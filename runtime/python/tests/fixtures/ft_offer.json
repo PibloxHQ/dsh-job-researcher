@@ -1,0 +1,14 @@
+{
+  "id": "FT123",
+  "intitule": "Développeur fullstack TypeScript H/F",
+  "description": "Next.js, télétravail possible 2j/semaine",
+  "typeContratLibelle": "Contrat à durée indéterminée",
+  "romeCode": "M1805",
+  "lieuTravail": {
+    "libelle": "38 - Meylan",
+    "commune": "Meylan",
+    "codePostal": "38240"
+  },
+  "entreprise": { "nom": "Example Tech" },
+  "origineOffre": { "urlOrigine": "https://example.test/offre/FT123" }
+}

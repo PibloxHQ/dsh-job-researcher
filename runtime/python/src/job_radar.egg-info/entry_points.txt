@@ -1,0 +1,2 @@
+[console_scripts]
+job-radar = job_radar.cli:app

@@ -1,7 +1,7 @@
 {
   "name": "dsh-job-researcher",
-  "version": "0.1.0-dev",
-  "description": "DSH Job Researcher — bootstrap plugin for reviewing scored job offers (scaffold only; Hermes job-radar remains SSOT runtime)",
+  "version": "0.2.0-dev",
+  "description": "DSH Job Researcher \u2014 primary job-search runtime (Python worker + Settings UI)",
   "type": "module",
   "main": "src/index.js",
   "exports": {
@@ -11,10 +11,13 @@
   },
   "files": [
     "src",
+    "runtime",
+    "scripts",
     "cordis.patch.yml",
     "README.md",
     "docs",
-    "LICENSE"
+    "LICENSE",
+    "migrations"
   ],
   "license": "MIT",
   "keywords": [
@@ -29,7 +32,8 @@
   },
   "scripts": {
     "test": "node --test test/*.test.js",
-    "check": "node --check src/index.js && node --check src/client/index.js"
+    "check": "node --check src/index.js && node --check src/cron.js && node --check src/store.js && node --check src/pipeline.js && node --check src/scheduler.js && node --check src/http.js && node --check src/client/index.js",
+    "setup-venv": "bash scripts/setup-venv.sh"
   },
   "dsh": {
     "bundle": {

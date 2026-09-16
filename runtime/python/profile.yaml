@@ -1,0 +1,160 @@
+# Florian Mestryx — Dev/Infra profile for Claims-to-Ping matching.
+# Edit this file to tune what triggers a ping notification.
+# Skills marked in 'required' will block pings if none match.
+
+name: "Florian — Dev/Infra"
+
+weights:
+  skill: 3.0
+  role: 2.0
+  location: 4.0
+  contract: 2.0
+  sector: 1.0
+  work_time: 1.0
+  employer_size: 0.5
+  benefit: 0.5
+
+required:
+  # At least ONE of these skills must match
+  skill:
+    - python
+    - typescript
+    - docker
+    - linux
+    - devops
+  # Must be CDI (Plan B: contractuel is OK too)
+  contract:
+    - cdi
+    - contractuel
+
+accepted:
+  skill:
+    - python
+    - typescript
+    - javascript
+    - docker
+    - kubernetes
+    - linux
+    - bash
+    - ansible
+    - terraform
+    - aws
+    - azure
+    - gcp
+    - git
+    - sql
+    - postgresql
+    - redis
+    - grafana
+    - prometheus
+    - ci/cd
+    - devops
+    - sre
+    - cloud
+    - web
+    - fullstack
+    - frontend
+    - backend
+    - api
+    - microservices
+    - agile
+    - scripting
+    - powershell
+    - php
+    - java
+    - rust
+    - go
+    - golang
+    - vue
+    - react
+    - angular
+    - node.js
+    - flask
+    - django
+    - fastapi
+    - monitoring
+    - firewall
+    - cisco
+    - vmware
+    - proxmox
+    - active directory
+    - ldap
+    - oauth
+    - data
+    - ia
+    - ml
+    - llm
+
+  role:
+    - devops
+    - developpeur
+    - developpeur fullstack
+    - administrateur systeme
+    - technicien systeme et reseaux
+    - ingenieur systeme
+    - ingenieur reseau
+    - ingenieur cloud
+    - ingenieur data
+    - ingenieur logiciel
+    - sre
+    - architecte technique
+    - architecte logiciel
+    - chef de projet
+    - tech lead
+    - exploitant
+    - assistant informatique
+    - support informatique
+    - helpdesk
+    - charge d'application
+    - cybersecurite
+    - technicien maintenance
+
+  location:
+    - isere_38
+    - grenoble
+    - remote
+    - commune:montbonnot
+    - commune:meylan
+    - commune:crolles
+    - commune:st-ismier
+    - commune:saint-ismier
+    - commune:versoud
+    - commune:grenoble
+    - commune:st-egreve
+    - commune:saint-egreve
+    - commune:sassenage
+    - commune:gières
+    - commune:gieres
+    - commune:la tronche
+    - commune:st-martin-d'heres
+    - commune:saint-martin-d-heres
+    - commune:echirolles
+    - commune:fontaine
+
+  contract:
+    - cdi
+    - contractuel
+    - fonctionnaire
+
+  sector:
+    - public
+    - private
+
+  work_time:
+    - full
+
+  employer_size:
+    - pme
+    - eti
+    - startup
+    - grand_compte
+    - tpe
+
+  benefit:
+    - teletravail
+    - remote
+    - formation
+    - mutuelle
+    - rdp
+    - retraite
+    - prevoyance
