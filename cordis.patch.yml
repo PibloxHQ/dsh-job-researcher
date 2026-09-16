@@ -1,0 +1,5 @@
+# Scaffold only — not wired into profiles yet (see INSTALL-MAP.md status: scaffold).
+- insert:
+    - id: dsh-job-researcher
+      name: 'dsh-job-researcher'
+      config: {}
