@@ -175,3 +175,125 @@ La livraison UX est acceptée lorsque le tri rapide, la consultation, les retour
 **Token frais (session de preuve) :** voir log `dsh-web-20260917-ux-journey.log` / stdout process.
 
 **Reste recette §9 :** double-clic, conflit 409 Settings, clavier complet Escape hors modal, mobile 200 % — non tous exécutés dans cette passe.
+
+## 12. Proposition de polish produit — fiche, menus et navigation
+
+Statut : **lots P-A → P-F implémentés** (2026-09-17). Fiche lisible + menus + vues/filtres/densité + feedback + settings sections + recette Playwright.
+
+### 12.1 Direction d'ensemble
+
+Construire un espace de recherche calme et lisible : informations essentielles visibles, actions fréquentes directement accessibles, détails secondaires dépliables. Réutiliser les tokens et composants DSH, avec une seule couleur d'accent, des séparateurs discrets et des états actifs explicites. Éviter l'accumulation de badges, boutons et blocs techniques.
+
+Conserver une navigation principale simple : **Offres**, **Mes candidatures**, roue **Réglages**. Les vues « À examiner », « M'intéresse », « À revoir » et « Écartées » sont des filtres enregistrés de la liste, pas des copies de données. Afficher leurs compteurs avec le même périmètre de recherche.
+
+### 12.2 Fiche d'offre : lecture prioritaire, actions toujours accessibles
+
+La fiche actuelle montre l'URL brute, `score=...`, la version technique et les raisons système avant la description. Remplacer cette hiérarchie par une grande fiche de lecture, avec panneau latéral d'actions sur écran large et une seule colonne sur petit écran.
+
+```text
+[Précédente] [Suivante]                              [Fermer]
+Développeur / administrateur systèmes
+Entreprise · Commune
+CDI · Télétravail à préciser · Source
+
+Description de l'offre                Mon intérêt [À revoir ▾]
+Missions et profil, si identifiés      Candidature [Non commencée ▾]
+                                      [Consulter l'annonce ↗]
+                                      Date d'envoi, si renseignée
+Pourquoi cette offre ?
+2–3 raisons lisibles                  Mon retour
+[Voir le détail du score ▾]           [Lieu] [Métier] [Contrat] ...
+                                      Commentaire personnel
+Informations de la source ▸           [Enregistrer le retour]
+```
+
+- En-tête fixe : titre avec retour à la ligne, employeur, lieu, fermeture et navigation précédente/suivante dans l'ordre filtré. Garder visible l'action externe sans répéter l'URL longue.
+- Métadonnées en grille compacte : contrat, temps de travail, télétravail, rémunération, publication/échéance uniquement si les données sont disponibles. « Non précisé » est préférable à une supposition.
+- Description en premier, largeur de lecture limitée, paragraphes et listes lisibles. Ne créer « Missions », « Profil recherché » et « Avantages » que si la source fournit une structure fiable. Pour un extrait court, indiquer « Extrait fourni par la source » avec accès à l'annonce complète.
+- Préserver les sauts de ligne ; si le contenu HTML est rendu, le nettoyer et filtrer les URLs. Ne pas injecter directement le HTML collecté.
+- Score : libellé « Bonne correspondance », « À examiner » ou « Peu de critères correspondants », selon des seuils documentés ; garder le score exact en détail. Ne pas convertir le score actuel en pourcentage de compatibilité sans calibration.
+- Montrer les limites : localisation incertaine, description partielle, score ancien, offre potentiellement expirée. Une information incertaine ne devient pas un fait par sa mise en forme.
+- « Informations de la source » dépliable : lien, collecte, identifiant, version de score/configuration. Les diagnostics techniques n'occupent pas le haut de la fiche.
+- Précédente/suivante préserve les brouillons par offre et remet le corps de lecture en haut. Si l'offre sort du filtre après décision, la fiche reste ouverte jusqu'à une navigation explicite ; la destination suivante est calculée sans saut ni boucle.
+
+### 12.3 Menus déroulants : un rôle précis pour chaque contrôle
+
+| Contrôle | Présentation proposée | Comportement |
+|---|---|---|
+| Intérêt dans la liste | Trois actions compactes visibles avec état actif | Le tri fréquent reste en un clic, sans ouvrir la fiche |
+| Intérêt dans la fiche | Bouton « À revoir ▾ » + menu de choix exclusifs | M'intéresse / À revoir / Pas intéressé / À examiner ; choix courant coché |
+| Candidature | Bouton portant l'état courant + menu | Non commencée / À préparer / Prête ; envoi traité comme action explicite |
+| Envoi effectif | « J'ai envoyé ma candidature » | Enregistrement manuel identifiable ; succès et annulation/correction visibles |
+| Autres actions | Menu « … » | Copier le lien, copier le titre, remettre à examiner ; aucune action fictive |
+| Filtres | Select simple ou sélection multiple selon le besoin | Libellé, nombre de choix, effacer ; recherche intégrée seulement pour les listes longues |
+| Contenu secondaire | Accordéon | Déplier sans changer la décision ni déclencher de sauvegarde |
+
+Éviter trois systèmes de menus différents. Utiliser en priorité les primitives accessibles DSH ; sinon conserver des contrôles natifs avant d'introduire un composant maison. Un menu d'actions et une liste de sélection n'ont pas le même contrat clavier.
+
+Exigences : ouverture clavier, navigation par flèches adaptée au composant, choix actif annoncé, Escape ferme le menu avant la fiche, focus rendu au déclencheur, fermeture au clic extérieur. Les menus doivent rester dans la fenêtre même en bas de liste et au zoom ; vérifier les portals/z-index et le piège de focus de la modal ensemble.
+
+Les actions s'appliquent après activation d'un choix, jamais au survol. Durant une mutation, bloquer seulement le contrôle concerné. Un menu fermé ou une fiche fermée ne doit pas être rouvert par la réponse.
+
+### 12.4 Retours utilisateur plus légers et plus explicables
+
+Regrouper les tags par thème : Lieu, Métier, Contrat, Informations manquantes. Montrer d'abord les plus utiles puis « Tous les critères ». Un retour reste facultatif après une décision ; aucune fenêtre imposée pour expliquer un Non.
+
+Afficher « Votre retour est enregistré » puis, si démontré par le moteur, « Ce critère influence désormais le classement » ou « Encore un retour similaire pour activer ce critère ». Ne pas promettre que le commentaire libre entraîne le modèle : le learning actuel porte sur les tags.
+
+Prévoir les contradictions dans un même thème, notamment Support OK/Support non : choix mutuellement exclusifs ou résolution explicite avant sauvegarde. Distinguer la zone de commentaire du bloc des raisons système. Conserver les états Brouillon / Enregistrement / Enregistré / Échec près de la commande.
+
+### 12.5 Liste et filtres mieux organisés
+
+- Navbar courte : titre, recherche en cours si pertinente, progression candidature, Lancer une recherche, roue. Mettre les diagnostics dans une zone « Activité » dépliable.
+- Ligne d'offre : titre principal, entreprise en secondaire, lieu, contrat/télétravail disponibles, correspondance, intérêt et candidature. Icônes cohérentes et noms accessibles ; pas de sigles de sources inexpliqués.
+- Barre de filtres : recherche, vue d'intérêt, localisation, puis « Plus de filtres ». Chips récapitulatives et « Tout effacer » lorsque des filtres sont actifs.
+- Tri explicite : pertinence, dernières collectées, titre. Ne pas appeler « plus récentes » des dates de collecte si la publication n'est pas connue.
+- Vues de densité confortable/compacte, avec préférence conservée. À faible largeur, cartes compactes avec les mêmes actions et états.
+- En chargement initial, squelette mesuré ; pendant une actualisation, conserver les lignes. État vide contextualisé avec une action utile : enlever les filtres, configurer ou lancer la première recherche.
+- L'ordre et les compteurs doivent rester cohérents avec les filtres ; le rafraîchissement ne vole ni focus ni position de lecture.
+
+### 12.6 Réglages en langage utilisateur
+
+Regrouper en quatre sections : **Ma recherche**, **Sources**, **Rythme**, **Préférences**. Le formulaire montre une phrase récapitulative : « Recherche dans [zones], pour [métiers], via [sources], [horaire] ». Cette phrase doit refléter les paramètres réellement utilisés.
+
+Sélection de commune/département assistée, états de sources lisibles, heure locale et jours sous forme de contrôles usuels. Le cron et les détails du runtime vont dans « Avancé ». Bouton Enregistrer proche du résumé des modifications, Annuler les modifications explicite, erreurs par champ. Les contrôles métier absents du backend restent hors du parcours principal jusqu'à leur implémentation.
+
+### 12.7 Finition visuelle et comportementale
+
+- Définir les mêmes hauteurs de champs/boutons, espacements, arrondis et styles de focus dans tout le plugin avec les tokens DSH. Tester thème clair et sombre.
+- Donner un poids visuel principal à une action par groupe ; les décisions positives/négatives restent identifiables autrement que par la couleur.
+- Utiliser des confirmations locales pour les sauvegardes, des notifications discrètes avec Annuler pour les décisions et des erreurs persistantes à l'endroit où l'utilisateur peut agir.
+- Animations courtes de 120–180 ms pour menus et transitions, sans déplacement de mise en page ; respecter la préférence de réduction des animations.
+- Fournir des cibles tactiles confortables, tester 360 px et zoom 200 %, garder toutes les commandes accessibles. Aucune tooltip ne porte seule une information essentielle.
+- Ne pas masquer par une animation un délai réel : expliquer chargement et indisponibilité, permettre une reprise.
+
+### 12.8 Lots de polish et critères d'acceptation
+
+| Lot | Livrable | Recette |
+|---|---|---|
+| P-A | Fiche recomposée + styles partagés | Titres longs, texte long/court, métadonnées absentes, lecture mobile/desktop |
+| P-B | Menus d'intérêt/candidature/actions + accordéons | Souris, clavier, toucher ; Escape menu puis modal ; aucun effet de bord |
+| P-C | Liste, filtres, vues et densité | Tri rapide toujours en un clic ; retour fiche/liste sans perte du contexte |
+| P-D | Feedback, messages et états candidature | Sauvegarde lente, erreur, brouillon, annulation et double clic |
+| P-E | Settings simplifiés + résumé de recherche | Réglages compris et réellement appliqués, aucun champ décoratif |
+| P-F | Recette visuelle transversale | Clair/sombre, petit écran, zoom, navigation clavier et lecteur d'écran |
+
+Commencer par P-A/P-B : c'est le cœur de la demande de polish. Livrer chaque lot avec captures dans DSH et tests d'interaction ciblés. Les tests textuels ne prouvent ni la qualité visuelle ni la navigation des menus.
+
+Definition of Done : une personne peut lire une offre, exprimer son intérêt, ajouter un retour, suivre sa candidature, passer à l'offre suivante et revenir à ses filtres sans surprise. Aucun champ manquant n'est inventé ; aucun détail technique n'est nécessaire pour utiliser les commandes courantes.
+
+### 12.9 Journal polish (2026-09-17)
+
+| Lot | Statut | Preuves |
+|---|---|---|
+| P-A | **DONE** | `modalDialogWide`, description prioritaire, score libellé + accordéon, meta contrat/télétravail |
+| P-B | **DONE** | `DropdownMenu` intérêt/candidature/… ; Escape menu avant modal ; Précédente/Suivante |
+| P-C | **DONE** | Vues À examiner / M'intéresse / À revoir ; Plus de filtres ; chips + Tout effacer ; densité |
+| P-D | **DONE** | Tags par thème + exclusivité ; brouillon/erreur près de l'action ; undo inchangé |
+| P-E | **DONE** | Sections Ma recherche / Sources / Rythme / Préférences + résumé + Avancé (cron) |
+| P-F | **DONE** | Playwright : views, density, modal, interest-menu, description, prev ; mobile CSS 720px |
+
+**Tests :** `npm test` → 48/48 PASS (contrat polish ajouté).
+
+**Definition of Done :** lecture → intérêt ▾ → retour → candidature → suivante → filtres conservés.
+

@@ -103,6 +103,54 @@ window.__ModuleLoader__.load({
         runAccepted: 'Run accepted — collecting in background.',
         resetUnreviewed: 'Reset to review',
         unreviewed: 'To review',
+        prevOffer: 'Previous',
+        nextOffer: 'Next',
+        description: 'Description',
+        excerptHint: 'Excerpt provided by the source — open the full listing for the complete text.',
+        noDescription: 'No description available.',
+        whyThisOffer: 'Why this offer?',
+        scoreDetail: 'Score details',
+        scoreGood: 'Good match',
+        scoreReview: 'Worth reviewing',
+        scoreLow: 'Few matching criteria',
+        scoreUnknown: 'Score not calculated',
+        scoreNoReasons: 'No system reasons available yet.',
+        sourceInfo: 'Source information',
+        myInterest: 'My interest',
+        myFeedback: 'My feedback',
+        openExternal: 'View listing ↗',
+        noExternalUrl: 'No external URL',
+        moreActions: 'More',
+        copyLink: 'Copy link',
+        copyTitle: 'Copy title',
+        linkCopied: 'Link copied',
+        titleCopied: 'Title copied',
+        copyFailed: 'Could not copy',
+        notSpecified: 'Not specified',
+        contract: 'Contract',
+        remote: 'Remote',
+        remoteYes: 'Remote',
+        remoteHybrid: 'Hybrid',
+        remoteNo: 'On-site',
+        remoteUnknown: 'Remote TBD',
+        match: 'Match',
+        untitledOffer: 'Untitled offer',
+        externalId: 'External id',
+        collectedAt: 'Collected',
+        appliedOn: 'Submitted on',
+        clearApplied: 'Clear submitted status',
+        appNoneStarted: 'Not started',
+        allCriteria: 'All criteria',
+        viewAll: 'All',
+        moreFilters: 'More filters',
+        clearFilters: 'Clear all',
+        densityComfort: 'Comfortable',
+        densityCompact: 'Compact',
+        density: 'Density',
+        activity: 'Activity',
+        offersTab: 'Offers',
+        applicationsTab: 'Applications',
+        filtersActive: 'filters active',
       },
       fr: {
         nav: 'Job Researcher',
@@ -163,6 +211,54 @@ window.__ModuleLoader__.load({
         runAccepted: 'Run accepté — collecte en arrière-plan.',
         resetUnreviewed: 'Remettre à examiner',
         unreviewed: 'À examiner',
+        prevOffer: 'Précédente',
+        nextOffer: 'Suivante',
+        description: 'Description',
+        excerptHint: 'Extrait fourni par la source — consultez l’annonce complète pour le texte entier.',
+        noDescription: 'Aucune description disponible.',
+        whyThisOffer: 'Pourquoi cette offre ?',
+        scoreDetail: 'Voir le détail du score',
+        scoreGood: 'Bonne correspondance',
+        scoreReview: 'À examiner',
+        scoreLow: 'Peu de critères correspondants',
+        scoreUnknown: 'Score non calculé',
+        scoreNoReasons: 'Aucune raison système pour l’instant.',
+        sourceInfo: 'Informations de la source',
+        myInterest: 'Mon intérêt',
+        myFeedback: 'Mon retour',
+        openExternal: 'Consulter l’annonce ↗',
+        noExternalUrl: 'Pas d’URL externe',
+        moreActions: 'Plus',
+        copyLink: 'Copier le lien',
+        copyTitle: 'Copier le titre',
+        linkCopied: 'Lien copié',
+        titleCopied: 'Titre copié',
+        copyFailed: 'Copie impossible',
+        notSpecified: 'Non précisé',
+        contract: 'Contrat',
+        remote: 'Télétravail',
+        remoteYes: 'Télétravail',
+        remoteHybrid: 'Hybride',
+        remoteNo: 'Sur site',
+        remoteUnknown: 'Télétravail à préciser',
+        match: 'Correspondance',
+        untitledOffer: 'Offre sans titre',
+        externalId: 'Identifiant source',
+        collectedAt: 'Collectée',
+        appliedOn: 'Envoyée le',
+        clearApplied: 'Retirer le statut envoyée',
+        appNoneStarted: 'Non commencée',
+        allCriteria: 'Tous les critères',
+        viewAll: 'Toutes',
+        moreFilters: 'Plus de filtres',
+        clearFilters: 'Tout effacer',
+        densityComfort: 'Confortable',
+        densityCompact: 'Compact',
+        density: 'Affichage',
+        activity: 'Activité',
+        offersTab: 'Offres',
+        applicationsTab: 'Mes candidatures',
+        filtersActive: 'filtres actifs',
       },
     }
 
@@ -193,6 +289,18 @@ window.__ModuleLoader__.load({
         conflictReload: 'Reload remote',
         dirtyConfirm: 'Discard unsaved settings changes?',
         newProfile: 'New profile',
+        sectionSearch: 'My search',
+        sectionSources: 'Sources',
+        sectionRhythm: 'Rhythm',
+        sectionPrefs: 'Preferences',
+        sectionAdvanced: 'Advanced',
+        summaryPrefix: 'Searching in',
+        summaryFor: 'for',
+        summaryVia: 'via',
+        summaryAt: 'schedule',
+        discard: 'Discard changes',
+        jobsHint: 'Job titles / keywords (optional — used when sources support it)',
+        jobs: 'Target roles',
       },
       fr: {
         nav: 'Job Researcher',
@@ -220,6 +328,18 @@ window.__ModuleLoader__.load({
         conflictReload: 'Recharger le distant',
         dirtyConfirm: 'Abandonner les modifications non enregistrées ?',
         newProfile: 'Nouveau profil',
+        sectionSearch: 'Ma recherche',
+        sectionSources: 'Sources',
+        sectionRhythm: 'Rythme',
+        sectionPrefs: 'Préférences',
+        sectionAdvanced: 'Avancé',
+        summaryPrefix: 'Recherche dans',
+        summaryFor: 'pour',
+        summaryVia: 'via',
+        summaryAt: 'horaire',
+        discard: 'Annuler les modifications',
+        jobsHint: 'Métiers / mots-clés (optionnel — si les sources le supportent)',
+        jobs: 'Métiers ciblés',
       },
     }
 
@@ -645,6 +765,337 @@ window.__ModuleLoader__.load({
         overflow: 'auto',
         maxHeight: '55%',
       },
+      modalDialogWide: {
+        position: 'relative',
+        zIndex: 1,
+        width: 'min(72rem, 100%)',
+        maxHeight: 'min(92vh, 56rem)',
+        overflow: 'hidden',
+        display: 'flex',
+        flexDirection: 'column',
+        borderRadius: '0.65rem',
+        border: '0.5px solid var(--dsw-alias-border-l2)',
+        background: 'var(--dsw-alias-bg-layer-1, var(--dsw-alias-bg-base, #0b0d10))',
+        color: 'var(--dsw-alias-label-primary, inherit)',
+        boxShadow: '0 18px 48px color-mix(in oklab, black 45%, transparent)',
+      },
+      sheetTopBar: {
+        flex: 'none',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: '0.75rem',
+        padding: '0.65rem 1rem',
+        borderBottom: '0.5px solid var(--dsw-alias-border-l2)',
+        background: 'var(--dsw-alias-bg-layer-2)',
+      },
+      sheetNavGroup: {
+        display: 'flex',
+        gap: '0.4rem',
+        flexWrap: 'wrap',
+      },
+      sheetBody: {
+        flex: 1,
+        minHeight: 0,
+        overflow: 'auto',
+        scrollbarGutter: 'stable',
+        padding: '1rem 1.15rem 1.35rem',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '1rem',
+      },
+      sheetHeader: {
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '0.35rem',
+      },
+      sheetTitle: {
+        margin: 0,
+        fontSize: '1.35rem',
+        lineHeight: 1.25,
+        fontWeight: 650,
+        letterSpacing: '-0.02em',
+      },
+      sheetSub: {
+        margin: 0,
+        fontSize: '0.92rem',
+        color: 'var(--dsw-alias-label-secondary, inherit)',
+      },
+      metaGrid: {
+        display: 'flex',
+        flexWrap: 'wrap',
+        gap: '0.4rem',
+        marginTop: '0.35rem',
+      },
+      metaChip: {
+        display: 'inline-flex',
+        alignItems: 'center',
+        padding: '0.2rem 0.55rem',
+        borderRadius: '0.4rem',
+        fontSize: '0.78rem',
+        border: '0.5px solid var(--dsw-alias-border-l3)',
+        background: 'var(--dsw-alias-bg-layer-3, transparent)',
+        color: 'var(--dsw-alias-label-secondary, inherit)',
+      },
+      sheetGrid: {
+        display: 'grid',
+        gridTemplateColumns: 'minmax(0, 1.6fr) minmax(16rem, 0.9fr)',
+        gap: '1.25rem',
+        alignItems: 'start',
+      },
+      sheetMain: {
+        minWidth: 0,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '0.75rem',
+      },
+      sheetAside: {
+        position: 'sticky',
+        top: 0,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '0.65rem',
+        padding: '0.85rem',
+        borderRadius: '0.55rem',
+        border: '0.5px solid var(--dsw-alias-border-l2)',
+        background: 'var(--dsw-alias-bg-layer-2)',
+      },
+      descriptionReadable: {
+        fontSize: '0.95rem',
+        whiteSpace: 'pre-wrap',
+        lineHeight: 1.55,
+        maxWidth: '42rem',
+        color: 'var(--dsw-alias-label-primary, inherit)',
+      },
+      reasonList: {
+        margin: '0.35rem 0 0.5rem',
+        paddingLeft: '1.15rem',
+        fontSize: '0.88rem',
+        lineHeight: 1.45,
+        color: 'var(--dsw-alias-label-secondary, inherit)',
+      },
+      dropdownRoot: {
+        position: 'relative',
+        display: 'block',
+        width: '100%',
+      },
+      dropdownTrigger: {
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: '0.5rem',
+        width: '100%',
+        minHeight: '2.25rem',
+        padding: '0.4rem 0.65rem',
+        borderRadius: '0.45rem',
+        border: '0.5px solid var(--dsw-alias-border-l3)',
+        background: 'var(--dsw-alias-bg-layer-3, transparent)',
+        color: 'var(--dsw-alias-label-primary, inherit)',
+        font: 'inherit',
+        fontSize: '0.85rem',
+        cursor: 'pointer',
+        textAlign: 'left',
+      },
+      dropdownLabel: {
+        fontSize: '0.72rem',
+        color: 'var(--dsw-alias-label-tertiary, inherit)',
+        flex: 'none',
+      },
+      dropdownValue: {
+        flex: 1,
+        minWidth: 0,
+        fontWeight: 600,
+        textAlign: 'left',
+      },
+      dropdownMenu: {
+        position: 'absolute',
+        zIndex: 20,
+        right: 0,
+        top: 'calc(100% + 0.25rem)',
+        minWidth: '100%',
+        margin: 0,
+        padding: '0.3rem',
+        listStyle: 'none',
+        borderRadius: '0.45rem',
+        border: '0.5px solid var(--dsw-alias-border-l2)',
+        background: 'var(--dsw-alias-bg-layer-1, var(--dsw-alias-bg-base, #0b0d10))',
+        boxShadow: '0 10px 28px color-mix(in oklab, black 35%, transparent)',
+      },
+      dropdownItem: {
+        display: 'flex',
+        width: '100%',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: '0.5rem',
+        minHeight: '2rem',
+        padding: '0.35rem 0.55rem',
+        border: 'none',
+        borderRadius: '0.35rem',
+        background: 'transparent',
+        color: 'inherit',
+        font: 'inherit',
+        fontSize: '0.85rem',
+        cursor: 'pointer',
+        textAlign: 'left',
+      },
+      dropdownItemActive: {
+        background: 'var(--dsw-alias-bg-layer-3)',
+        fontWeight: 600,
+      },
+      accordion: {
+        marginTop: '0.55rem',
+        borderTop: '0.5px solid var(--dsw-alias-border-l2)',
+        paddingTop: '0.45rem',
+      },
+      accordionBtn: {
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '0.35rem',
+        background: 'none',
+        border: 'none',
+        padding: 0,
+        margin: 0,
+        font: 'inherit',
+        fontSize: '0.85rem',
+        color: 'var(--dsw-alias-label-secondary, inherit)',
+        cursor: 'pointer',
+        minHeight: '2rem',
+      },
+      accordionBody: {
+        marginTop: '0.45rem',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '0.45rem',
+      },
+      externalLinkBtn: {
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: '2.25rem',
+        padding: '0.4rem 0.75rem',
+        borderRadius: '0.45rem',
+        border: '0.5px solid var(--dsw-alias-border-l3)',
+        background: 'transparent',
+        color: 'var(--dsw-alias-label-primary, inherit)',
+        font: 'inherit',
+        fontSize: '0.85rem',
+        textDecoration: 'none',
+        textAlign: 'center',
+      },
+      feedbackBlock: {
+        marginTop: '0.35rem',
+        paddingTop: '0.75rem',
+        borderTop: '0.5px solid var(--dsw-alias-border-l2)',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '0.45rem',
+      },
+      tagGroupLabel: {
+        fontSize: '0.72rem',
+        fontWeight: 600,
+        color: 'var(--dsw-alias-label-tertiary, inherit)',
+        marginBottom: '0.2rem',
+      },
+      linkBtn: {
+        background: 'none',
+        border: 'none',
+        padding: 0,
+        margin: 0,
+        font: 'inherit',
+        fontSize: '0.8rem',
+        color: 'var(--dsw-alias-label-secondary, inherit)',
+        textDecoration: 'underline',
+        textUnderlineOffset: '0.12em',
+        cursor: 'pointer',
+        alignSelf: 'flex-start',
+        minHeight: '2rem',
+      },
+      deflist: {
+        margin: 0,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '0.35rem',
+        fontSize: '0.8rem',
+      },
+      viewTabs: {
+        display: 'flex',
+        flexWrap: 'wrap',
+        gap: '0.35rem',
+        alignItems: 'center',
+      },
+      viewTab: {
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '0.3rem',
+        minHeight: '2rem',
+        padding: '0.3rem 0.7rem',
+        borderRadius: '0.45rem',
+        border: '0.5px solid var(--dsw-alias-border-l3)',
+        background: 'transparent',
+        color: 'var(--dsw-alias-label-primary, inherit)',
+        font: 'inherit',
+        fontSize: '0.82rem',
+        cursor: 'pointer',
+      },
+      viewTabOn: {
+        background: 'var(--dsw-alias-bg-layer-3)',
+        border: '0.5px solid var(--dsw-alias-border-l2)',
+        fontWeight: 600,
+      },
+      filterChips: {
+        display: 'flex',
+        flexWrap: 'wrap',
+        gap: '0.35rem',
+        alignItems: 'center',
+      },
+      filterChip: {
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '0.3rem',
+        minHeight: '1.75rem',
+        padding: '0.15rem 0.55rem',
+        borderRadius: '0.4rem',
+        border: '0.5px solid var(--dsw-alias-border-l3)',
+        background: 'var(--dsw-alias-bg-layer-3)',
+        fontSize: '0.75rem',
+        color: 'var(--dsw-alias-label-secondary, inherit)',
+      },
+      offerCard: {
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '0.35rem',
+        padding: '0.7rem 0.75rem',
+        borderRadius: '0.5rem',
+        border: '0.5px solid var(--dsw-alias-border-l2)',
+        background: 'var(--dsw-alias-bg-layer-2)',
+        marginBottom: '0.45rem',
+      },
+      offerCardSelected: {
+        outline: '0.5px solid var(--dsw-alias-border-l2)',
+        background: 'var(--dsw-alias-bg-layer-3)',
+      },
+      offerCardMeta: {
+        display: 'flex',
+        flexWrap: 'wrap',
+        gap: '0.45rem 0.75rem',
+        fontSize: '0.78rem',
+        color: 'var(--dsw-alias-label-secondary, inherit)',
+      },
+      settingsSectionTitle: {
+        margin: 0,
+        fontSize: '0.95rem',
+        fontWeight: 650,
+        letterSpacing: '-0.01em',
+      },
+      settingsSummary: {
+        margin: 0,
+        padding: '0.65rem 0.75rem',
+        borderRadius: '0.45rem',
+        border: '0.5px solid var(--dsw-alias-border-l2)',
+        background: 'var(--dsw-alias-bg-layer-2)',
+        fontSize: '0.85rem',
+        lineHeight: 1.4,
+      },
     }
 
     function scoreBadgeStyle(score) {
@@ -778,6 +1229,206 @@ window.__ModuleLoader__.load({
     function sourceLabel(id) {
       return SOURCE_LABELS[id] || id
     }
+
+
+    const FEEDBACK_TAG_GROUPS = [
+      {
+        id: 'location',
+        labelFr: 'Lieu',
+        labelEn: 'Location',
+        tags: ['location_good', 'too_far'],
+      },
+      {
+        id: 'job',
+        labelFr: 'Métier',
+        labelEn: 'Role',
+        tags: ['dev_infra_good', 'support_good', 'support_bad', 'public_sector_good'],
+      },
+      {
+        id: 'contract',
+        labelFr: 'Contrat',
+        labelEn: 'Contract',
+        tags: ['student_contract_bad', 'contract_bad'],
+      },
+      {
+        id: 'missing',
+        labelFr: 'Informations manquantes',
+        labelEn: 'Missing info',
+        tags: ['missing_diploma', 'needs_details'],
+      },
+    ]
+
+    const EXCLUSIVE_TAG_PAIRS = [
+      ['location_good', 'too_far'],
+      ['support_good', 'support_bad'],
+    ]
+
+    const DENSITY_KEY = 'dsh-jr-density'
+    const VIEW_OPTIONS = [
+      { id: '', labelKey: 'viewAll' },
+      { id: 'UNREVIEWED', labelKey: 'unreviewed' },
+      { id: 'YES', labelKey: 'yes' },
+      { id: 'MAYBE', labelKey: 'maybe' },
+      { id: 'NO', labelKey: 'no' },
+    ]
+
+    function decisionLabel(t, d) {
+      if (d === 'YES') return t('yes')
+      if (d === 'NO') return t('no')
+      if (d === 'MAYBE') return t('maybe')
+      if (d === 'UNREVIEWED' || !d) return t('unreviewed')
+      return d || '—'
+    }
+
+    function scoreMatchLabel(t, score) {
+      if (score == null || score === '') return t('scoreUnknown')
+      const n = Number(score)
+      if (!Number.isFinite(n)) return t('scoreUnknown')
+      if (n >= 3) return t('scoreGood')
+      if (n >= 1) return t('scoreReview')
+      return t('scoreLow')
+    }
+
+    function remoteLabel(t, remote) {
+      const r = String(remote || '').toLowerCase()
+      if (r === 'yes' || r === 'full' || r === 'remote') return t('remoteYes')
+      if (r === 'hybrid') return t('remoteHybrid')
+      if (r === 'no' || r === 'onsite') return t('remoteNo')
+      return t('remoteUnknown')
+    }
+
+    function metaOrUnknown(value, unknown) {
+      const s = String(value || '').trim()
+      return s ? s : unknown
+    }
+
+    function toggleExclusiveTags(prev, id) {
+      let next = prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+      if (!prev.includes(id)) {
+        for (const pair of EXCLUSIVE_TAG_PAIRS) {
+          if (!pair.includes(id)) continue
+          next = next.filter((x) => x === id || !pair.includes(x))
+        }
+      }
+      return [...new Set(next)].sort()
+    }
+
+    function DropdownMenu(props) {
+      const {
+        label,
+        valueLabel,
+        options,
+        disabled,
+        testId,
+        onSelect,
+        align = 'end',
+      } = props
+      const [open, setOpen] = useState(false)
+      const rootRef = useRef(null)
+      const btnRef = useRef(null)
+
+      useEffect(() => {
+        if (!open) return undefined
+        const onDoc = (e) => {
+          if (rootRef.current && !rootRef.current.contains(e.target)) setOpen(false)
+        }
+        const onKey = (e) => {
+          if (e.key === 'Escape') {
+            e.stopPropagation()
+            e.stopImmediatePropagation()
+            e.preventDefault()
+            setOpen(false)
+            btnRef.current?.focus?.()
+          }
+        }
+        document.addEventListener('mousedown', onDoc)
+        window.addEventListener('keydown', onKey, true)
+        return () => {
+          document.removeEventListener('mousedown', onDoc)
+          window.removeEventListener('keydown', onKey, true)
+        }
+      }, [open])
+
+      return jsxs('div', {
+        ref: rootRef,
+        style: css.dropdownRoot,
+        'data-testid': testId || undefined,
+        children: [
+          jsxs('button', {
+            type: 'button',
+            ref: btnRef,
+            style: btnStyle(css.dropdownTrigger, disabled),
+            disabled,
+            'aria-haspopup': 'menu',
+            'aria-expanded': open,
+            onClick: () => setOpen((v) => !v),
+            children: [
+              jsx('span', { style: css.dropdownLabel, children: label }),
+              jsx('span', { style: css.dropdownValue, children: valueLabel }),
+              jsx('span', { 'aria-hidden': true, children: '▾' }),
+            ],
+          }),
+          open
+            ? jsx('ul', {
+                role: 'menu',
+                style: {
+                  ...css.dropdownMenu,
+                  ...(align === 'start' ? { left: 0, right: 'auto' } : {}),
+                },
+                children: options.map((opt) =>
+                  jsx(
+                    'li',
+                    {
+                      role: 'none',
+                      children: jsxs('button', {
+                        type: 'button',
+                        role: 'menuitemradio',
+                        'aria-checked': Boolean(opt.checked),
+                        style: {
+                          ...css.dropdownItem,
+                          ...(opt.checked ? css.dropdownItemActive : {}),
+                          ...(opt.danger ? { color: 'var(--dsw-alias-state-error-primary)' } : {}),
+                        },
+                        disabled: Boolean(opt.disabled),
+                        onClick: () => {
+                          setOpen(false)
+                          onSelect?.(opt.value)
+                          btnRef.current?.focus?.()
+                        },
+                        children: [
+                          jsx('span', { children: opt.label }),
+                          opt.checked ? jsx('span', { 'aria-hidden': true, children: '✓' }) : null,
+                        ],
+                      }),
+                    },
+                    String(opt.value),
+                  ),
+                ),
+              })
+            : null,
+        ],
+      })
+    }
+
+    function Accordion(props) {
+      const { title, children, testId, defaultOpen = false } = props
+      const [open, setOpen] = useState(defaultOpen)
+      return jsxs('div', {
+        style: css.accordion,
+        'data-testid': testId || undefined,
+        children: [
+          jsx('button', {
+            type: 'button',
+            style: css.accordionBtn,
+            'aria-expanded': open,
+            onClick: () => setOpen((v) => !v),
+            children: `${open ? '▾' : '▸'} ${title}`,
+          }),
+          open ? jsx('div', { style: css.accordionBody, children }) : null,
+        ],
+      })
+    }
+
 
     function JobResearcherSettings(props) {
       const t = props.t || ((k) => k)
@@ -959,9 +1610,16 @@ window.__ModuleLoader__.load({
                 : null,
             ],
           }),
+          jsx('p', {
+            style: css.settingsSummary,
+            'data-testid': 'jr-settings-summary',
+            children: `${t('summaryPrefix')} [${departments.trim() || '—'}], ${t('summaryVia')} [${SOURCE_OPTIONS.filter((id) => enabled[id]).map(sourceLabel).join(', ') || '—'}], ${t('summaryAt')} [${cron.trim() || '—'}]`,
+          }),
           jsxs('div', {
             style: css.settingsSection,
+            'data-testid': 'jr-settings-section-search',
             children: [
+              jsx('h3', { style: css.settingsSectionTitle, children: t('sectionSearch') }),
               jsxs('div', {
                 style: css.settingsField,
                 children: [
@@ -991,6 +1649,13 @@ window.__ModuleLoader__.load({
                     : null,
                 ],
               }),
+            ],
+          }),
+          jsxs('div', {
+            style: css.settingsSection,
+            'data-testid': 'jr-settings-section-sources',
+            children: [
+              jsx('h3', { style: css.settingsSectionTitle, children: t('sectionSources') }),
               jsxs('div', {
                 style: css.settingsField,
                 children: [
@@ -1022,27 +1687,31 @@ window.__ModuleLoader__.load({
                   }),
                 ],
               }),
-              jsxs('div', {
-                style: css.settingsField,
-                children: [
-                  jsx('label', {
-                    style: css.settingsLabel,
-                    htmlFor: 'jr-cron',
-                    children: t('scheduleCron'),
-                  }),
-                  jsx('input', {
-                    id: 'jr-cron',
-                    style: { ...css.input, width: '100%', minWidth: 0 },
-                    value: cron,
-                    disabled: busy || !canEdit,
-                    onChange: (e) => {
-                      setCron(e.target.value)
-                      markDirty()
-                    },
-                    'data-testid': 'jr-settings-cron',
-                  }),
-                ],
+              jsx('p', { style: css.settingsHint, children: t('secretsHint') }),
+              jsx('button', {
+                type: 'button',
+                style: {
+                  ...css.settingsLabel,
+                  background: 'none',
+                  border: 'none',
+                  padding: 0,
+                  cursor: 'pointer',
+                  textDecoration: 'underline',
+                  textUnderlineOffset: '0.15em',
+                  font: 'inherit',
+                  color: 'inherit',
+                },
+                'data-testid': 'jr-settings-secrets-link',
+                onClick: handleOpenSecrets,
+                children: t('secretsLink'),
               }),
+            ],
+          }),
+          jsxs('div', {
+            style: css.settingsSection,
+            'data-testid': 'jr-settings-section-rhythm',
+            children: [
+              jsx('h3', { style: css.settingsSectionTitle, children: t('sectionRhythm') }),
               jsxs('div', {
                 style: css.settingsField,
                 children: [
@@ -1067,31 +1736,41 @@ window.__ModuleLoader__.load({
                   }),
                 ],
               }),
+              jsx(Accordion, {
+                title: t('sectionAdvanced'),
+                testId: 'jr-settings-advanced',
+                children: jsxs('div', {
+                  style: css.settingsField,
+                  children: [
+                    jsx('label', {
+                      style: css.settingsLabel,
+                      htmlFor: 'jr-cron',
+                      children: t('scheduleCron'),
+                    }),
+                    jsx('input', {
+                      id: 'jr-cron',
+                      style: { ...css.input, width: '100%', minWidth: 0 },
+                      value: cron,
+                      disabled: busy || !canEdit,
+                      onChange: (e) => {
+                        setCron(e.target.value)
+                        markDirty()
+                      },
+                      'data-testid': 'jr-settings-cron',
+                    }),
+                  ],
+                }),
+              }),
             ],
           }),
           jsxs('div', {
             style: css.settingsSection,
+            'data-testid': 'jr-settings-section-prefs',
             children: [
+              jsx('h3', { style: css.settingsSectionTitle, children: t('sectionPrefs') }),
               jsx('p', {
                 style: css.settingsHint,
-                children: t('secretsHint'),
-              }),
-              jsx('button', {
-                type: 'button',
-                style: {
-                  ...css.settingsLabel,
-                  background: 'none',
-                  border: 'none',
-                  padding: 0,
-                  cursor: 'pointer',
-                  textDecoration: 'underline',
-                  textUnderlineOffset: '0.15em',
-                  font: 'inherit',
-                  color: 'inherit',
-                },
-                'data-testid': 'jr-settings-secrets-link',
-                onClick: handleOpenSecrets,
-                children: t('secretsLink'),
+                children: t('subtitle'),
               }),
             ],
           }),
@@ -1105,6 +1784,16 @@ window.__ModuleLoader__.load({
                 onClick: () => void load({ confirmDirty: true }),
                 children: t('load'),
               }),
+              dirty
+                ? jsx('button', {
+                    type: 'button',
+                    style: btnStyle(css.btn, busy),
+                    disabled: busy,
+                    'data-testid': 'jr-settings-discard',
+                    onClick: () => void load({ confirmDirty: true }),
+                    children: t('discard'),
+                  })
+                : null,
               !configLoaded
                 ? jsx('button', {
                     type: 'button',
@@ -1206,6 +1895,7 @@ window.__ModuleLoader__.load({
       })
     }
 
+
     function OfferDetailModal(props) {
       const {
         t,
@@ -1217,7 +1907,9 @@ window.__ModuleLoader__.load({
         draftDirty,
         feedbackMsg,
         err,
+        offersRows,
         onClose,
+        onNavigate,
         onComment,
         onToggleTag,
         onSaveFeedback,
@@ -1225,15 +1917,24 @@ window.__ModuleLoader__.load({
         onAppStatus,
       } = props
       const closeBtnRef = useRef(null)
+      const bodyRef = useRef(null)
       const previousActiveRef = useRef(null)
+      const [showAllTags, setShowAllTags] = useState(false)
+      const [copiedMsg, setCopiedMsg] = useState('')
       const rowBusy = selected ? Boolean(offerBusy?.[selected.id]) : false
       const controlsBusy = busy || rowBusy
+
+      const rows = Array.isArray(offersRows) ? offersRows : []
+      const idx = selected ? rows.findIndex((r) => r.id === selected.id) : -1
+      const prevRow = idx > 0 ? rows[idx - 1] : null
+      const nextRow = idx >= 0 && idx < rows.length - 1 ? rows[idx + 1] : null
 
       useEffect(() => {
         if (!selected) return undefined
         previousActiveRef.current = document.activeElement
         const prevOverflow = document.body.style.overflow
         document.body.style.overflow = 'hidden'
+        if (bodyRef.current) bodyRef.current.scrollTop = 0
         const focusTimer = window.setTimeout(() => {
           const btn =
             closeBtnRef.current ||
@@ -1241,15 +1942,14 @@ window.__ModuleLoader__.load({
           btn?.focus?.()
         }, 0)
         const onKey = (event) => {
-          if (event.key === 'Escape') {
-            event.stopPropagation()
-            onClose()
-          }
+          if (event.key !== 'Escape') return
+          event.stopPropagation()
+          onClose()
         }
-        window.addEventListener('keydown', onKey, true)
+        window.addEventListener('keydown', onKey, false)
         return () => {
           window.clearTimeout(focusTimer)
-          window.removeEventListener('keydown', onKey, true)
+          window.removeEventListener('keydown', onKey, false)
           document.body.style.overflow = prevOverflow
           const prev = previousActiveRef.current
           if (prev && typeof prev.focus === 'function') {
@@ -1260,17 +1960,99 @@ window.__ModuleLoader__.load({
             }
           }
         }
-      }, [selected, onClose])
+      }, [selected?.id, onClose])
+
+      useEffect(() => {
+        setShowAllTags(false)
+        setCopiedMsg('')
+      }, [selected?.id])
 
       if (!selected) return null
 
       const scoreDetails = parseScoreDetails(selected.score_details)
+      const reasons = Array.isArray(scoreDetails?.reasons)
+        ? scoreDetails.reasons.filter(Boolean)
+        : []
       const systemText =
         selected.system_reason ||
-        (scoreDetails && Array.isArray(scoreDetails.reasons)
-          ? scoreDetails.reasons.join('\n')
-          : '') ||
+        (reasons.length ? reasons.join('\n') : '') ||
         ''
+      const shortReasons = reasons.slice(0, 3)
+      const unknown = t('notSpecified')
+      const contract = metaOrUnknown(selected.contract_type, unknown)
+      const remote = remoteLabel(t, selected.remote)
+      const matchLabel = scoreMatchLabel(t, selected.score)
+      const interestLabel = decisionLabel(t, selected.user_decision)
+      const appLabel = applicationLabel(t, selected.application_status)
+      const desc = String(selected.description || '').trim()
+      const isExcerpt = Boolean(desc) && desc.length < 280 && !desc.includes('\n\n')
+
+      const interestOptions = [
+        { value: 'YES', label: t('yes'), checked: selected.user_decision === 'YES' },
+        { value: 'MAYBE', label: t('maybe'), checked: selected.user_decision === 'MAYBE' },
+        { value: 'NO', label: t('no'), checked: selected.user_decision === 'NO' },
+        {
+          value: 'UNREVIEWED',
+          label: t('unreviewed'),
+          checked: !selected.user_decision || selected.user_decision === 'UNREVIEWED',
+        },
+      ]
+      const appOptions = [
+        {
+          value: 'NONE',
+          label: t('appNoneStarted'),
+          checked: !selected.application_status || selected.application_status === 'NONE',
+        },
+        {
+          value: 'TO_PREPARE',
+          label: t('toPrepare'),
+          checked: selected.application_status === 'TO_PREPARE',
+        },
+        {
+          value: 'READY',
+          label: t('ready'),
+          checked: selected.application_status === 'READY',
+        },
+      ]
+      const moreOptions = [
+        {
+          value: 'copy-link',
+          label: t('copyLink'),
+          checked: false,
+          disabled: !selected.url,
+        },
+        { value: 'copy-title', label: t('copyTitle'), checked: false },
+        {
+          value: 'reset',
+          label: t('resetUnreviewed'),
+          checked: false,
+          disabled: !selected.user_decision || selected.user_decision === 'UNREVIEWED',
+        },
+      ]
+
+      async function copyText(text, okMsg) {
+        try {
+          await navigator.clipboard.writeText(text)
+          setCopiedMsg(okMsg)
+          window.setTimeout(() => setCopiedMsg(''), 2000)
+        } catch {
+          setCopiedMsg(t('copyFailed'))
+        }
+      }
+
+      function handleMore(value) {
+        if (value === 'copy-link' && selected.url) void copyText(selected.url, t('linkCopied'))
+        if (value === 'copy-title') void copyText(selected.title || '', t('titleCopied'))
+        if (value === 'reset') void onDecide(selected.id, 'UNREVIEWED', { force: true })
+      }
+
+      function navigateTo(row) {
+        if (!row || typeof onNavigate !== 'function') return
+        onNavigate(row)
+      }
+
+      const primaryGroups = FEEDBACK_TAG_GROUPS.slice(0, 2)
+      const groups = showAllTags ? FEEDBACK_TAG_GROUPS : primaryGroups
 
       return createPortal(
         jsxs('div', {
@@ -1287,12 +2069,34 @@ window.__ModuleLoader__.load({
               'aria-modal': true,
               'aria-label': t('detail'),
               'data-testid': 'offer-detail',
-              style: css.modalDialog,
+              style: css.modalDialogWide,
               children: [
                 jsxs('div', {
-                  style: css.modalHeader,
+                  style: css.sheetTopBar,
                   children: [
-                    jsx('strong', { children: t('detail') }),
+                    jsxs('div', {
+                      style: css.sheetNavGroup,
+                      children: [
+                        jsx('button', {
+                          type: 'button',
+                          style: btnStyle(css.btn, !prevRow),
+                          disabled: !prevRow,
+                          'data-testid': 'offer-prev',
+                          'aria-label': t('prevOffer'),
+                          onClick: () => navigateTo(prevRow),
+                          children: `← ${t('prevOffer')}`,
+                        }),
+                        jsx('button', {
+                          type: 'button',
+                          style: btnStyle(css.btn, !nextRow),
+                          disabled: !nextRow,
+                          'data-testid': 'offer-next',
+                          'aria-label': t('nextOffer'),
+                          onClick: () => navigateTo(nextRow),
+                          children: `${t('nextOffer')} →`,
+                        }),
+                      ],
+                    }),
                     jsx('button', {
                       type: 'button',
                       ref: closeBtnRef,
@@ -1300,180 +2104,357 @@ window.__ModuleLoader__.load({
                       'aria-label': t('closeDetail'),
                       'data-testid': 'offer-detail-close',
                       onClick: onClose,
-                      children: t('closeDetail'),
+                      children: t('close'),
                     }),
                   ],
                 }),
-                jsx('div', { children: selected.title }),
-                jsx('div', {
-                  style: css.muted,
-                  children: `${selected.employer} · ${selected.location} · ${sourceLabel(selected.source)}`,
-                }),
-                selected.url
-                  ? jsx('a', {
-                      href: selected.url,
-                      target: '_blank',
-                      rel: 'noreferrer',
-                      children: selected.url,
-                    })
-                  : null,
-                jsx('div', {
-                  style: css.muted,
-                  children: `score=${selected.score} (${selected.score_version || '—'}) ${
-                    selected.score_classification || ''
-                  }${
-                    scoreDetails && scoreDetails.feedback_adjustment
-                      ? ` · adj ${scoreDetails.feedback_adjustment}`
-                      : ''
-                  }`,
-                }),
                 jsxs('div', {
-                  'data-testid': 'system-score',
+                  ref: bodyRef,
+                  style: css.sheetBody,
                   children: [
-                    jsx('h3', { style: css.sectionTitle, children: t('systemScore') }),
-                    jsx('pre', { style: css.pre, children: systemText || '—' }),
-                  ],
-                }),
-                jsx('div', { style: css.muted, children: t('applicationHint') }),
-                jsx('div', {
-                  style: css.muted,
-                  children: `${t('application')}: ${applicationLabel(
-                    t,
-                    selected.application_status,
-                  )}${
-                    selected.applied_local_day
-                      ? ` · ${selected.applied_local_day} (${t('dailyTz')})`
-                      : ''
-                  }`,
-                }),
-                jsx('div', {
-                  style: css.description,
-                  children: selected.description || '—',
-                }),
-                err ? jsx('div', { style: css.error, role: 'alert', children: err }) : null,
-                draftDirty
-                  ? jsx('div', {
-                      style: css.muted,
-                      role: 'status',
-                      children: t('unsavedChanges'),
-                    })
-                  : null,
-                jsxs('div', {
-                  'data-testid': 'feedback-panel',
-                  children: [
-                    jsx('h3', { style: css.sectionTitle, children: t('whyHeading') }),
-                    jsx('p', { style: css.hint, children: t('whyHelper') }),
+                    jsxs('header', {
+                      style: css.sheetHeader,
+                      children: [
+                        jsx('h2', {
+                          style: css.sheetTitle,
+                          'data-testid': 'offer-detail-title',
+                          children: selected.title || t('untitledOffer'),
+                        }),
+                        jsx('p', {
+                          style: css.sheetSub,
+                          children: [
+                            metaOrUnknown(selected.employer, unknown),
+                            ' · ',
+                            metaOrUnknown(selected.location, unknown),
+                          ].join(''),
+                        }),
+                        jsxs('div', {
+                          style: css.metaGrid,
+                          children: [
+                            jsxs('span', {
+                              style: css.metaChip,
+                              children: [t('contract'), ': ', contract],
+                            }),
+                            jsxs('span', {
+                              style: css.metaChip,
+                              children: [t('remote'), ': ', remote],
+                            }),
+                            jsxs('span', {
+                              style: css.metaChip,
+                              children: [t('source'), ': ', sourceLabel(selected.source)],
+                            }),
+                            jsxs('span', {
+                              style: css.metaChip,
+                              title: `${selected.score ?? '—'} · ${selected.score_version || '—'}`,
+                              children: [t('match'), ': ', matchLabel],
+                            }),
+                          ],
+                        }),
+                      ],
+                    }),
                     jsxs('div', {
-                      style: css.row,
-                      role: 'group',
-                      'aria-label': t('whyHeading'),
-                      children: FEEDBACK_TAG_META.map((tag) =>
-                        jsx(
-                          'button',
-                          {
-                            type: 'button',
-                            style: {
-                              ...css.chip,
-                              ...(tags.includes(tag.id) ? css.chipOn : {}),
-                            },
-                            'aria-pressed': tags.includes(tag.id),
-                            onClick: () => onToggleTag(tag.id),
-                            children: tag.labelFr,
-                          },
-                          tag.id,
-                        ),
-                      ),
-                    }),
-                    jsx('textarea', {
-                      style: { ...css.input, minHeight: '4rem', width: '100%' },
-                      placeholder: t('comment'),
-                      'aria-label': t('comment'),
-                      value: comment,
-                      onChange: (e) => onComment(e.target.value),
-                    }),
-                    jsx('button', {
-                      type: 'button',
-                      style: btnStyle(css.btnPrimary, controlsBusy),
-                      disabled: controlsBusy,
-                      'data-testid': 'save-feedback',
-                      onClick: () => void onSaveFeedback(selected.id),
-                      children: t('saveFeedback'),
-                    }),
-                    feedbackMsg
-                      ? jsx('div', {
-                          style: css.ok,
-                          role: 'status',
-                          children: feedbackMsg,
-                        })
-                      : null,
-                  ],
-                }),
-                jsxs('div', {
-                  style: css.row,
-                  role: 'group',
-                  'aria-label': t('decision'),
-                  children: [
-                    jsx('button', {
-                      type: 'button',
-                      style: btnStyle(css.btnPrimary, controlsBusy),
-                      disabled: controlsBusy,
-                      'aria-pressed': selected.user_decision === 'YES',
-                      onClick: () => void onDecide(selected.id, 'YES'),
-                      children: t('yes'),
-                    }),
-                    jsx('button', {
-                      type: 'button',
-                      style: btnStyle(css.btn, controlsBusy),
-                      disabled: controlsBusy,
-                      'aria-pressed': selected.user_decision === 'NO',
-                      onClick: () => void onDecide(selected.id, 'NO'),
-                      children: t('no'),
-                    }),
-                    jsx('button', {
-                      type: 'button',
-                      style: btnStyle(css.btn, controlsBusy),
-                      disabled: controlsBusy,
-                      'aria-pressed': selected.user_decision === 'MAYBE',
-                      onClick: () => void onDecide(selected.id, 'MAYBE'),
-                      children: t('maybe'),
-                    }),
-                    selected.user_decision && selected.user_decision !== 'UNREVIEWED'
-                      ? jsx('button', {
-                          type: 'button',
-                          style: btnStyle(css.btn, controlsBusy),
-                          disabled: controlsBusy,
-                          onClick: () => void onDecide(selected.id, 'UNREVIEWED', { force: true }),
-                          children: t('resetUnreviewed'),
-                        })
-                      : null,
-                  ],
-                }),
-                jsxs('div', {
-                  style: css.row,
-                  children: [
-                    jsx('button', {
-                      type: 'button',
-                      style: btnStyle(css.btn, controlsBusy),
-                      disabled: controlsBusy,
-                      onClick: () => void onAppStatus(selected.id, 'TO_PREPARE'),
-                      children: t('toPrepare'),
-                    }),
-                    jsx('button', {
-                      type: 'button',
-                      style: btnStyle(css.btn, controlsBusy),
-                      disabled: controlsBusy,
-                      onClick: () => void onAppStatus(selected.id, 'READY'),
-                      children: t('ready'),
-                    }),
-                    jsx('button', {
-                      type: 'button',
-                      style: btnStyle(css.btnPrimary, controlsBusy),
-                      disabled: controlsBusy,
-                      'data-testid': 'mark-applied',
-                      title: t('markApplied'),
-                      'aria-label': t('markApplied'),
-                      onClick: () => void onAppStatus(selected.id, 'APPLIED'),
-                      children: t('markApplied'),
+                      className: 'jr-sheet-grid',
+                      style: css.sheetGrid,
+                      children: [
+                        jsxs('div', {
+                          style: css.sheetMain,
+                          children: [
+                            jsxs('section', {
+                              'data-testid': 'offer-description',
+                              children: [
+                                jsx('h3', {
+                                  style: css.sectionTitle,
+                                  children: t('description'),
+                                }),
+                                isExcerpt
+                                  ? jsx('p', {
+                                      style: css.hint,
+                                      children: t('excerptHint'),
+                                    })
+                                  : null,
+                                jsx('div', {
+                                  style: css.descriptionReadable,
+                                  children: desc || t('noDescription'),
+                                }),
+                              ],
+                            }),
+                            jsxs('section', {
+                              'data-testid': 'system-score',
+                              style: { marginTop: '1.1rem' },
+                              children: [
+                                jsx('h3', {
+                                  style: css.sectionTitle,
+                                  children: t('whyThisOffer'),
+                                }),
+                                shortReasons.length
+                                  ? jsx('ul', {
+                                      style: css.reasonList,
+                                      children: shortReasons.map((r, i) =>
+                                        jsx('li', { children: r }, i),
+                                      ),
+                                    })
+                                  : jsx('p', {
+                                      style: css.muted,
+                                      children: systemText
+                                        ? systemText.split('\n').slice(0, 3).join(' · ')
+                                        : t('scoreNoReasons'),
+                                    }),
+                                jsx(Accordion, {
+                                  title: t('scoreDetail'),
+                                  testId: 'score-detail-accordion',
+                                  children: jsxs(Fragment, {
+                                    children: [
+                                      jsx('p', {
+                                        style: css.muted,
+                                        children: `${matchLabel} · score ${selected.score ?? '—'} (${
+                                          selected.score_version || '—'
+                                        })${
+                                          selected.score_classification
+                                            ? ` · ${selected.score_classification}`
+                                            : ''
+                                        }${
+                                          scoreDetails?.feedback_adjustment
+                                            ? ` · adj ${scoreDetails.feedback_adjustment}`
+                                            : ''
+                                        }`,
+                                      }),
+                                      jsx('pre', {
+                                        style: css.pre,
+                                        children: systemText || '—',
+                                      }),
+                                    ],
+                                  }),
+                                }),
+                              ],
+                            }),
+                            jsx(Accordion, {
+                              title: t('sourceInfo'),
+                              testId: 'source-info-accordion',
+                              children: jsxs('dl', {
+                                style: css.deflist,
+                                children: [
+                                  jsxs('div', {
+                                    children: [
+                                      jsx('dt', { children: t('source') }),
+                                      jsx('dd', { children: sourceLabel(selected.source) }),
+                                    ],
+                                  }),
+                                  jsxs('div', {
+                                    children: [
+                                      jsx('dt', { children: 'ID' }),
+                                      jsx('dd', { children: String(selected.id) }),
+                                    ],
+                                  }),
+                                  jsxs('div', {
+                                    children: [
+                                      jsx('dt', { children: t('externalId') }),
+                                      jsx('dd', {
+                                        children: selected.external_id || '—',
+                                      }),
+                                    ],
+                                  }),
+                                  jsxs('div', {
+                                    children: [
+                                      jsx('dt', { children: t('collectedAt') }),
+                                      jsx('dd', {
+                                        children:
+                                          selected.collected_at ||
+                                          selected.created_at ||
+                                          '—',
+                                      }),
+                                    ],
+                                  }),
+                                  selected.url
+                                    ? jsxs('div', {
+                                        children: [
+                                          jsx('dt', { children: 'URL' }),
+                                          jsx('dd', {
+                                            children: jsx('a', {
+                                              href: selected.url,
+                                              target: '_blank',
+                                              rel: 'noreferrer',
+                                              children: t('openExternal'),
+                                            }),
+                                          }),
+                                        ],
+                                      })
+                                    : null,
+                                ],
+                              }),
+                            }),
+                          ],
+                        }),
+                        jsxs('aside', {
+                          style: css.sheetAside,
+                          'data-testid': 'offer-actions-panel',
+                          children: [
+                            jsx(DropdownMenu, {
+                              label: t('myInterest'),
+                              valueLabel: interestLabel,
+                              testId: 'interest-menu',
+                              disabled: controlsBusy,
+                              options: interestOptions,
+                              onSelect: (v) =>
+                                void onDecide(selected.id, v, {
+                                  force: v === 'UNREVIEWED',
+                                }),
+                            }),
+                            jsx(DropdownMenu, {
+                              label: t('application'),
+                              valueLabel: appLabel === t('appNone') ? t('appNoneStarted') : appLabel,
+                              testId: 'application-menu',
+                              disabled: controlsBusy,
+                              options: appOptions,
+                              onSelect: (v) => void onAppStatus(selected.id, v),
+                            }),
+                            selected.url
+                              ? jsx('a', {
+                                  href: selected.url,
+                                  target: '_blank',
+                                  rel: 'noreferrer',
+                                  style: css.externalLinkBtn,
+                                  'data-testid': 'open-external',
+                                  children: t('openExternal'),
+                                })
+                              : jsx('span', {
+                                  style: css.muted,
+                                  children: t('noExternalUrl'),
+                                }),
+                            selected.applied_local_day
+                              ? jsx('p', {
+                                  style: css.hint,
+                                  children: `${t('appliedOn')} ${selected.applied_local_day} (${t('dailyTz')})`,
+                                })
+                              : null,
+                            selected.application_status !== 'APPLIED'
+                              ? jsx('button', {
+                                  type: 'button',
+                                  style: btnStyle(css.btnPrimary, controlsBusy),
+                                  disabled: controlsBusy,
+                                  'data-testid': 'mark-applied',
+                                  'aria-label': t('markApplied'),
+                                  onClick: () => void onAppStatus(selected.id, 'APPLIED'),
+                                  children: t('markApplied'),
+                                })
+                              : jsx('button', {
+                                  type: 'button',
+                                  style: btnStyle(css.btn, controlsBusy),
+                                  disabled: controlsBusy,
+                                  onClick: () => void onAppStatus(selected.id, 'NONE'),
+                                  children: t('clearApplied'),
+                                }),
+                            jsx(DropdownMenu, {
+                              label: t('moreActions'),
+                              valueLabel: '…',
+                              testId: 'more-actions-menu',
+                              disabled: controlsBusy,
+                              options: moreOptions,
+                              onSelect: handleMore,
+                            }),
+                            copiedMsg
+                              ? jsx('div', {
+                                  style: css.ok,
+                                  role: 'status',
+                                  children: copiedMsg,
+                                })
+                              : null,
+                            err
+                              ? jsx('div', {
+                                  style: css.error,
+                                  role: 'alert',
+                                  'data-testid': 'offer-detail-error',
+                                  children: err,
+                                })
+                              : null,
+                            jsxs('section', {
+                              'data-testid': 'feedback-panel',
+                              style: css.feedbackBlock,
+                              children: [
+                                jsx('h3', {
+                                  style: css.sectionTitle,
+                                  children: t('myFeedback'),
+                                }),
+                                jsx('p', { style: css.hint, children: t('whyHelper') }),
+                                groups.map((group) =>
+                                  jsxs(
+                                    'div',
+                                    {
+                                      style: { marginBottom: '0.55rem' },
+                                      children: [
+                                        jsx('div', {
+                                          style: css.tagGroupLabel,
+                                          children: group.labelFr,
+                                        }),
+                                        jsxs('div', {
+                                          style: css.row,
+                                          role: 'group',
+                                          'aria-label': group.labelFr,
+                                          children: group.tags.map((tagId) => {
+                                            const tag = FEEDBACK_TAG_META.find((x) => x.id === tagId)
+                                            if (!tag) return null
+                                            return jsx(
+                                              'button',
+                                              {
+                                                type: 'button',
+                                                style: {
+                                                  ...css.chip,
+                                                  ...(tags.includes(tag.id) ? css.chipOn : {}),
+                                                },
+                                                'aria-pressed': tags.includes(tag.id),
+                                                onClick: () => onToggleTag(tag.id),
+                                                children: tag.labelFr,
+                                              },
+                                              tag.id,
+                                            )
+                                          }),
+                                        }),
+                                      ],
+                                    },
+                                    group.id,
+                                  ),
+                                ),
+                                !showAllTags
+                                  ? jsx('button', {
+                                      type: 'button',
+                                      style: css.linkBtn,
+                                      onClick: () => setShowAllTags(true),
+                                      children: t('allCriteria'),
+                                    })
+                                  : null,
+                                jsx('textarea', {
+                                  style: { ...css.input, minHeight: '4.5rem', width: '100%' },
+                                  placeholder: t('comment'),
+                                  'aria-label': t('comment'),
+                                  value: comment,
+                                  onChange: (e) => onComment(e.target.value),
+                                }),
+                                draftDirty
+                                  ? jsx('div', {
+                                      style: css.muted,
+                                      role: 'status',
+                                      children: t('unsavedChanges'),
+                                    })
+                                  : null,
+                                jsx('button', {
+                                  type: 'button',
+                                  style: btnStyle(css.btnPrimary, controlsBusy),
+                                  disabled: controlsBusy,
+                                  'data-testid': 'save-feedback',
+                                  onClick: () => void onSaveFeedback(selected.id),
+                                  children: t('saveFeedback'),
+                                }),
+                                feedbackMsg
+                                  ? jsx('div', {
+                                      style: css.ok,
+                                      role: 'status',
+                                      children: feedbackMsg,
+                                    })
+                                  : null,
+                              ],
+                            }),
+                          ],
+                        }),
+                      ],
                     }),
                   ],
                 }),
@@ -1484,6 +2465,7 @@ window.__ModuleLoader__.load({
         document.body,
       )
     }
+
 
     function JobResearcherPanel(props) {
       const t = props.t || ((k) => DICT.fr[k] || DICT.en[k] || k)
@@ -1515,6 +2497,16 @@ window.__ModuleLoader__.load({
       const [showSettingsInline, setShowSettingsInline] = useState(false)
       const [undoById, setUndoById] = useState(null)
       const [retryDecisionById, setRetryDecisionById] = useState({})
+      const [showMoreFilters, setShowMoreFilters] = useState(false)
+      const [showActivity, setShowActivity] = useState(false)
+      const [listTab, setListTab] = useState('offers')
+      const [density, setDensity] = useState(() => {
+        try {
+          return sessionStorage.getItem(DENSITY_KEY) === 'compact' ? 'compact' : 'comfort'
+        } catch {
+          return 'comfort'
+        }
+      })
       const limit = 40
 
       const selectedRef = useRef(null)
@@ -1545,6 +2537,14 @@ window.__ModuleLoader__.load({
         offerBusyRef.current = offerBusy
       }, [offerBusy])
 
+      useEffect(() => {
+        try {
+          sessionStorage.setItem(DENSITY_KEY, density)
+        } catch {
+          /* ignore */
+        }
+      }, [density])
+
       const readiness = status?.readiness || status?.status || null
       const canRun =
         status?.can_run === true || status?.can_run_public === true
@@ -1573,6 +2573,25 @@ window.__ModuleLoader__.load({
 [data-testid="offer-detail"]::-webkit-scrollbar-thumb {
   background: var(--dsw-alias-border-l3, #555);
   border-radius: 8px;
+}
+@media (max-width: 720px) {
+  [data-testid="offer-detail"] .jr-sheet-grid {
+    grid-template-columns: 1fr !important;
+  }
+  [data-testid="offer-detail"] [data-testid="offer-actions-panel"] {
+    position: static !important;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-testid="dsh-job-researcher"] *,
+  [data-testid="offer-detail-modal"] * {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+[data-density="compact"] [data-testid="job-researcher-list"] td {
+  padding-top: 0.28rem !important;
+  padding-bottom: 0.28rem !important;
 }
 `
         document.head.appendChild(styleEl)
@@ -1770,9 +2789,7 @@ window.__ModuleLoader__.load({
 
       function toggleTag(id) {
         setTags((prev) => {
-          const next = prev.includes(id)
-            ? prev.filter((x) => x !== id)
-            : [...prev, id].sort()
+          const next = toggleExclusiveTags(prev, id)
           const cur = selectedRef.current
           if (cur) bumpDraft(cur.id, commentRef.current, next, cur)
           return next
@@ -1961,9 +2978,45 @@ window.__ModuleLoader__.load({
         return `${label}: ${title || ''}`.trim()
       }
 
+      const activeFilterCount = [
+        q,
+        source,
+        decision,
+        application,
+        minScore,
+      ].filter((v) => String(v || '').trim() !== '').length
+
+      function clearAllFilters() {
+        setPage(0)
+        setQInput('')
+        setQ('')
+        setSource('')
+        setDecision('')
+        setApplication('')
+        setMinScore('')
+        setListTab('offers')
+      }
+
+      function setViewDecision(next) {
+        setPage(0)
+        setDecision(next)
+        if (listTab !== 'offers') setListTab('offers')
+      }
+
+      function switchListTab(tab) {
+        setListTab(tab)
+        setPage(0)
+        if (tab === 'applications') {
+          setApplication('APPLIED')
+        } else if (application === 'APPLIED') {
+          setApplication('')
+        }
+      }
+
       return jsxs('div', {
         'data-plugin': PLUGIN_ID,
         'data-testid': 'dsh-job-researcher',
+        'data-density': density,
         style: css.panel,
         children: [
           jsxs('header', {
@@ -2173,89 +3226,220 @@ window.__ModuleLoader__.load({
                   })
                 : null,
               jsxs('div', {
-                style: css.toolbar,
+                style: { ...css.toolbar, width: '100%' },
+                'data-testid': 'job-researcher-toolbar',
                 children: [
+                  jsxs('div', {
+                    style: css.viewTabs,
+                    role: 'tablist',
+                    'aria-label': t('offersTab'),
+                    children: [
+                      jsx('button', {
+                        type: 'button',
+                        role: 'tab',
+                        'aria-selected': listTab === 'offers',
+                        style: {
+                          ...css.viewTab,
+                          ...(listTab === 'offers' ? css.viewTabOn : {}),
+                        },
+                        onClick: () => switchListTab('offers'),
+                        children: t('offersTab'),
+                      }),
+                      jsx('button', {
+                        type: 'button',
+                        role: 'tab',
+                        'aria-selected': listTab === 'applications',
+                        style: {
+                          ...css.viewTab,
+                          ...(listTab === 'applications' ? css.viewTabOn : {}),
+                        },
+                        'data-testid': 'tab-applications',
+                        onClick: () => switchListTab('applications'),
+                        children: t('applicationsTab'),
+                      }),
+                    ],
+                  }),
                   jsx('input', {
-                    style: css.input,
+                    style: { ...css.input, flex: '1 1 12rem', minWidth: '10rem' },
                     placeholder: t('search'),
                     'aria-label': t('search'),
                     value: qInput,
                     onChange: (e) => setQInput(e.target.value),
                   }),
-                  jsxs('select', {
-                    style: css.input,
-                    value: source,
-                    'aria-label': t('source'),
-                    onChange: (e) => {
-                      setPage(0)
-                      setSource(e.target.value)
-                    },
-                    children: [
-                      jsx('option', { value: '', children: t('source') + ' *' }),
-                      jsx('option', {
-                        value: 'csp',
-                        children: sourceLabel('csp'),
-                      }),
-                      jsx('option', {
-                        value: 'et',
-                        children: sourceLabel('et'),
-                      }),
-                      jsx('option', {
-                        value: 'ft',
-                        children: sourceLabel('ft'),
-                      }),
-                    ],
-                  }),
-                  jsxs('select', {
-                    style: css.input,
-                    value: decision,
+                  jsxs('div', {
+                    style: css.viewTabs,
+                    role: 'group',
                     'aria-label': t('decision'),
-                    onChange: (e) => {
-                      setPage(0)
-                      setDecision(e.target.value)
-                    },
-                    children: [
-                      jsx('option', { value: '', children: t('decision') + ' *' }),
-                      jsx('option', {
-                        value: 'UNREVIEWED',
-                        children: t('unreviewed'),
-                      }),
-                      jsx('option', { value: 'YES', children: t('yes') }),
-                      jsx('option', { value: 'NO', children: t('no') }),
-                      jsx('option', { value: 'MAYBE', children: t('maybe') }),
-                    ],
+                    'data-testid': 'interest-views',
+                    children: VIEW_OPTIONS.map((opt) =>
+                      jsx(
+                        'button',
+                        {
+                          type: 'button',
+                          style: {
+                            ...css.viewTab,
+                            ...(decision === opt.id ? css.viewTabOn : {}),
+                          },
+                          'aria-pressed': decision === opt.id,
+                          onClick: () => setViewDecision(opt.id),
+                          children: t(opt.labelKey),
+                        },
+                        opt.id || 'all',
+                      ),
+                    ),
                   }),
-                  jsxs('select', {
-                    style: css.input,
-                    value: application,
-                    'aria-label': t('application'),
-                    onChange: (e) => {
-                      setPage(0)
-                      setApplication(e.target.value)
+                  jsx('button', {
+                    type: 'button',
+                    style: {
+                      ...css.btn,
+                      ...(showMoreFilters ? css.viewTabOn : {}),
                     },
-                    children: [
-                      jsx('option', { value: '', children: t('application') + ' *' }),
-                      jsx('option', { value: 'NONE', children: t('appNone') }),
-                      jsx('option', {
-                        value: 'TO_PREPARE',
-                        children: t('toPrepare'),
-                      }),
-                      jsx('option', { value: 'READY', children: t('ready') }),
-                      jsx('option', { value: 'APPLIED', children: t('applied') }),
-                    ],
+                    'aria-expanded': showMoreFilters,
+                    'data-testid': 'more-filters',
+                    onClick: () => setShowMoreFilters((v) => !v),
+                    children: t('moreFilters'),
                   }),
-                  jsx('input', {
-                    style: { ...css.input, minWidth: '5rem' },
-                    placeholder: t('minScore'),
-                    'aria-label': t('minScore'),
-                    value: minScore,
-                    onChange: (e) => {
-                      setPage(0)
-                      setMinScore(e.target.value)
-                    },
+                  jsx('button', {
+                    type: 'button',
+                    style: css.btn,
+                    'aria-label': t('density'),
+                    'data-testid': 'density-toggle',
+                    onClick: () =>
+                      setDensity((d) => (d === 'compact' ? 'comfort' : 'compact')),
+                    children:
+                      density === 'compact' ? t('densityCompact') : t('densityComfort'),
+                  }),
+                  jsx('button', {
+                    type: 'button',
+                    style: css.btn,
+                    'aria-expanded': showActivity,
+                    onClick: () => setShowActivity((v) => !v),
+                    children: t('activity'),
                   }),
                 ],
               }),
+              showMoreFilters
+                ? jsxs('div', {
+                    style: css.toolbar,
+                    'data-testid': 'more-filters-panel',
+                    children: [
+                      jsxs('select', {
+                        style: css.input,
+                        value: source,
+                        'aria-label': t('source'),
+                        onChange: (e) => {
+                          setPage(0)
+                          setSource(e.target.value)
+                        },
+                        children: [
+                          jsx('option', { value: '', children: t('source') + ' *' }),
+                          jsx('option', { value: 'csp', children: sourceLabel('csp') }),
+                          jsx('option', { value: 'et', children: sourceLabel('et') }),
+                          jsx('option', { value: 'ft', children: sourceLabel('ft') }),
+                        ],
+                      }),
+                      jsxs('select', {
+                        style: css.input,
+                        value: application,
+                        'aria-label': t('application'),
+                        onChange: (e) => {
+                          setPage(0)
+                          setApplication(e.target.value)
+                          if (e.target.value === 'APPLIED') setListTab('applications')
+                          else if (listTab === 'applications') setListTab('offers')
+                        },
+                        children: [
+                          jsx('option', { value: '', children: t('application') + ' *' }),
+                          jsx('option', { value: 'NONE', children: t('appNone') }),
+                          jsx('option', { value: 'TO_PREPARE', children: t('toPrepare') }),
+                          jsx('option', { value: 'READY', children: t('ready') }),
+                          jsx('option', { value: 'APPLIED', children: t('applied') }),
+                        ],
+                      }),
+                      jsx('input', {
+                        style: { ...css.input, minWidth: '5rem' },
+                        placeholder: t('minScore'),
+                        'aria-label': t('minScore'),
+                        value: minScore,
+                        onChange: (e) => {
+                          setPage(0)
+                          setMinScore(e.target.value)
+                        },
+                      }),
+                    ],
+                  })
+                : null,
+              activeFilterCount
+                ? jsxs('div', {
+                    style: css.filterChips,
+                    'data-testid': 'active-filters',
+                    children: [
+                      jsx('span', {
+                        style: css.muted,
+                        children: `${activeFilterCount} ${t('filtersActive')}`,
+                      }),
+                      q
+                        ? jsx('span', {
+                            style: css.filterChip,
+                            children: `${t('search')}: ${q}`,
+                          })
+                        : null,
+                      decision
+                        ? jsx('span', {
+                            style: css.filterChip,
+                            children: decisionLabel(t, decision),
+                          })
+                        : null,
+                      source
+                        ? jsx('span', {
+                            style: css.filterChip,
+                            children: sourceLabel(source),
+                          })
+                        : null,
+                      application
+                        ? jsx('span', {
+                            style: css.filterChip,
+                            children: applicationLabel(t, application),
+                          })
+                        : null,
+                      minScore
+                        ? jsx('span', {
+                            style: css.filterChip,
+                            children: `${t('minScore')}: ${minScore}`,
+                          })
+                        : null,
+                      jsx('button', {
+                        type: 'button',
+                        style: css.linkBtn,
+                        'data-testid': 'clear-filters',
+                        onClick: clearAllFilters,
+                        children: t('clearFilters'),
+                      }),
+                    ],
+                  })
+                : null,
+              showActivity
+                ? jsxs('div', {
+                    style: css.undoBanner,
+                    'data-testid': 'activity-panel',
+                    children: [
+                      jsxs('span', {
+                        style: css.muted,
+                        children: [
+                          t('lastRun'),
+                          ': ',
+                          latest
+                            ? `#${latest.id} ${latest.status} · new ${latest.offers_new || 0}`
+                            : '—',
+                          ' · ',
+                          t('nextRun'),
+                          ': ',
+                          sched?.next_run_at || '—',
+                        ],
+                      }),
+                    ],
+                  })
+                : null,
               bannerErr
                 ? jsx('div', { style: css.error, role: 'alert', children: bannerErr })
                 : null,
@@ -2293,14 +3477,6 @@ window.__ModuleLoader__.load({
                               })
                             : offers.rows.map((row) => {
                                 const rowBusy = Boolean(offerBusy[row.id])
-                                const decisionLabel = (d) =>
-                                  d === 'YES'
-                                    ? t('yes')
-                                    : d === 'NO'
-                                      ? t('no')
-                                      : d === 'MAYBE'
-                                        ? t('maybe')
-                                        : d || '—'
                                 return jsxs(
                                   'tr',
                                   {
@@ -2358,7 +3534,9 @@ window.__ModuleLoader__.load({
                                       }),
                                       jsx('td', {
                                         style: css.td,
-                                        children: `${row.location || '—'} · ${row.remote || '?'}`,
+                                        children: `${row.location || t('notSpecified')} · ${remoteLabel(t, row.remote)}${
+                                          row.contract_type ? ` · ${row.contract_type}` : ''
+                                        }`,
                                       }),
                                       jsx('td', {
                                         style: css.td,
@@ -2366,7 +3544,7 @@ window.__ModuleLoader__.load({
                                       }),
                                       jsx('td', {
                                         style: css.td,
-                                        children: decisionLabel(row.user_decision),
+                                        children: decisionLabel(t, row.user_decision),
                                       }),
                                       jsx('td', {
                                         style: css.td,
@@ -2518,7 +3696,9 @@ window.__ModuleLoader__.load({
             draftDirty,
             feedbackMsg,
             err: selected ? err : '',
+            offersRows: offers.rows || [],
             onClose: closeDetail,
+            onNavigate: selectOffer,
             onComment: onCommentChange,
             onToggleTag: toggleTag,
             onSaveFeedback: saveFeedback,

@@ -74,6 +74,24 @@ describe('client feedback / DSH token contract', () => {
     assert.match(src, /event\.target\s*!==\s*event\.currentTarget|e\.target\s*!==\s*e\.currentTarget/)
   })
 
+  it('product polish: readable sheet, menus, views, density, settings sections', () => {
+    const src = readFileSync(CLIENT, 'utf8')
+    assert.match(src, /modalDialogWide/)
+    assert.match(src, /'data-testid':\s*'offer-actions-panel'/)
+    assert.match(src, /testId:\s*'interest-menu'/)
+    assert.match(src, /testId:\s*'application-menu'/)
+    assert.match(src, /'data-testid':\s*'offer-prev'/)
+    assert.match(src, /'data-testid':\s*'offer-next'/)
+    assert.match(src, /'data-testid':\s*'interest-views'/)
+    assert.match(src, /'data-testid':\s*'density-toggle'/)
+    assert.match(src, /'data-testid':\s*'jr-settings-section-search'/)
+    assert.match(src, /'data-testid':\s*'jr-settings-summary'/)
+    assert.match(src, /Consulter l[\u2019']annonce|View listing/)
+    assert.match(src, /function DropdownMenu/)
+    assert.match(src, /toggleExclusiveTags/)
+    assert.match(src, /data-density/)
+  })
+
   it('settings secrets link is a button; empty departments are not silently 38', () => {
     const src = readFileSync(CLIENT, 'utf8')
     assert.match(src, /'data-testid':\s*'jr-settings-secrets-link'/)
