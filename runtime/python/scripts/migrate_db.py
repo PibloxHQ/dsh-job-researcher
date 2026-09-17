@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Migrate legacy radar.db into DSH-owned location + schema v2."""
+"""Migrate legacy radar.db into DSH-owned location + schema v2/v3."""
 
 from __future__ import annotations
 
@@ -14,7 +14,10 @@ from pathlib import Path
 SRC = Path(__file__).resolve().parents[1] / "src"
 sys.path.insert(0, str(SRC))
 
-from job_radar.schema_v2 import INTEREST_TO_DECISION, SCHEMA_V2  # noqa: E402
+from job_radar.schema_v2 import (  # noqa: E402
+    SCHEMA_V2,
+    ensure_feedback_learning_schema,
+)
 
 
 def utc_now() -> str:
@@ -46,6 +49,7 @@ def migrate(src: Path, dst: Path) -> dict:
         if col not in cols:
             conn.execute(f"ALTER TABLE offers ADD COLUMN {col} {decl}")
 
+    # v2 tables/indexes only — application indexes come after ensure_application_schema.
     conn.executescript(
         """
         CREATE INDEX IF NOT EXISTS idx_offers_interest ON offers(interest);
@@ -96,31 +100,28 @@ def migrate(src: Path, dst: Path) -> dict:
         """
     )
 
-    # Seed feedback from legacy interest
+    # Seed feedback rows as UNREVIEWED only.
+    # Legacy offers.interest came from score triage — NOT operator decisions.
     existing = {
         r[0]
         for r in conn.execute("SELECT offer_id FROM offer_feedback")
     }
     rows = conn.execute(
-        "SELECT id, interest, notes FROM offers"
+        "SELECT id, notes FROM offers"
     ).fetchall()
     inserted = 0
     for row in rows:
         oid = int(row["id"])
         if oid in existing:
             continue
-        decision = INTEREST_TO_DECISION.get(row["interest"] or "unset", "UNREVIEWED")
         conn.execute(
             """
             INSERT INTO offer_feedback (offer_id, decision, comment, viewed, decision_updated_at)
-            VALUES (?, ?, ?, ?, ?)
+            VALUES (?, 'UNREVIEWED', ?, 0, NULL)
             """,
             (
                 oid,
-                decision,
                 row["notes"] or "",
-                0 if decision == "UNREVIEWED" else 1,
-                utc_now() if decision != "UNREVIEWED" else None,
             ),
         )
         inserted += 1
@@ -145,9 +146,7 @@ def migrate(src: Path, dst: Path) -> dict:
             (source, utc_now()),
         )
 
-    conn.execute(
-        "INSERT OR REPLACE INTO schema_meta (key, value) VALUES ('version', '2')"
-    )
+    ensure_feedback_learning_schema(conn, now=utc_now())
     conn.execute(
         "INSERT OR REPLACE INTO schema_meta (key, value) VALUES ('migrated_at', ?)",
         (utc_now(),),

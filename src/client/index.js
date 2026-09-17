@@ -1,5 +1,6 @@
 /**
- * dsh-job-researcher — Settings section: ops + offer triage UI.
+ * dsh-job-researcher — global main panel (session-like) + offer detail modal.
+ * Visual language: --dsw-alias-* tokens only.
  */
 window.__ModuleLoader__.load({
   id: 'dsh-job-researcher',
@@ -9,131 +10,669 @@ window.__ModuleLoader__.load({
 
     const React = require('react')
     const { jsx, jsxs, Fragment } = require('react/jsx-runtime')
-    const { useEffect, useState, useCallback } = React
+    const { createPortal } = require('react-dom')
+    const { useEffect, useState, useCallback, useRef } = React
 
     const PLUGIN_ID = 'dsh-job-researcher'
+    const PANEL_ID = 'job-researcher'
     const SECTION_ID = 'job-researcher'
-    const LOCALE_NS = 'settings.job-researcher'
+    const LOCALE_NS = 'job-researcher'
+    const SETTINGS_LOCALE_NS = 'settings.job-researcher'
     const API = '/api/job-researcher'
-    const ORDER = 42
+    const ORDER = 20
+    const SETTINGS_ORDER = 17
+    const SOURCE_OPTIONS = ['csp-filtre', 'et', 'ft']
+    const SOURCE_LABELS = {
+      'csp-filtre': 'CSP Filtre',
+      csp: 'CSP Filtre',
+      et: 'Emploi territorial',
+      ft: 'France Travail',
+    }
+    const UNDO_MS = 8000
+
+    const FEEDBACK_TAG_META = [
+      { id: 'location_good', labelFr: 'Bon lieu' },
+      { id: 'too_far', labelFr: 'Trop loin' },
+      { id: 'dev_infra_good', labelFr: 'Bon fit infra/dev' },
+      { id: 'support_good', labelFr: 'Support OK' },
+      { id: 'support_bad', labelFr: 'Support non' },
+      { id: 'public_sector_good', labelFr: 'Secteur public OK' },
+      { id: 'student_contract_bad', labelFr: 'Alternance/stage non' },
+      { id: 'contract_bad', labelFr: 'Contrat non' },
+      { id: 'missing_diploma', labelFr: 'Diplôme manquant' },
+      { id: 'needs_details', labelFr: 'Manque de détails' },
+    ]
 
     const DICT = {
       en: {
         nav: 'Job Researcher',
-        title: 'DSH Job Researcher',
+        title: 'Job Researcher',
         runNow: 'Run now',
         running: 'Running…',
         refresh: 'Refresh',
-        filters: 'Filters',
         search: 'Search',
         source: 'Source',
-        decision: 'Decision',
+        decision: 'Interest',
+        application: 'Application',
         minScore: 'Min score',
-        yes: 'YES',
-        no: 'NO',
-        maybe: 'MAYBE',
-        comment: 'Comment',
-        save: 'Save',
+        yes: "I'm interested",
+        no: 'Not interested',
+        maybe: 'Revisit later',
+        comment: 'Optional free comment',
         lastRun: 'Last run',
         nextRun: 'Next scheduled',
         sources: 'Sources',
         empty: 'No offers match filters.',
         detail: 'Offer detail',
+        dailyProgress: 'Daily applications',
+        dailyTz: 'Europe/Paris',
+        markApplied: 'Mark submitted (external application done)',
+        toPrepare: 'À préparer',
+        ready: 'Prête',
+        applied: 'Envoyée',
+        appNone: '—',
+        applicationHint:
+          'Application state is separate from interest. Starts empty until you begin prep. Never auto-applies. Mark submitted only after you personally submitted outside DSH.',
+        whyHeading: 'Why this choice?',
+        whyHelper:
+          'Explain why you are interested, declining, or unsure. This feedback improves future ranking without submitting an application.',
+        saveFeedback: 'Save feedback',
+        feedbackSaved: 'Feedback saved',
+        systemScore: 'Score explanation (system)',
+        learning: 'Learning',
+        prevPage: 'Previous page',
+        nextPage: 'Next page',
+        close: 'Close',
+        backToChat: 'Back to chat',
+        openAria: 'Open Job Researcher',
+        closeDetail: 'Close detail',
+        openOffer: 'Open offer',
+        readiness: 'Readiness',
+        settings: 'Settings',
+        openSettings: 'Open Job Researcher settings',
+        settingsHint: 'Open Settings → Job Researcher',
+        needsSetupTitle: 'Setup required',
+        needsSetupBody:
+          'Configure location, sources, and FT secrets before the first run.',
+        openSettingsCta: 'Open settings',
+        bootstrapCta: 'Run bootstrap',
+        undo: 'Undo',
+        undoBanner: 'Decision updated',
+        retry: 'Retry',
+        unsavedChanges: 'Unsaved changes',
+        runAccepted: 'Run accepted — collecting in background.',
+        resetUnreviewed: 'Reset to review',
+        unreviewed: 'To review',
       },
       fr: {
         nav: 'Job Researcher',
-        title: 'DSH Job Researcher',
+        title: 'Job Researcher',
         runNow: 'Lancer maintenant',
         running: 'En cours…',
         refresh: 'Rafraîchir',
-        filters: 'Filtres',
         search: 'Recherche',
         source: 'Source',
-        decision: 'Décision',
+        decision: 'Intérêt',
+        application: 'Candidature',
         minScore: 'Score min',
-        yes: 'OUI',
-        no: 'NON',
-        maybe: 'PEUT-ÊTRE',
-        comment: 'Commentaire',
-        save: 'Enregistrer',
+        yes: "M'intéresse",
+        no: 'Pas intéressé',
+        maybe: 'À revoir',
+        comment: 'Commentaire libre (optionnel)',
         lastRun: 'Dernier run',
         nextRun: 'Prochain run',
         sources: 'Sources',
         empty: 'Aucune offre pour ces filtres.',
         detail: 'Détail offre',
+        dailyProgress: 'Candidatures du jour',
+        dailyTz: 'Europe/Paris',
+        markApplied: 'Marquer envoyée (candidature externe terminée)',
+        toPrepare: 'À préparer',
+        ready: 'Prête',
+        applied: 'Envoyée',
+        appNone: '—',
+        applicationHint:
+          'État candidature ≠ intérêt. Vide tant que tu n’as pas démarré la prep. Jamais d’envoi auto. Envoyée seulement après soumission manuelle hors DSH.',
+        whyHeading: 'Pourquoi ce choix ?',
+        whyHelper:
+          'Explique pourquoi tu postules, refuses ou hésites. Ce retour affine le classement futur sans envoyer de candidature.',
+        saveFeedback: 'Enregistrer le retour',
+        feedbackSaved: 'Retour enregistré',
+        systemScore: 'Explication du score (système)',
+        learning: 'Apprentissage',
+        prevPage: 'Page précédente',
+        nextPage: 'Page suivante',
+        close: 'Fermer',
+        backToChat: 'Retour au chat',
+        openAria: 'Ouvrir Job Researcher',
+        closeDetail: 'Fermer le détail',
+        openOffer: 'Ouvrir l’offre',
+        readiness: 'État',
+        settings: 'Réglages',
+        openSettings: 'Ouvrir les réglages Job Researcher',
+        settingsHint: 'Ouvrir Settings → Job Researcher',
+        needsSetupTitle: 'Configuration requise',
+        needsSetupBody:
+          'Configure la zone, les sources et les secrets FT avant le premier run.',
+        openSettingsCta: 'Ouvrir les réglages',
+        bootstrapCta: 'Lancer le bootstrap',
+        undo: 'Annuler',
+        undoBanner: 'Décision mise à jour',
+        retry: 'Réessayer',
+        unsavedChanges: 'Modifications non enregistrées',
+        runAccepted: 'Run accepté — collecte en arrière-plan.',
+        resetUnreviewed: 'Remettre à examiner',
+        unreviewed: 'À examiner',
+      },
+    }
+
+    const SETTINGS_DICT = {
+      en: {
+        nav: 'Job Researcher',
+        title: 'Job Researcher',
+        subtitle: 'Search profile — no secrets stored here.',
+        location: 'Departments',
+        locationHint: 'Comma-separated INSEE department codes (e.g. 38)',
+        sources: 'Enabled sources',
+        scheduleCron: 'Schedule cron (UTC)',
+        dailyTarget: 'Daily application target',
+        load: 'Reload',
+        save: 'Save',
+        validate: 'Validate',
+        saved: 'Saved',
+        validated: 'Valid',
+        invalid: 'Invalid',
+        secretsLink: 'Secrets FT → Settings → Secrets',
+        secretsHint: 'FT credentials live in the Secrets vault — never shown here.',
+        readiness: 'Readiness',
+        revision: 'Revision',
+        error: 'Error',
+        loading: 'Loading…',
+        departmentsRequired: 'At least one department code is required.',
+        conflict: 'Conflict: configuration was changed elsewhere.',
+        conflictReload: 'Reload remote',
+        dirtyConfirm: 'Discard unsaved settings changes?',
+        newProfile: 'New profile',
+      },
+      fr: {
+        nav: 'Job Researcher',
+        title: 'Job Researcher',
+        subtitle: 'Profil de recherche — aucun secret ici.',
+        location: 'Départements',
+        locationHint: 'Codes département INSEE séparés par des virgules (ex. 38)',
+        sources: 'Sources activées',
+        scheduleCron: 'Cron (UTC)',
+        dailyTarget: 'Objectif candidatures / jour',
+        load: 'Recharger',
+        save: 'Enregistrer',
+        validate: 'Valider',
+        saved: 'Enregistré',
+        validated: 'Valide',
+        invalid: 'Invalide',
+        secretsLink: 'Secrets FT → Settings → Secrets',
+        secretsHint: 'Les identifiants FT sont dans le coffre Secrets — jamais affichés ici.',
+        readiness: 'État',
+        revision: 'Révision',
+        error: 'Erreur',
+        loading: 'Chargement…',
+        departmentsRequired: 'Au moins un code département est requis.',
+        conflict: 'Conflit : la configuration a été modifiée ailleurs.',
+        conflictReload: 'Recharger le distant',
+        dirtyConfirm: 'Abandonner les modifications non enregistrées ?',
+        newProfile: 'Nouveau profil',
       },
     }
 
     const css = {
-      root: { display: 'flex', flexDirection: 'column', gap: '1rem', maxWidth: '72rem' },
-      h2: { margin: 0, fontSize: '1.25rem', fontWeight: 600 },
-      ops: {
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(12rem, 1fr))',
-        gap: '0.75rem',
-        padding: '0.75rem',
-        border: '1px solid rgba(127,127,127,0.25)',
-        borderRadius: '8px',
+      panel: {
+        display: 'flex',
+        flexDirection: 'column',
+        width: '100%',
+        height: '100%',
+        minHeight: 0,
+        color: 'var(--dsw-alias-label-primary, inherit)',
+        font: 'inherit',
+        background: 'var(--dsw-alias-bg-layer-1, var(--dsw-alias-bg-base, transparent))',
       },
-      card: { display: 'flex', flexDirection: 'column', gap: '0.25rem' },
-      muted: { opacity: 0.7, fontSize: '0.8rem' },
-      row: { display: 'flex', flexWrap: 'wrap', gap: '0.5rem', alignItems: 'center' },
+      navbar: {
+        flex: 'none',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: '1rem',
+        padding: '0.75rem 1.25rem',
+        borderBottom: '0.5px solid var(--dsw-alias-border-l2)',
+        background: 'var(--dsw-alias-bg-layer-2)',
+      },
+      navBrand: {
+        display: 'flex',
+        alignItems: 'center',
+        gap: '0.65rem',
+        minWidth: 0,
+      },
+      navTitle: {
+        margin: 0,
+        fontSize: '1.05rem',
+        fontWeight: 600,
+        letterSpacing: '-0.02em',
+      },
+      navMeta: {
+        display: 'flex',
+        flexWrap: 'wrap',
+        gap: '0.75rem 1.1rem',
+        alignItems: 'center',
+        fontSize: '0.78rem',
+        color: 'var(--dsw-alias-label-secondary, inherit)',
+      },
+      navMetaItem: {
+        display: 'inline-flex',
+        gap: '0.3rem',
+        alignItems: 'baseline',
+      },
+      navActions: {
+        display: 'flex',
+        gap: '0.5rem',
+        alignItems: 'center',
+        flex: 'none',
+      },
+      body: {
+        flex: 1,
+        minHeight: 0,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '0.75rem',
+        padding: '0.85rem 1.25rem 1.25rem',
+      },
+      toolbar: {
+        flex: 'none',
+        display: 'flex',
+        flexWrap: 'wrap',
+        gap: '0.5rem',
+        alignItems: 'center',
+      },
+      listPane: {
+        flex: 1,
+        minHeight: 0,
+        overflow: 'auto',
+        scrollbarGutter: 'stable',
+        border: '0.5px solid var(--dsw-alias-border-l2)',
+        borderRadius: '0.55rem',
+        background: 'var(--dsw-alias-bg-layer-2)',
+        padding: '0.5rem',
+      },
+      muted: {
+        fontSize: '0.8rem',
+        color: 'var(--dsw-alias-label-secondary, inherit)',
+        opacity: 0.9,
+      },
       input: {
-        padding: '0.4rem 0.55rem',
-        borderRadius: '6px',
-        border: '1px solid rgba(127,127,127,0.35)',
-        background: 'transparent',
+        boxSizing: 'border-box',
+        padding: '0.5rem 0.65rem',
+        borderRadius: '0.45rem',
+        border: '0.5px solid var(--dsw-alias-border-l4)',
+        background: 'var(--dsw-alias-bg-layer-3, transparent)',
+        color: 'var(--dsw-alias-label-primary, inherit)',
+        font: 'inherit',
+        fontSize: '0.9rem',
         minWidth: '8rem',
       },
       btn: {
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: '0.35rem',
+        minHeight: '2rem',
+        minWidth: '2rem',
         padding: '0.4rem 0.75rem',
-        borderRadius: '6px',
-        border: '1px solid rgba(127,127,127,0.35)',
+        borderRadius: '0.45rem',
+        border: '0.5px solid var(--dsw-alias-border-l3)',
         background: 'transparent',
+        color: 'var(--dsw-alias-label-primary, inherit)',
+        font: 'inherit',
+        fontSize: '0.85rem',
         cursor: 'pointer',
       },
       btnPrimary: {
-        padding: '0.4rem 0.75rem',
-        borderRadius: '6px',
-        border: 'none',
-        background: '#c9a227',
-        color: '#111',
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: '0.35rem',
+        minHeight: '2rem',
+        padding: '0.45rem 0.9rem',
+        borderRadius: '0.45rem',
+        border: '0.5px solid transparent',
+        background: 'var(--dsw-alias-button-primary-fill)',
+        color:
+          'var(--dsw-alias-label-primary-foreground, var(--dsw-alias-brand-primary-invert))',
+        font: 'inherit',
+        fontSize: '0.85rem',
         cursor: 'pointer',
-        fontWeight: 600,
       },
-      table: { width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem' },
+      btnDisabled: { opacity: 0.55, cursor: 'not-allowed' },
+      btnIcon: {
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        boxSizing: 'border-box',
+        width: '1.75rem',
+        height: '1.75rem',
+        minWidth: '1.75rem',
+        minHeight: '1.75rem',
+        padding: 0,
+        borderRadius: '0.4rem',
+        border: '0.5px solid var(--dsw-alias-border-l3)',
+        background: 'transparent',
+        color: 'var(--dsw-alias-label-primary, inherit)',
+        font: 'inherit',
+        fontSize: '0.8rem',
+        lineHeight: 1,
+        cursor: 'pointer',
+        flex: 'none',
+      },
+      actionCell: {
+        padding: '0.45rem 0.4rem',
+        borderBottom: '0.5px solid var(--dsw-alias-border-l2)',
+        verticalAlign: 'middle',
+        whiteSpace: 'nowrap',
+      },
+      actionGroup: {
+        display: 'inline-flex',
+        flexWrap: 'nowrap',
+        gap: '0.25rem',
+        alignItems: 'center',
+      },
+      titleBtn: {
+        background: 'none',
+        border: 'none',
+        padding: 0,
+        margin: 0,
+        font: 'inherit',
+        color: 'var(--dsw-alias-label-primary, inherit)',
+        textAlign: 'left',
+        cursor: 'pointer',
+        textDecoration: 'underline',
+        textUnderlineOffset: '0.12em',
+      },
+      undoBanner: {
+        display: 'flex',
+        alignItems: 'center',
+        gap: '0.75rem',
+        flexWrap: 'wrap',
+        padding: '0.45rem 0.75rem',
+        borderRadius: '0.45rem',
+        border: '0.5px solid var(--dsw-alias-border-l3)',
+        background: 'var(--dsw-alias-bg-layer-3, transparent)',
+        fontSize: '0.85rem',
+      },
+      table: {
+        width: '100%',
+        borderCollapse: 'collapse',
+        fontSize: '0.875rem',
+        font: 'inherit',
+      },
       th: {
         textAlign: 'left',
         padding: '0.4rem',
-        borderBottom: '1px solid rgba(127,127,127,0.3)',
-        opacity: 0.8,
+        borderBottom: '0.5px solid var(--dsw-alias-border-l2)',
+        color: 'var(--dsw-alias-label-secondary, inherit)',
+        position: 'sticky',
+        top: 0,
+        background: 'var(--dsw-alias-bg-layer-2)',
+        zIndex: 1,
       },
-      td: { padding: '0.45rem 0.4rem', borderBottom: '1px solid rgba(127,127,127,0.15)', verticalAlign: 'top' },
+      td: {
+        padding: '0.45rem 0.4rem',
+        borderBottom: '0.5px solid var(--dsw-alias-border-l2)',
+        verticalAlign: 'top',
+      },
+      selectedRow: {
+        background: 'var(--dsw-alias-bg-layer-3)',
+        outline: '0.5px solid var(--dsw-alias-border-l2)',
+      },
       badge: {
-        display: 'inline-block',
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
         minWidth: '2rem',
-        textAlign: 'center',
-        padding: '0.1rem 0.35rem',
-        borderRadius: '4px',
-        fontWeight: 700,
+        padding: '0.15rem 0.45rem',
+        borderRadius: '0.45rem',
+        fontWeight: 600,
         fontSize: '0.8rem',
+        border: '0.5px solid var(--dsw-alias-border-l3)',
+        background: 'var(--dsw-alias-bg-layer-3)',
+        color: 'var(--dsw-alias-label-primary, inherit)',
       },
-      drawer: {
-        padding: '0.75rem',
-        border: '1px solid rgba(127,127,127,0.25)',
-        borderRadius: '8px',
+      badgeHigh: {
+        color: 'var(--dsw-alias-state-success-primary)',
+        background:
+          'color-mix(in oklab, var(--dsw-alias-state-success-primary) 14%, transparent)',
+        border:
+          '0.5px solid color-mix(in oklab, var(--dsw-alias-state-success-primary) 40%, transparent)',
+      },
+      badgeMid: {
+        color: 'var(--dsw-alias-label-secondary, inherit)',
+        background: 'var(--dsw-alias-bg-layer-3)',
+      },
+      badgeLow: {
+        color: 'var(--dsw-alias-state-error-primary)',
+        background:
+          'color-mix(in oklab, var(--dsw-alias-state-error-primary) 14%, transparent)',
+        border:
+          '0.5px solid color-mix(in oklab, var(--dsw-alias-state-error-primary) 40%, transparent)',
+      },
+      row: {
+        display: 'flex',
+        flexWrap: 'wrap',
+        gap: '0.5rem',
+        alignItems: 'center',
+      },
+      sectionTitle: {
+        margin: 0,
+        fontSize: '0.95rem',
+        fontWeight: 600,
+        color: 'var(--dsw-alias-label-primary, inherit)',
+      },
+      hint: {
+        margin: 0,
+        fontSize: '0.75rem',
+        color: 'var(--dsw-alias-label-tertiary, inherit)',
+      },
+      chip: {
+        display: 'inline-flex',
+        alignItems: 'center',
+        padding: '0.25rem 0.55rem',
+        borderRadius: '0.45rem',
+        fontSize: '0.8rem',
+        border: '0.5px solid var(--dsw-alias-border-l3)',
+        background: 'transparent',
+        color: 'var(--dsw-alias-label-primary, inherit)',
+        font: 'inherit',
+        cursor: 'pointer',
+        minHeight: '2rem',
+      },
+      chipOn: {
+        background: 'var(--dsw-alias-bg-layer-3)',
+        border: '0.5px solid var(--dsw-alias-border-l2)',
+        fontWeight: 600,
+      },
+      error: {
+        fontSize: '0.85rem',
+        color: 'var(--dsw-alias-state-error-primary)',
+      },
+      ok: {
+        fontSize: '0.85rem',
+        color: 'var(--dsw-alias-state-success-primary)',
+      },
+      pre: {
+        whiteSpace: 'pre-wrap',
+        fontSize: '0.8rem',
+        margin: 0,
+        padding: '0.55rem',
+        borderRadius: '0.45rem',
+        border: '0.5px solid var(--dsw-alias-border-l2)',
+        background: 'var(--dsw-alias-bg-layer-3, transparent)',
+        color: 'var(--dsw-alias-label-secondary, inherit)',
+      },
+      description: {
+        fontSize: '0.85rem',
+        whiteSpace: 'pre-wrap',
+        lineHeight: 1.45,
+        color: 'var(--dsw-alias-label-primary, inherit)',
+      },
+      modalRoot: {
+        position: 'fixed',
+        inset: 0,
+        zIndex: 10_000,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '1.25rem',
+        pointerEvents: 'auto',
+      },
+      modalMask: {
+        position: 'absolute',
+        inset: 0,
+        background: 'color-mix(in oklab, black 55%, transparent)',
+      },
+      modalDialog: {
+        position: 'relative',
+        zIndex: 1,
+        width: 'min(44rem, 100%)',
+        maxHeight: 'min(88vh, 52rem)',
+        overflow: 'auto',
+        scrollbarGutter: 'stable',
         display: 'flex',
         flexDirection: 'column',
-        gap: '0.5rem',
+        gap: '0.75rem',
+        padding: '1rem 1.1rem 1.15rem',
+        borderRadius: '0.65rem',
+        border: '0.5px solid var(--dsw-alias-border-l2)',
+        background: 'var(--dsw-alias-bg-layer-1, var(--dsw-alias-bg-base, #0b0d10))',
+        color: 'var(--dsw-alias-label-primary, inherit)',
+        boxShadow: '0 18px 48px color-mix(in oklab, black 45%, transparent)',
       },
-      error: { color: '#ef4444', fontSize: '0.85rem' },
+      modalHeader: {
+        display: 'flex',
+        alignItems: 'flex-start',
+        justifyContent: 'space-between',
+        gap: '0.75rem',
+      },
+      iconWrap: {
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        color: 'var(--dsw-alias-label-primary, inherit)',
+        opacity: 0.92,
+      },
+      iconActive: {
+        color: 'var(--dsw-alias-button-primary-fill, inherit)',
+        opacity: 1,
+      },
+      readinessBadge: {
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '0.35rem',
+        padding: '0.2rem 0.55rem',
+        borderRadius: '0.4rem',
+        border: '0.5px solid var(--dsw-alias-border-l3)',
+        fontSize: '0.72rem',
+        fontWeight: 600,
+        letterSpacing: '0.02em',
+        textTransform: 'uppercase',
+      },
+      emptyState: {
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '0.75rem',
+        alignItems: 'flex-start',
+        padding: '1.25rem 1rem',
+        borderRadius: '0.55rem',
+        border: '0.5px solid var(--dsw-alias-border-l2)',
+        background: 'var(--dsw-alias-bg-layer-2)',
+      },
+      settingsPage: {
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '1.25rem',
+        maxWidth: '40rem',
+        color: 'var(--dsw-alias-label-primary, inherit)',
+      },
+      settingsTitle: {
+        margin: 0,
+        fontSize: '1.25rem',
+        letterSpacing: '-0.02em',
+      },
+      settingsSubtitle: {
+        margin: '0.25rem 0 0',
+        fontSize: '0.9rem',
+        lineHeight: 1.4,
+        color: 'var(--dsw-alias-label-secondary, inherit)',
+        opacity: 0.9,
+      },
+      settingsSection: {
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '0.65rem',
+        padding: '0.85rem 0',
+        borderTop: '0.5px solid var(--dsw-alias-border-l2)',
+      },
+      settingsField: {
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '0.3rem',
+      },
+      settingsLabel: {
+        fontSize: '0.8rem',
+        color: 'var(--dsw-alias-label-primary, inherit)',
+      },
+      settingsHint: {
+        margin: 0,
+        fontSize: '0.75rem',
+        color: 'var(--dsw-alias-label-tertiary, inherit)',
+      },
+      checkboxRow: {
+        display: 'flex',
+        flexWrap: 'wrap',
+        gap: '0.75rem 1.1rem',
+        alignItems: 'center',
+        fontSize: '0.85rem',
+      },
+      inlineSettings: {
+        flex: 'none',
+        padding: '0.85rem 1.25rem 1.25rem',
+        borderBottom: '0.5px solid var(--dsw-alias-border-l2)',
+        background: 'var(--dsw-alias-bg-layer-2)',
+        overflow: 'auto',
+        maxHeight: '55%',
+      },
     }
 
-    function scoreColor(score) {
-      if (score == null) return 'rgba(127,127,127,0.3)'
-      if (score >= 3) return 'rgba(22,163,74,0.35)'
-      if (score >= 1) return 'rgba(201,162,39,0.35)'
-      return 'rgba(185,28,28,0.3)'
+    function scoreBadgeStyle(score) {
+      if (score == null) return css.badge
+      if (score >= 3) return { ...css.badge, ...css.badgeHigh }
+      if (score >= 1) return { ...css.badge, ...css.badgeMid }
+      return { ...css.badge, ...css.badgeLow }
+    }
+
+    function applicationLabel(t, status) {
+      if (status === 'READY') return t('ready')
+      if (status === 'APPLIED') return t('applied')
+      if (status === 'TO_PREPARE') return t('toPrepare')
+      return t('appNone')
+    }
+
+    function btnStyle(base, disabled) {
+      return disabled ? { ...base, ...css.btnDisabled } : base
+    }
+
+    function parseScoreDetails(raw) {
+      if (!raw) return null
+      if (typeof raw === 'object') return raw
+      try {
+        return JSON.parse(raw)
+      } catch {
+        return { reasons: [String(raw)] }
+      }
     }
 
     function tBound(ctx) {
@@ -148,6 +687,78 @@ window.__ModuleLoader__.load({
       }
     }
 
+    function settingsTBound(ctx) {
+      return (key) => {
+        try {
+          const v = ctx.locale?.t?.(SETTINGS_LOCALE_NS + '.' + key)
+          if (v && v !== SETTINGS_LOCALE_NS + '.' + key) return v
+        } catch {
+          /* fallthrough */
+        }
+        return SETTINGS_DICT.fr[key] || SETTINGS_DICT.en[key] || key
+      }
+    }
+
+    function readinessBadgeStyle(state) {
+      const base = { ...css.readinessBadge }
+      if (state === 'ready') {
+        return {
+          ...base,
+          borderColor: 'var(--dsw-alias-border-l3)',
+          color: 'var(--dsw-alias-label-primary, inherit)',
+          background: 'color-mix(in oklab, var(--dsw-alias-button-primary-fill) 22%, transparent)',
+        }
+      }
+      if (state === 'degraded' || state === 'running' || state === 'installing') {
+        return {
+          ...base,
+          color: 'var(--dsw-alias-label-secondary, inherit)',
+          background: 'var(--dsw-alias-bg-layer-3, transparent)',
+        }
+      }
+      if (state === 'blocked' || state === 'needs_setup') {
+        return {
+          ...base,
+          color: 'var(--dsw-alias-label-primary, inherit)',
+          background: 'color-mix(in oklab, var(--dsw-alias-label-primary) 10%, transparent)',
+        }
+      }
+      return base
+    }
+
+    function ReadinessBadge(props) {
+      const state = props.state || 'needs_setup'
+      const message = props.message || state
+      return jsx('span', {
+        style: readinessBadgeStyle(state),
+        title: message,
+        'data-testid': 'job-researcher-readiness',
+        'data-readiness': state,
+        children: state,
+      })
+    }
+
+    function tryOpenHostSettings(ctx, sectionId) {
+      const target = sectionId || SECTION_ID
+      try {
+        if (typeof ctx?.layout?.openSettings === 'function') {
+          ctx.layout.openSettings(target)
+          return true
+        }
+        if (typeof ctx?.layout?.selectSettingsSection === 'function') {
+          ctx.layout.selectSettingsSection(target)
+          return true
+        }
+        if (typeof ctx?.layout?.navigate === 'function') {
+          ctx.layout.navigate({ settings: target })
+          return true
+        }
+      } catch {
+        /* ignore */
+      }
+      return false
+    }
+
     async function api(path, opts) {
       const res = await fetch(API + path, {
         credentials: 'same-origin',
@@ -155,53 +766,128 @@ window.__ModuleLoader__.load({
         ...opts,
       })
       const data = await res.json().catch(() => ({}))
-      if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`)
+      if (!res.ok) {
+        const err = new Error(data.error || `HTTP ${res.status}`)
+        err.status = res.status
+        err.data = data
+        throw err
+      }
       return data
     }
 
-    function JobResearcherSection(props) {
-      const t = props.t || ((k) => DICT.fr[k] || k)
-      const [status, setStatus] = useState(null)
-      const [offers, setOffers] = useState({ total: 0, rows: [] })
-      const [q, setQ] = useState('')
-      const [source, setSource] = useState('')
-      const [decision, setDecision] = useState('UNREVIEWED')
-      const [minScore, setMinScore] = useState('')
-      const [selected, setSelected] = useState(null)
-      const [comment, setComment] = useState('')
+    function sourceLabel(id) {
+      return SOURCE_LABELS[id] || id
+    }
+
+    function JobResearcherSettings(props) {
+      const t = props.t || ((k) => k)
+      const openSecrets = props.openSecrets
       const [busy, setBusy] = useState(false)
       const [err, setErr] = useState('')
-      const [page, setPage] = useState(0)
-      const limit = 40
+      const [fieldErr, setFieldErr] = useState('')
+      const [msg, setMsg] = useState('')
+      const [conflict, setConflict] = useState(false)
+      const [configLoaded, setConfigLoaded] = useState(false)
+      const [allowNewProfile, setAllowNewProfile] = useState(false)
+      const [dirty, setDirty] = useState(false)
+      const [revision, setRevision] = useState(0)
+      const [departments, setDepartments] = useState('')
+      const [cron, setCron] = useState('0 12 * * *')
+      const [dailyTarget, setDailyTarget] = useState(0)
+      const [enabled, setEnabled] = useState({
+        'csp-filtre': true,
+        et: true,
+        ft: true,
+      })
+      const [readiness, setReadiness] = useState(null)
+      const [readinessMsg, setReadinessMsg] = useState('')
 
-      const load = useCallback(async () => {
-        setErr('')
-        try {
-          const [st, list] = await Promise.all([
-            api('/status'),
-            api(
-              `/offers?q=${encodeURIComponent(q)}&source=${encodeURIComponent(source)}&decision=${encodeURIComponent(decision)}&minScore=${encodeURIComponent(minScore)}&limit=${limit}&offset=${page * limit}`,
-            ),
-          ])
-          setStatus(st)
-          setOffers(list)
-        } catch (e) {
-          setErr(String(e.message || e))
-        }
-      }, [q, source, decision, minScore, page])
+      const applyConfig = useCallback((config, version) => {
+        const deps = config?.location?.departments
+        setDepartments(Array.isArray(deps) ? deps.join(', ') : '')
+        setCron(config?.schedule?.cron || '0 12 * * *')
+        const n = Number(config?.schedule?.daily_application_target)
+        setDailyTarget(Number.isFinite(n) ? n : 0)
+        const src = config?.sources?.enabled || SOURCE_OPTIONS
+        const next = {}
+        for (const id of SOURCE_OPTIONS) next[id] = src.includes(id)
+        setEnabled(next)
+        setRevision(Number(version) || Number(config?.revision) || 0)
+        setDirty(false)
+        setFieldErr('')
+        setConflict(false)
+      }, [])
+
+      const load = useCallback(
+        async ({ confirmDirty } = {}) => {
+          if (confirmDirty && dirty) {
+            if (!window.confirm(t('dirtyConfirm'))) return
+          }
+          setErr('')
+          setMsg('')
+          setConflict(false)
+          try {
+            const [cfgRes, st] = await Promise.all([api('/config'), api('/status')])
+            applyConfig(cfgRes.config || {}, cfgRes.version)
+            setReadiness(st.readiness || st.status || null)
+            setReadinessMsg(st.message || '')
+            setConfigLoaded(true)
+            setAllowNewProfile(false)
+          } catch (e) {
+            setErr(String(e.message || e))
+          }
+        },
+        [applyConfig, dirty, t],
+      )
 
       useEffect(() => {
         void load()
-        const id = setInterval(() => void load(), 15_000)
-        return () => clearInterval(id)
-      }, [load])
+        // eslint-disable-next-line react-hooks/exhaustive-deps -- mount once
+      }, [])
 
-      async function runNow() {
+      function markDirty() {
+        setDirty(true)
+        setMsg('')
+      }
+
+      function buildPayload() {
+        const deps = departments
+          .split(/[,\s]+/)
+          .map((s) => s.trim())
+          .filter(Boolean)
+        if (!deps.length) {
+          const message = t('departmentsRequired')
+          setFieldErr(message)
+          throw new Error(message)
+        }
+        setFieldErr('')
+        const n = Number(dailyTarget)
+        return {
+          location: { departments: deps },
+          sources: {
+            enabled: SOURCE_OPTIONS.filter((id) => enabled[id]),
+          },
+          schedule: {
+            cron: cron.trim(),
+            daily_application_target: Number.isFinite(n) ? n : 0,
+          },
+        }
+      }
+
+      const canEdit = configLoaded || allowNewProfile
+
+      async function onValidate() {
+        if (!canEdit) return
         setBusy(true)
         setErr('')
+        setMsg('')
         try {
-          await api('/run', { method: 'POST', body: '{}' })
-          await load()
+          const r = await api('/config/validate', {
+            method: 'POST',
+            body: JSON.stringify({ config: buildPayload() }),
+          })
+          setMsg(r.ok ? t('validated') : t('invalid'))
+          if (!r.ok && r.errors?.length) setErr(r.errors.join('; '))
         } catch (e) {
           setErr(String(e.message || e))
         } finally {
@@ -209,337 +895,1636 @@ window.__ModuleLoader__.load({
         }
       }
 
-      async function decide(id, dec) {
+      async function onSave() {
+        if (!canEdit) return
         setBusy(true)
         setErr('')
+        setMsg('')
+        setConflict(false)
         try {
-          const r = await api(`/offers/${id}/decision`, {
-            method: 'PATCH',
-            body: JSON.stringify({ decision: dec, comment }),
+          const r = await api('/config', {
+            method: 'PUT',
+            body: JSON.stringify({
+              config: buildPayload(),
+              expected_revision: revision,
+            }),
           })
-          setSelected(r.offer)
-          await load()
+          applyConfig(r.config || {}, r.version)
+          setConfigLoaded(true)
+          setAllowNewProfile(false)
+          setMsg(t('saved'))
+          const st = await api('/status')
+          setReadiness(st.readiness || st.status || null)
+          setReadinessMsg(st.message || '')
+        } catch (e) {
+          if (e.status === 409) {
+            setConflict(true)
+            setErr(t('conflict'))
+          } else {
+            setErr(String(e.message || e))
+          }
+        } finally {
+          setBusy(false)
+        }
+      }
+
+      function handleOpenSecrets() {
+        if (typeof openSecrets === 'function' && openSecrets()) return
+      }
+
+      return jsxs('div', {
+        className: 'dsh-job-researcher-settings',
+        'data-testid': 'job-researcher-settings',
+        style: css.settingsPage,
+        children: [
+          jsxs('div', {
+            children: [
+              jsx('h2', { style: css.settingsTitle, children: t('title') }),
+              jsx('p', { style: css.settingsSubtitle, children: t('subtitle') }),
+            ],
+          }),
+          jsxs('div', {
+            style: { display: 'flex', gap: '0.65rem', alignItems: 'center', flexWrap: 'wrap' },
+            children: [
+              jsx(ReadinessBadge, { state: readiness || 'needs_setup', message: readinessMsg }),
+              jsxs('span', {
+                style: css.settingsHint,
+                children: [t('revision'), ': ', String(revision)],
+              }),
+              !configLoaded
+                ? jsx('span', {
+                    style: css.settingsHint,
+                    children: t('loading'),
+                  })
+                : null,
+            ],
+          }),
+          jsxs('div', {
+            style: css.settingsSection,
+            children: [
+              jsxs('div', {
+                style: css.settingsField,
+                children: [
+                  jsx('label', {
+                    style: css.settingsLabel,
+                    htmlFor: 'jr-departments',
+                    children: t('location'),
+                  }),
+                  jsx('input', {
+                    id: 'jr-departments',
+                    style: { ...css.input, width: '100%', minWidth: 0 },
+                    value: departments,
+                    disabled: busy || !canEdit,
+                    onChange: (e) => {
+                      setDepartments(e.target.value)
+                      markDirty()
+                    },
+                    'data-testid': 'jr-settings-departments',
+                  }),
+                  jsx('p', { style: css.settingsHint, children: t('locationHint') }),
+                  fieldErr
+                    ? jsx('p', {
+                        style: { ...css.muted, color: 'var(--dsw-alias-label-primary)' },
+                        role: 'alert',
+                        children: fieldErr,
+                      })
+                    : null,
+                ],
+              }),
+              jsxs('div', {
+                style: css.settingsField,
+                children: [
+                  jsx('span', { style: css.settingsLabel, children: t('sources') }),
+                  jsxs('div', {
+                    style: css.checkboxRow,
+                    'data-testid': 'jr-settings-sources',
+                    children: SOURCE_OPTIONS.map((id) =>
+                      jsxs(
+                        'label',
+                        {
+                          style: { display: 'inline-flex', gap: '0.35rem', alignItems: 'center' },
+                          children: [
+                            jsx('input', {
+                              type: 'checkbox',
+                              checked: Boolean(enabled[id]),
+                              disabled: busy || !canEdit,
+                              onChange: (e) => {
+                                setEnabled((prev) => ({ ...prev, [id]: e.target.checked }))
+                                markDirty()
+                              },
+                            }),
+                            sourceLabel(id),
+                          ],
+                        },
+                        id,
+                      ),
+                    ),
+                  }),
+                ],
+              }),
+              jsxs('div', {
+                style: css.settingsField,
+                children: [
+                  jsx('label', {
+                    style: css.settingsLabel,
+                    htmlFor: 'jr-cron',
+                    children: t('scheduleCron'),
+                  }),
+                  jsx('input', {
+                    id: 'jr-cron',
+                    style: { ...css.input, width: '100%', minWidth: 0 },
+                    value: cron,
+                    disabled: busy || !canEdit,
+                    onChange: (e) => {
+                      setCron(e.target.value)
+                      markDirty()
+                    },
+                    'data-testid': 'jr-settings-cron',
+                  }),
+                ],
+              }),
+              jsxs('div', {
+                style: css.settingsField,
+                children: [
+                  jsx('label', {
+                    style: css.settingsLabel,
+                    htmlFor: 'jr-daily-target',
+                    children: t('dailyTarget'),
+                  }),
+                  jsx('input', {
+                    id: 'jr-daily-target',
+                    type: 'number',
+                    min: 0,
+                    max: 50,
+                    style: { ...css.input, width: '8rem' },
+                    value: dailyTarget,
+                    disabled: busy || !canEdit,
+                    onChange: (e) => {
+                      setDailyTarget(e.target.value)
+                      markDirty()
+                    },
+                    'data-testid': 'jr-settings-daily-target',
+                  }),
+                ],
+              }),
+            ],
+          }),
+          jsxs('div', {
+            style: css.settingsSection,
+            children: [
+              jsx('p', {
+                style: css.settingsHint,
+                children: t('secretsHint'),
+              }),
+              jsx('button', {
+                type: 'button',
+                style: {
+                  ...css.settingsLabel,
+                  background: 'none',
+                  border: 'none',
+                  padding: 0,
+                  cursor: 'pointer',
+                  textDecoration: 'underline',
+                  textUnderlineOffset: '0.15em',
+                  font: 'inherit',
+                  color: 'inherit',
+                },
+                'data-testid': 'jr-settings-secrets-link',
+                onClick: handleOpenSecrets,
+                children: t('secretsLink'),
+              }),
+            ],
+          }),
+          jsxs('div', {
+            style: { display: 'flex', gap: '0.5rem', flexWrap: 'wrap' },
+            children: [
+              jsx('button', {
+                type: 'button',
+                style: btnStyle(css.btn, busy),
+                disabled: busy,
+                onClick: () => void load({ confirmDirty: true }),
+                children: t('load'),
+              }),
+              !configLoaded
+                ? jsx('button', {
+                    type: 'button',
+                    style: btnStyle(css.btn, busy),
+                    disabled: busy,
+                    onClick: () => {
+                      setAllowNewProfile(true)
+                      setDepartments('')
+                      setDirty(true)
+                    },
+                    children: t('newProfile'),
+                  })
+                : null,
+              jsx('button', {
+                type: 'button',
+                style: btnStyle(css.btn, busy || !canEdit),
+                disabled: busy || !canEdit,
+                onClick: () => void onValidate(),
+                'data-testid': 'jr-settings-validate',
+                children: t('validate'),
+              }),
+              jsx('button', {
+                type: 'button',
+                style: btnStyle(css.btnPrimary, busy || !canEdit),
+                disabled: busy || !canEdit,
+                onClick: () => void onSave(),
+                'data-testid': 'jr-settings-save',
+                children: t('save'),
+              }),
+              conflict
+                ? jsx('button', {
+                    type: 'button',
+                    style: btnStyle(css.btn, busy),
+                    disabled: busy,
+                    onClick: () => void load({ confirmDirty: true }),
+                    children: t('conflictReload'),
+                  })
+                : null,
+            ],
+          }),
+          msg
+            ? jsx('div', { style: css.muted, role: 'status', children: msg })
+            : null,
+          err
+            ? jsx('div', {
+                style: { ...css.muted, color: 'var(--dsw-alias-label-primary)' },
+                role: 'alert',
+                children: err,
+              })
+            : null,
+        ],
+      })
+    }
+
+    /** Small mark for sidebar panellist + navbar. */
+    function JobMark(props) {
+      const size = props.size || 16
+      return jsxs('svg', {
+        width: size,
+        height: size,
+        viewBox: '0 0 24 24',
+        fill: 'none',
+        'aria-hidden': true,
+        children: [
+          jsx('path', {
+            d: 'M8.5 7.25V6.5A2.5 2.5 0 0 1 11 4h2a2.5 2.5 0 0 1 2.5 2.5v.75',
+            stroke: 'currentColor',
+            strokeWidth: 1.75,
+            strokeLinecap: 'round',
+          }),
+          jsx('path', {
+            d: 'M4.75 8.25h14.5A1.75 1.75 0 0 1 21 10v8.25A1.75 1.75 0 0 1 19.25 20H4.75A1.75 1.75 0 0 1 3 18.25V10a1.75 1.75 0 0 1 1.75-1.75Z',
+            fill: 'color-mix(in oklab, currentColor 18%, transparent)',
+            stroke: 'currentColor',
+            strokeWidth: 1.75,
+          }),
+          jsx('path', {
+            d: 'M3 12.25h18',
+            stroke: 'currentColor',
+            strokeWidth: 1.75,
+            strokeLinecap: 'round',
+          }),
+          jsx('circle', {
+            cx: 12,
+            cy: 15.75,
+            r: 1.6,
+            fill: 'currentColor',
+          }),
+        ],
+      })
+    }
+
+    function JobResearcherIcon(props) {
+      const { size = 16, active } = props
+      return jsx('span', {
+        style: { ...css.iconWrap, ...(active ? css.iconActive : {}) },
+        'data-testid': 'job-researcher-icon',
+        children: jsx(JobMark, { size }),
+      })
+    }
+
+    function OfferDetailModal(props) {
+      const {
+        t,
+        selected,
+        busy,
+        offerBusy,
+        comment,
+        tags,
+        draftDirty,
+        feedbackMsg,
+        err,
+        onClose,
+        onComment,
+        onToggleTag,
+        onSaveFeedback,
+        onDecide,
+        onAppStatus,
+      } = props
+      const closeBtnRef = useRef(null)
+      const previousActiveRef = useRef(null)
+      const rowBusy = selected ? Boolean(offerBusy?.[selected.id]) : false
+      const controlsBusy = busy || rowBusy
+
+      useEffect(() => {
+        if (!selected) return undefined
+        previousActiveRef.current = document.activeElement
+        const prevOverflow = document.body.style.overflow
+        document.body.style.overflow = 'hidden'
+        const focusTimer = window.setTimeout(() => {
+          const btn =
+            closeBtnRef.current ||
+            document.querySelector('[data-testid="offer-detail-close"]')
+          btn?.focus?.()
+        }, 0)
+        const onKey = (event) => {
+          if (event.key === 'Escape') {
+            event.stopPropagation()
+            onClose()
+          }
+        }
+        window.addEventListener('keydown', onKey, true)
+        return () => {
+          window.clearTimeout(focusTimer)
+          window.removeEventListener('keydown', onKey, true)
+          document.body.style.overflow = prevOverflow
+          const prev = previousActiveRef.current
+          if (prev && typeof prev.focus === 'function') {
+            try {
+              prev.focus()
+            } catch {
+              /* ignore */
+            }
+          }
+        }
+      }, [selected, onClose])
+
+      if (!selected) return null
+
+      const scoreDetails = parseScoreDetails(selected.score_details)
+      const systemText =
+        selected.system_reason ||
+        (scoreDetails && Array.isArray(scoreDetails.reasons)
+          ? scoreDetails.reasons.join('\n')
+          : '') ||
+        ''
+
+      return createPortal(
+        jsxs('div', {
+          style: css.modalRoot,
+          'data-testid': 'offer-detail-modal',
+          children: [
+            jsx('div', {
+              style: css.modalMask,
+              'aria-hidden': true,
+              onClick: onClose,
+            }),
+            jsxs('div', {
+              role: 'dialog',
+              'aria-modal': true,
+              'aria-label': t('detail'),
+              'data-testid': 'offer-detail',
+              style: css.modalDialog,
+              children: [
+                jsxs('div', {
+                  style: css.modalHeader,
+                  children: [
+                    jsx('strong', { children: t('detail') }),
+                    jsx('button', {
+                      type: 'button',
+                      ref: closeBtnRef,
+                      style: css.btn,
+                      'aria-label': t('closeDetail'),
+                      'data-testid': 'offer-detail-close',
+                      onClick: onClose,
+                      children: t('closeDetail'),
+                    }),
+                  ],
+                }),
+                jsx('div', { children: selected.title }),
+                jsx('div', {
+                  style: css.muted,
+                  children: `${selected.employer} · ${selected.location} · ${sourceLabel(selected.source)}`,
+                }),
+                selected.url
+                  ? jsx('a', {
+                      href: selected.url,
+                      target: '_blank',
+                      rel: 'noreferrer',
+                      children: selected.url,
+                    })
+                  : null,
+                jsx('div', {
+                  style: css.muted,
+                  children: `score=${selected.score} (${selected.score_version || '—'}) ${
+                    selected.score_classification || ''
+                  }${
+                    scoreDetails && scoreDetails.feedback_adjustment
+                      ? ` · adj ${scoreDetails.feedback_adjustment}`
+                      : ''
+                  }`,
+                }),
+                jsxs('div', {
+                  'data-testid': 'system-score',
+                  children: [
+                    jsx('h3', { style: css.sectionTitle, children: t('systemScore') }),
+                    jsx('pre', { style: css.pre, children: systemText || '—' }),
+                  ],
+                }),
+                jsx('div', { style: css.muted, children: t('applicationHint') }),
+                jsx('div', {
+                  style: css.muted,
+                  children: `${t('application')}: ${applicationLabel(
+                    t,
+                    selected.application_status,
+                  )}${
+                    selected.applied_local_day
+                      ? ` · ${selected.applied_local_day} (${t('dailyTz')})`
+                      : ''
+                  }`,
+                }),
+                jsx('div', {
+                  style: css.description,
+                  children: selected.description || '—',
+                }),
+                err ? jsx('div', { style: css.error, role: 'alert', children: err }) : null,
+                draftDirty
+                  ? jsx('div', {
+                      style: css.muted,
+                      role: 'status',
+                      children: t('unsavedChanges'),
+                    })
+                  : null,
+                jsxs('div', {
+                  'data-testid': 'feedback-panel',
+                  children: [
+                    jsx('h3', { style: css.sectionTitle, children: t('whyHeading') }),
+                    jsx('p', { style: css.hint, children: t('whyHelper') }),
+                    jsxs('div', {
+                      style: css.row,
+                      role: 'group',
+                      'aria-label': t('whyHeading'),
+                      children: FEEDBACK_TAG_META.map((tag) =>
+                        jsx(
+                          'button',
+                          {
+                            type: 'button',
+                            style: {
+                              ...css.chip,
+                              ...(tags.includes(tag.id) ? css.chipOn : {}),
+                            },
+                            'aria-pressed': tags.includes(tag.id),
+                            onClick: () => onToggleTag(tag.id),
+                            children: tag.labelFr,
+                          },
+                          tag.id,
+                        ),
+                      ),
+                    }),
+                    jsx('textarea', {
+                      style: { ...css.input, minHeight: '4rem', width: '100%' },
+                      placeholder: t('comment'),
+                      'aria-label': t('comment'),
+                      value: comment,
+                      onChange: (e) => onComment(e.target.value),
+                    }),
+                    jsx('button', {
+                      type: 'button',
+                      style: btnStyle(css.btnPrimary, controlsBusy),
+                      disabled: controlsBusy,
+                      'data-testid': 'save-feedback',
+                      onClick: () => void onSaveFeedback(selected.id),
+                      children: t('saveFeedback'),
+                    }),
+                    feedbackMsg
+                      ? jsx('div', {
+                          style: css.ok,
+                          role: 'status',
+                          children: feedbackMsg,
+                        })
+                      : null,
+                  ],
+                }),
+                jsxs('div', {
+                  style: css.row,
+                  role: 'group',
+                  'aria-label': t('decision'),
+                  children: [
+                    jsx('button', {
+                      type: 'button',
+                      style: btnStyle(css.btnPrimary, controlsBusy),
+                      disabled: controlsBusy,
+                      'aria-pressed': selected.user_decision === 'YES',
+                      onClick: () => void onDecide(selected.id, 'YES'),
+                      children: t('yes'),
+                    }),
+                    jsx('button', {
+                      type: 'button',
+                      style: btnStyle(css.btn, controlsBusy),
+                      disabled: controlsBusy,
+                      'aria-pressed': selected.user_decision === 'NO',
+                      onClick: () => void onDecide(selected.id, 'NO'),
+                      children: t('no'),
+                    }),
+                    jsx('button', {
+                      type: 'button',
+                      style: btnStyle(css.btn, controlsBusy),
+                      disabled: controlsBusy,
+                      'aria-pressed': selected.user_decision === 'MAYBE',
+                      onClick: () => void onDecide(selected.id, 'MAYBE'),
+                      children: t('maybe'),
+                    }),
+                    selected.user_decision && selected.user_decision !== 'UNREVIEWED'
+                      ? jsx('button', {
+                          type: 'button',
+                          style: btnStyle(css.btn, controlsBusy),
+                          disabled: controlsBusy,
+                          onClick: () => void onDecide(selected.id, 'UNREVIEWED', { force: true }),
+                          children: t('resetUnreviewed'),
+                        })
+                      : null,
+                  ],
+                }),
+                jsxs('div', {
+                  style: css.row,
+                  children: [
+                    jsx('button', {
+                      type: 'button',
+                      style: btnStyle(css.btn, controlsBusy),
+                      disabled: controlsBusy,
+                      onClick: () => void onAppStatus(selected.id, 'TO_PREPARE'),
+                      children: t('toPrepare'),
+                    }),
+                    jsx('button', {
+                      type: 'button',
+                      style: btnStyle(css.btn, controlsBusy),
+                      disabled: controlsBusy,
+                      onClick: () => void onAppStatus(selected.id, 'READY'),
+                      children: t('ready'),
+                    }),
+                    jsx('button', {
+                      type: 'button',
+                      style: btnStyle(css.btnPrimary, controlsBusy),
+                      disabled: controlsBusy,
+                      'data-testid': 'mark-applied',
+                      title: t('markApplied'),
+                      'aria-label': t('markApplied'),
+                      onClick: () => void onAppStatus(selected.id, 'APPLIED'),
+                      children: t('markApplied'),
+                    }),
+                  ],
+                }),
+              ],
+            }),
+          ],
+        }),
+        document.body,
+      )
+    }
+
+    function JobResearcherPanel(props) {
+      const t = props.t || ((k) => DICT.fr[k] || DICT.en[k] || k)
+      const closePanel = props.closePanel
+      const openSettings = props.openSettings
+      const openSecrets = props.openSecrets
+      const [status, setStatus] = useState(null)
+      const [offers, setOffers] = useState({ total: 0, rows: [] })
+      const [qInput, setQInput] = useState('')
+      const [q, setQ] = useState('')
+      const [source, setSource] = useState('')
+      const [decision, setDecision] = useState('')
+      const [application, setApplication] = useState('')
+      const [minScore, setMinScore] = useState('')
+      const [selected, setSelected] = useState(null)
+      const [comment, setComment] = useState('')
+      const [tags, setTags] = useState([])
+      const [draftDirty, setDraftDirty] = useState(false)
+      const [busy, setBusy] = useState(false)
+      const [runBusy, setRunBusy] = useState(false)
+      const [offerBusy, setOfferBusy] = useState({})
+      const [rowErrors, setRowErrors] = useState({})
+      const [err, setErr] = useState('')
+      const [listErr, setListErr] = useState('')
+      const [statusErr, setStatusErr] = useState('')
+      const [runMsg, setRunMsg] = useState('')
+      const [feedbackMsg, setFeedbackMsg] = useState('')
+      const [page, setPage] = useState(0)
+      const [showSettingsInline, setShowSettingsInline] = useState(false)
+      const [undoById, setUndoById] = useState(null)
+      const [retryDecisionById, setRetryDecisionById] = useState({})
+      const limit = 40
+
+      const selectedRef = useRef(null)
+      const draftsRef = useRef(new Map())
+      const offersReqId = useRef(0)
+      const decisionFilterRef = useRef(decision)
+      const pageRef = useRef(page)
+      const commentRef = useRef(comment)
+      const tagsRef = useRef(tags)
+      const offerBusyRef = useRef({})
+
+      useEffect(() => {
+        selectedRef.current = selected
+      }, [selected])
+      useEffect(() => {
+        decisionFilterRef.current = decision
+      }, [decision])
+      useEffect(() => {
+        pageRef.current = page
+      }, [page])
+      useEffect(() => {
+        commentRef.current = comment
+      }, [comment])
+      useEffect(() => {
+        tagsRef.current = tags
+      }, [tags])
+      useEffect(() => {
+        offerBusyRef.current = offerBusy
+      }, [offerBusy])
+
+      const readiness = status?.readiness || status?.status || null
+      const canRun =
+        status?.can_run === true || status?.can_run_public === true
+      const needsSetup = readiness === 'needs_setup'
+
+      function handleOpenSettings() {
+        if (typeof openSettings === 'function' && openSettings()) return
+        setShowSettingsInline((v) => !v)
+      }
+
+      useEffect(() => {
+        const styleEl = document.createElement('style')
+        styleEl.setAttribute('data-plugin', PLUGIN_ID)
+        styleEl.textContent = `
+[data-testid="dsh-job-researcher"] [data-scroll-pane],
+[data-testid="offer-detail"] {
+  scrollbar-width: thin;
+  scrollbar-color: var(--dsw-alias-border-l3, #555) transparent;
+}
+[data-testid="dsh-job-researcher"] [data-scroll-pane]::-webkit-scrollbar,
+[data-testid="offer-detail"]::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+[data-testid="dsh-job-researcher"] [data-scroll-pane]::-webkit-scrollbar-thumb,
+[data-testid="offer-detail"]::-webkit-scrollbar-thumb {
+  background: var(--dsw-alias-border-l3, #555);
+  border-radius: 8px;
+}
+`
+        document.head.appendChild(styleEl)
+        return () => styleEl.remove()
+      }, [])
+
+      useEffect(() => {
+        const timer = setTimeout(() => {
+          setPage(0)
+          setQ(qInput)
+        }, 300)
+        return () => clearTimeout(timer)
+      }, [qInput])
+
+      useEffect(() => {
+        if (!undoById) return undefined
+        const left = undoById.expiresAt - Date.now()
+        if (left <= 0) {
+          setUndoById(null)
+          return undefined
+        }
+        const timer = setTimeout(() => setUndoById(null), left)
+        return () => clearTimeout(timer)
+      }, [undoById])
+
+      const loadStatus = useCallback(async () => {
+        try {
+          const st = await api('/status')
+          setStatus(st)
+          setStatusErr('')
+        } catch (e) {
+          setStatusErr(String(e.message || e))
+        }
+      }, [])
+
+      const loadOffers = useCallback(async () => {
+        const reqId = ++offersReqId.current
+        try {
+          const list = await api(
+            `/offers?q=${encodeURIComponent(q)}&source=${encodeURIComponent(source)}&decision=${encodeURIComponent(decision)}&application=${encodeURIComponent(application)}&minScore=${encodeURIComponent(minScore)}&limit=${limit}&offset=${page * limit}`,
+          )
+          if (reqId !== offersReqId.current) return
+          setOffers(list)
+          setListErr('')
+        } catch (e) {
+          if (reqId !== offersReqId.current) return
+          setListErr(String(e.message || e))
+        }
+      }, [q, source, decision, application, minScore, page])
+
+      useEffect(() => {
+        void loadStatus()
+        void loadOffers()
+      }, [loadStatus, loadOffers])
+
+      useEffect(() => {
+        const tick = () => {
+          if (typeof document !== 'undefined' && document.visibilityState !== 'visible') {
+            return
+          }
+          void loadStatus()
+          const cur = selectedRef.current
+          const dirty = cur ? Boolean(draftsRef.current.get(cur.id)?.dirty) : false
+          if (!dirty) void loadOffers()
+        }
+        const id = setInterval(tick, 15_000)
+        return () => clearInterval(id)
+      }, [loadStatus, loadOffers])
+
+      function serverCommentTags(row) {
+        return {
+          comment: row?.user_comment || '',
+          tags: Array.isArray(row?.feedback_tags) ? [...row.feedback_tags] : [],
+        }
+      }
+
+      function isDraftDirtyVs(row, nextComment, nextTags) {
+        const server = serverCommentTags(row)
+        const tagA = [...(nextTags || [])].sort().join(',')
+        const tagB = [...server.tags].sort().join(',')
+        return String(nextComment || '') !== server.comment || tagA !== tagB
+      }
+
+      function bumpDraft(id, nextComment, nextTags, row) {
+        const prev = draftsRef.current.get(id) || { version: 0 }
+        const version = (prev.version || 0) + 1
+        const dirty = isDraftDirtyVs(row || selectedRef.current, nextComment, nextTags)
+        draftsRef.current.set(id, {
+          comment: nextComment,
+          tags: [...(nextTags || [])],
+          dirty,
+          version,
+        })
+        setDraftDirty(dirty)
+        return version
+      }
+
+      function persistCurrentDraft() {
+        const cur = selectedRef.current
+        if (!cur) return
+        const nextComment = commentRef.current
+        const nextTags = tagsRef.current
+        if (!isDraftDirtyVs(cur, nextComment, nextTags)) {
+          const existing = draftsRef.current.get(cur.id)
+          if (existing && !existing.dirty) return
+          draftsRef.current.delete(cur.id)
+          return
+        }
+        const prev = draftsRef.current.get(cur.id) || { version: 0 }
+        draftsRef.current.set(cur.id, {
+          comment: nextComment,
+          tags: [...(nextTags || [])],
+          dirty: true,
+          version: prev.version || 1,
+        })
+      }
+
+      function mergeSelectedFromServer(offer) {
+        setSelected((prev) => {
+          if (!prev || prev.id !== offer.id) return prev
+          return { ...prev, ...offer }
+        })
+        const draft = draftsRef.current.get(offer.id)
+        if (draft?.dirty) return
+        setComment(offer.user_comment || '')
+        setTags(Array.isArray(offer.feedback_tags) ? [...offer.feedback_tags] : [])
+        setDraftDirty(false)
+      }
+
+      function patchOfferInCache(offer) {
+        if (!offer || offer.id == null) return
+        const filter = decisionFilterRef.current
+        setOffers((prev) => {
+          const rows = prev?.rows || []
+          const idx = rows.findIndex((r) => r.id === offer.id)
+          const dropsFromFilter =
+            filter &&
+            filter !== '' &&
+            String(offer.user_decision || 'UNREVIEWED') !== filter
+          if (idx < 0) {
+            if (dropsFromFilter) return prev
+            return prev
+          }
+          if (dropsFromFilter) {
+            const nextRows = rows.slice(0, idx).concat(rows.slice(idx + 1))
+            const next = {
+              ...prev,
+              rows: nextRows,
+              total: Math.max(0, (prev.total || 0) - 1),
+            }
+            if (nextRows.length === 0 && pageRef.current > 0) {
+              setPage((p) => Math.max(0, p - 1))
+            }
+            return next
+          }
+          const nextRows = rows.slice()
+          nextRows[idx] = { ...nextRows[idx], ...offer }
+          return { ...prev, rows: nextRows }
+        })
+      }
+
+      function selectOffer(row) {
+        if (selectedRef.current && selectedRef.current.id !== row.id) {
+          persistCurrentDraft()
+        }
+        setSelected(row)
+        const draft = draftsRef.current.get(row.id)
+        if (draft) {
+          setComment(draft.comment || '')
+          setTags(Array.isArray(draft.tags) ? [...draft.tags] : [])
+          setDraftDirty(Boolean(draft.dirty))
+        } else {
+          setComment(row.user_comment || '')
+          setTags(Array.isArray(row.feedback_tags) ? [...row.feedback_tags] : [])
+          setDraftDirty(false)
+        }
+        setFeedbackMsg('')
+        setErr('')
+      }
+
+      function closeDetail() {
+        persistCurrentDraft()
+        setSelected(null)
+        setFeedbackMsg('')
+        setDraftDirty(false)
+      }
+
+      function onCommentChange(value) {
+        setComment(value)
+        setFeedbackMsg('')
+        const cur = selectedRef.current
+        if (!cur) return
+        bumpDraft(cur.id, value, tagsRef.current, cur)
+      }
+
+      function toggleTag(id) {
+        setTags((prev) => {
+          const next = prev.includes(id)
+            ? prev.filter((x) => x !== id)
+            : [...prev, id].sort()
+          const cur = selectedRef.current
+          if (cur) bumpDraft(cur.id, commentRef.current, next, cur)
+          return next
+        })
+        setFeedbackMsg('')
+      }
+
+      async function runNow() {
+        setRunBusy(true)
+        setErr('')
+        setRunMsg('')
+        try {
+          const r = await api('/run', { method: 'POST', body: '{}' })
+          if (r.accepted || r.ok) setRunMsg(t('runAccepted'))
+          await loadStatus()
+          await loadOffers()
         } catch (e) {
           setErr(String(e.message || e))
         } finally {
-          setBusy(false)
+          setRunBusy(false)
+        }
+      }
+
+      async function decide(id, dec, opts = {}) {
+        if (offerBusyRef.current[id] && !opts.forceQueue) return
+        const row =
+          (offers.rows || []).find((r) => r.id === id) ||
+          (selectedRef.current?.id === id ? selectedRef.current : null)
+        if (!opts.force && row && row.user_decision === dec) return
+
+        const previousDecision = row?.user_decision || 'UNREVIEWED'
+        setRetryDecisionById((prev) => ({ ...prev, [id]: dec }))
+        setOfferBusy((prev) => ({ ...prev, [id]: true }))
+        setRowErrors((prev) => {
+          if (!prev[id]) return prev
+          const next = { ...prev }
+          delete next[id]
+          return next
+        })
+        setFeedbackMsg('')
+        try {
+          const r = await api(`/offers/${id}/decision`, {
+            method: 'PATCH',
+            body: JSON.stringify({ decision: dec }),
+          })
+          patchOfferInCache(r.offer)
+          if (r.learning) {
+            setStatus((prev) => (prev ? { ...prev, learning: r.learning } : prev))
+          }
+          const cur = selectedRef.current
+          if (opts.openDetail === true) {
+            selectOffer(r.offer)
+          } else if (cur?.id === id) {
+            mergeSelectedFromServer(r.offer)
+          }
+          if (!opts.skipUndo) {
+            setUndoById({
+              id,
+              previousDecision,
+              expiresAt: Date.now() + UNDO_MS,
+            })
+          }
+        } catch (e) {
+          const message = String(e.message || e)
+          setRowErrors((prev) => ({ ...prev, [id]: message }))
+          if (selectedRef.current?.id === id) setErr(message)
+        } finally {
+          setOfferBusy((prev) => {
+            const next = { ...prev }
+            delete next[id]
+            return next
+          })
+        }
+      }
+
+      async function undoDecision() {
+        if (!undoById) return
+        const { id, previousDecision } = undoById
+        setUndoById(null)
+        await decide(id, previousDecision, { force: true, skipUndo: true })
+      }
+
+      async function saveFeedback(id) {
+        const draft = draftsRef.current.get(id) || {
+          comment: commentRef.current,
+          tags: tagsRef.current,
+          version: 0,
+          dirty: true,
+        }
+        const sentVersion = draft.version || 0
+        const sentComment = draft.comment
+        const sentTags = Array.isArray(draft.tags) ? [...draft.tags] : []
+        setOfferBusy((prev) => ({ ...prev, [id]: true }))
+        setErr('')
+        setFeedbackMsg('')
+        try {
+          const r = await api(`/offers/${id}/feedback`, {
+            method: 'PATCH',
+            body: JSON.stringify({ comment: sentComment, tags: sentTags }),
+          })
+          patchOfferInCache(r.offer)
+          if (r.learning) {
+            setStatus((prev) => (prev ? { ...prev, learning: r.learning } : prev))
+          }
+          const curDraft = draftsRef.current.get(id)
+          if (!curDraft || curDraft.version === sentVersion) {
+            draftsRef.current.set(id, {
+              comment: r.offer.user_comment || '',
+              tags: Array.isArray(r.offer.feedback_tags) ? [...r.offer.feedback_tags] : [],
+              dirty: false,
+              version: sentVersion,
+            })
+          }
+          if (selectedRef.current?.id === id) {
+            if (!curDraft || curDraft.version === sentVersion) {
+              setComment(r.offer.user_comment || '')
+              setTags(
+                Array.isArray(r.offer.feedback_tags) ? [...r.offer.feedback_tags] : [],
+              )
+              setDraftDirty(false)
+              setFeedbackMsg(t('feedbackSaved'))
+              setSelected((prev) =>
+                prev && prev.id === id ? { ...prev, ...r.offer } : prev,
+              )
+            } else {
+              setDraftDirty(true)
+              setFeedbackMsg(t('unsavedChanges'))
+            }
+          }
+        } catch (e) {
+          const message = String(e.message || e)
+          if (selectedRef.current?.id === id) setErr(message)
+          setRowErrors((prev) => ({ ...prev, [id]: message }))
+        } finally {
+          setOfferBusy((prev) => {
+            const next = { ...prev }
+            delete next[id]
+            return next
+          })
+        }
+      }
+
+      async function setAppStatus(id, statusValue) {
+        setOfferBusy((prev) => ({ ...prev, [id]: true }))
+        setErr('')
+        try {
+          const r = await api(`/offers/${id}/application`, {
+            method: 'PATCH',
+            body: JSON.stringify({ status: statusValue }),
+          })
+          patchOfferInCache(r.offer)
+          if (r.daily_applications) {
+            setStatus((prev) =>
+              prev ? { ...prev, daily_applications: r.daily_applications } : prev,
+            )
+          }
+          if (selectedRef.current?.id === id) {
+            setSelected((prev) =>
+              prev && prev.id === id ? { ...prev, ...r.offer } : prev,
+            )
+          }
+        } catch (e) {
+          const message = String(e.message || e)
+          if (selectedRef.current?.id === id) setErr(message)
+          setRowErrors((prev) => ({ ...prev, [id]: message }))
+        } finally {
+          setOfferBusy((prev) => {
+            const next = { ...prev }
+            delete next[id]
+            return next
+          })
         }
       }
 
       const latest = status?.latest_run
       const sched = status?.schedule
+      const daily = status?.daily_applications
+      const learning = status?.learning
+      const bannerErr = listErr || statusErr || (!selected ? err : '')
+
+      function stopRowEvent(e) {
+        e.stopPropagation()
+      }
+
+      function decisionAria(label, title) {
+        return `${label}: ${title || ''}`.trim()
+      }
 
       return jsxs('div', {
         'data-plugin': PLUGIN_ID,
         'data-testid': 'dsh-job-researcher',
-        style: css.root,
+        style: css.panel,
         children: [
-          jsx('h2', { style: css.h2, children: t('title') }),
-          jsxs('div', {
-            style: css.ops,
+          jsxs('header', {
+            style: css.navbar,
+            'data-testid': 'job-researcher-navbar',
             children: [
               jsxs('div', {
-                style: css.card,
+                style: css.navBrand,
                 children: [
-                  jsx('span', { style: css.muted, children: t('lastRun') }),
-                  jsx('strong', {
-                    children: latest
-                      ? `#${latest.id} ${latest.status} · new ${latest.offers_new || 0}`
-                      : '—',
+                  jsx(JobMark, { size: 20 }),
+                  jsx('h1', { style: css.navTitle, children: t('title') }),
+                  jsx(ReadinessBadge, {
+                    state: readiness || 'needs_setup',
+                    message: status?.message || '',
                   }),
                 ],
               }),
               jsxs('div', {
-                style: css.card,
+                style: css.navMeta,
                 children: [
-                  jsx('span', { style: css.muted, children: t('nextRun') }),
-                  jsx('strong', { children: sched?.next_run_at || '—' }),
-                ],
-              }),
-              jsxs('div', {
-                style: css.card,
-                children: [
-                  jsx('span', { style: css.muted, children: t('sources') }),
-                  jsx('strong', {
-                    children: (status?.sources || [])
-                      .map((s) => `${s.source}${s.last_error ? '!' : ''}`)
-                      .join(', ') || '—',
-                  }),
-                ],
-              }),
-              jsxs('div', {
-                style: css.card,
-                children: [
-                  jsx('span', { style: css.muted, children: 'Total' }),
-                  jsx('strong', { children: status?.stats?.total ?? '—' }),
-                ],
-              }),
-            ],
-          }),
-          jsxs('div', {
-            style: css.row,
-            children: [
-              jsx('button', {
-                type: 'button',
-                style: css.btnPrimary,
-                disabled: busy || sched?.running,
-                onClick: runNow,
-                children: busy || sched?.running ? t('running') : t('runNow'),
-              }),
-              jsx('button', {
-                type: 'button',
-                style: css.btn,
-                onClick: () => void load(),
-                children: t('refresh'),
-              }),
-            ],
-          }),
-          jsxs('div', {
-            style: css.row,
-            children: [
-              jsx('input', {
-                style: css.input,
-                placeholder: t('search'),
-                value: q,
-                onChange: (e) => {
-                  setPage(0)
-                  setQ(e.target.value)
-                },
-              }),
-              jsxs('select', {
-                style: css.input,
-                value: source,
-                onChange: (e) => {
-                  setPage(0)
-                  setSource(e.target.value)
-                },
-                children: [
-                  jsx('option', { value: '', children: t('source') + ' *' }),
-                  jsx('option', { value: 'csp', children: 'csp' }),
-                  jsx('option', { value: 'et', children: 'et' }),
-                  jsx('option', { value: 'ft', children: 'ft' }),
-                ],
-              }),
-              jsxs('select', {
-                style: css.input,
-                value: decision,
-                onChange: (e) => {
-                  setPage(0)
-                  setDecision(e.target.value)
-                },
-                children: [
-                  jsx('option', { value: '', children: t('decision') + ' *' }),
-                  jsx('option', { value: 'UNREVIEWED', children: 'UNREVIEWED' }),
-                  jsx('option', { value: 'YES', children: 'YES' }),
-                  jsx('option', { value: 'NO', children: 'NO' }),
-                  jsx('option', { value: 'MAYBE', children: 'MAYBE' }),
-                ],
-              }),
-              jsx('input', {
-                style: { ...css.input, minWidth: '5rem' },
-                placeholder: t('minScore'),
-                value: minScore,
-                onChange: (e) => {
-                  setPage(0)
-                  setMinScore(e.target.value)
-                },
-              }),
-            ],
-          }),
-          err ? jsx('div', { style: css.error, children: err }) : null,
-          jsxs('div', {
-            style: { overflowX: 'auto' },
-            children: [
-              jsxs('table', {
-                style: css.table,
-                children: [
-                  jsx('thead', {
-                    children: jsxs('tr', {
-                      children: [
-                        jsx('th', { style: css.th, children: 'Score' }),
-                        jsx('th', { style: css.th, children: 'Titre' }),
-                        jsx('th', { style: css.th, children: 'Entreprise' }),
-                        jsx('th', { style: css.th, children: 'Lieu' }),
-                        jsx('th', { style: css.th, children: 'Src' }),
-                        jsx('th', { style: css.th, children: 'Décision' }),
-                        jsx('th', { style: css.th, children: 'Actions' }),
-                      ],
-                    }),
-                  }),
-                  jsx('tbody', {
-                    children:
-                      (offers.rows || []).length === 0
-                        ? jsx('tr', {
-                            children: jsx('td', {
-                              style: css.td,
-                              colSpan: 7,
-                              children: t('empty'),
-                            }),
-                          })
-                        : offers.rows.map((row) =>
-                            jsxs(
-                              'tr',
-                              {
-                                onClick: () => {
-                                  setSelected(row)
-                                  setComment(row.user_comment || '')
-                                },
-                                style: {
-                                  cursor: 'pointer',
-                                  background:
-                                    selected?.id === row.id ? 'rgba(201,162,39,0.08)' : 'transparent',
-                                },
-                                children: [
-                                  jsx('td', {
-                                    style: css.td,
-                                    children: jsx('span', {
-                                      style: {
-                                        ...css.badge,
-                                        background: scoreColor(row.score),
-                                      },
-                                      children: row.score ?? '—',
-                                    }),
-                                  }),
-                                  jsx('td', { style: css.td, children: row.title }),
-                                  jsx('td', { style: css.td, children: row.employer }),
-                                  jsx('td', {
-                                    style: css.td,
-                                    children: `${row.location || '—'} · ${row.remote || '?'}`,
-                                  }),
-                                  jsx('td', { style: css.td, children: row.source }),
-                                  jsx('td', { style: css.td, children: row.user_decision }),
-                                  jsxs('td', {
-                                    style: css.td,
-                                    children: [
-                                      jsx('button', {
-                                        type: 'button',
-                                        style: css.btn,
-                                        onClick: (e) => {
-                                          e.stopPropagation()
-                                          void decide(row.id, 'YES')
-                                        },
-                                        children: '✓',
-                                      }),
-                                      jsx('button', {
-                                        type: 'button',
-                                        style: css.btn,
-                                        onClick: (e) => {
-                                          e.stopPropagation()
-                                          void decide(row.id, 'NO')
-                                        },
-                                        children: '✗',
-                                      }),
-                                      jsx('button', {
-                                        type: 'button',
-                                        style: css.btn,
-                                        onClick: (e) => {
-                                          e.stopPropagation()
-                                          void decide(row.id, 'MAYBE')
-                                        },
-                                        children: '?',
-                                      }),
-                                    ],
-                                  }),
-                                ],
-                              },
-                              row.id,
-                            ),
-                          ),
-                  }),
-                ],
-              }),
-              jsxs('div', {
-                style: { ...css.row, marginTop: '0.5rem' },
-                children: [
-                  jsx('span', {
-                    style: css.muted,
-                    children: `${offers.total || 0} offres · page ${page + 1}`,
-                  }),
-                  jsx('button', {
-                    type: 'button',
-                    style: css.btn,
-                    disabled: page === 0,
-                    onClick: () => setPage((p) => Math.max(0, p - 1)),
-                    children: '←',
-                  }),
-                  jsx('button', {
-                    type: 'button',
-                    style: css.btn,
-                    disabled: (page + 1) * limit >= (offers.total || 0),
-                    onClick: () => setPage((p) => p + 1),
-                    children: '→',
-                  }),
-                ],
-              }),
-            ],
-          }),
-          selected
-            ? jsxs('div', {
-                style: css.drawer,
-                children: [
-                  jsx('strong', { children: t('detail') }),
-                  jsx('div', { children: selected.title }),
-                  jsx('div', {
-                    style: css.muted,
-                    children: `${selected.employer} · ${selected.location} · ${selected.source}`,
-                  }),
-                  selected.url
-                    ? jsx('a', {
-                        href: selected.url,
-                        target: '_blank',
-                        rel: 'noreferrer',
-                        children: selected.url,
-                      })
-                    : null,
-                  jsx('div', {
-                    style: css.muted,
-                    children: `score=${selected.score} (${selected.score_version || '—'}) ${selected.score_classification || ''}`,
-                  }),
-                  selected.score_details
-                    ? jsx('pre', {
-                        style: { whiteSpace: 'pre-wrap', fontSize: '0.8rem', margin: 0 },
-                        children: selected.score_details,
-                      })
-                    : null,
-                  jsx('div', {
-                    style: { maxHeight: '12rem', overflow: 'auto', fontSize: '0.85rem' },
-                    children: selected.description || '—',
-                  }),
-                  jsx('textarea', {
-                    style: { ...css.input, minHeight: '4rem', width: '100%' },
-                    placeholder: t('comment'),
-                    value: comment,
-                    onChange: (e) => setComment(e.target.value),
-                  }),
-                  jsxs('div', {
-                    style: css.row,
+                  jsxs('span', {
+                    style: css.navMetaItem,
                     children: [
-                      jsx('button', {
-                        type: 'button',
-                        style: css.btnPrimary,
-                        disabled: busy,
-                        onClick: () => void decide(selected.id, 'YES'),
-                        children: t('yes'),
-                      }),
-                      jsx('button', {
-                        type: 'button',
-                        style: css.btn,
-                        disabled: busy,
-                        onClick: () => void decide(selected.id, 'NO'),
-                        children: t('no'),
-                      }),
-                      jsx('button', {
-                        type: 'button',
-                        style: css.btn,
-                        disabled: busy,
-                        onClick: () => void decide(selected.id, 'MAYBE'),
-                        children: t('maybe'),
+                      jsx('span', { children: t('lastRun') }),
+                      jsx('strong', {
+                        children: latest
+                          ? `#${latest.id} ${latest.status} · new ${latest.offers_new || 0}`
+                          : '—',
                       }),
                     ],
+                  }),
+                  jsxs('span', {
+                    style: css.navMetaItem,
+                    'data-testid': 'daily-applications',
+                    children: [
+                      jsx('span', { children: t('dailyProgress') }),
+                      jsx('strong', {
+                        children: daily
+                          ? `${daily.count}/${daily.target}${daily.met ? ' ✓' : ''}`
+                          : '—',
+                      }),
+                    ],
+                  }),
+                  jsxs('span', {
+                    style: css.navMetaItem,
+                    'data-testid': 'learning-summary',
+                    children: [
+                      jsx('span', { children: t('learning') }),
+                      jsx('strong', {
+                        children: learning
+                          ? `${learning.user_feedback_count || 0} retours`
+                          : '—',
+                      }),
+                    ],
+                  }),
+                  jsxs('span', {
+                    style: css.navMetaItem,
+                    children: [
+                      jsx('span', { children: 'Total' }),
+                      jsx('strong', { children: status?.stats?.total ?? '—' }),
+                    ],
+                  }),
+                ],
+              }),
+              jsxs('div', {
+                style: css.navActions,
+                children: [
+                  jsx('button', {
+                    type: 'button',
+                    style: btnStyle(css.btn, busy),
+                    disabled: busy,
+                    'aria-label': t('openSettings'),
+                    title: t('openSettings'),
+                    'data-testid': 'job-researcher-settings-gear',
+                    onClick: handleOpenSettings,
+                    children: '⚙',
+                  }),
+                  jsx('button', {
+                    type: 'button',
+                    style: btnStyle(
+                      css.btnPrimary,
+                      runBusy || sched?.running || !canRun,
+                    ),
+                    disabled: runBusy || sched?.running || !canRun,
+                    'data-testid': 'job-researcher-run',
+                    onClick: runNow,
+                    children: runBusy || sched?.running ? t('running') : t('runNow'),
+                  }),
+                  jsx('button', {
+                    type: 'button',
+                    style: css.btn,
+                    onClick: () => {
+                      void loadStatus()
+                      void loadOffers()
+                    },
+                    children: t('refresh'),
+                  }),
+                  closePanel
+                    ? jsx('button', {
+                        type: 'button',
+                        style: css.btn,
+                        'aria-label': t('backToChat'),
+                        'data-testid': 'job-researcher-close',
+                        onClick: () => closePanel(),
+                        children: t('backToChat'),
+                      })
+                    : null,
+                ],
+              }),
+            ],
+          }),
+          showSettingsInline
+            ? jsxs('div', {
+                style: css.inlineSettings,
+                'data-testid': 'job-researcher-settings-inline',
+                children: [
+                  jsx('p', {
+                    style: css.muted,
+                    children: t('settingsHint'),
+                  }),
+                  jsx(JobResearcherSettings, {
+                    t: (k) =>
+                      SETTINGS_DICT.fr[k] ||
+                      SETTINGS_DICT.en[k] ||
+                      DICT.fr[k] ||
+                      DICT.en[k] ||
+                      k,
+                    openSecrets:
+                      typeof openSecrets === 'function'
+                        ? openSecrets
+                        : () => false,
                   }),
                 ],
               })
             : null,
+          jsxs('div', {
+            style: css.body,
+            children: [
+              needsSetup
+                ? jsxs('div', {
+                    style: css.emptyState,
+                    'data-testid': 'job-researcher-needs-setup',
+                    children: [
+                      jsx('strong', { children: t('needsSetupTitle') }),
+                      jsx('p', {
+                        style: { ...css.muted, margin: 0 },
+                        children: status?.message || t('needsSetupBody'),
+                      }),
+                      jsxs('div', {
+                        style: { display: 'flex', gap: '0.5rem', flexWrap: 'wrap' },
+                        children: [
+                          jsx('button', {
+                            type: 'button',
+                            style: css.btnPrimary,
+                            onClick: handleOpenSettings,
+                            children: t('openSettingsCta'),
+                          }),
+                          jsx('button', {
+                            type: 'button',
+                            style: css.btn,
+                            disabled: busy,
+                            onClick: async () => {
+                              setBusy(true)
+                              setErr('')
+                              try {
+                                await api('/bootstrap', {
+                                  method: 'POST',
+                                  body: '{}',
+                                })
+                                await loadStatus()
+                                await loadOffers()
+                              } catch (e) {
+                                setErr(String(e.message || e))
+                              } finally {
+                                setBusy(false)
+                              }
+                            },
+                            children: t('bootstrapCta'),
+                          }),
+                        ],
+                      }),
+                    ],
+                  })
+                : null,
+              runMsg
+                ? jsx('div', {
+                    style: css.ok || css.muted,
+                    role: 'status',
+                    'data-testid': 'job-researcher-run-accepted',
+                    children: runMsg,
+                  })
+                : null,
+              undoById
+                ? jsxs('div', {
+                    style: css.undoBanner,
+                    role: 'status',
+                    'data-testid': 'job-researcher-undo',
+                    children: [
+                      jsx('span', { children: t('undoBanner') }),
+                      jsx('button', {
+                        type: 'button',
+                        style: css.btn,
+                        onClick: () => void undoDecision(),
+                        children: t('undo'),
+                      }),
+                    ],
+                  })
+                : null,
+              jsxs('div', {
+                style: css.toolbar,
+                children: [
+                  jsx('input', {
+                    style: css.input,
+                    placeholder: t('search'),
+                    'aria-label': t('search'),
+                    value: qInput,
+                    onChange: (e) => setQInput(e.target.value),
+                  }),
+                  jsxs('select', {
+                    style: css.input,
+                    value: source,
+                    'aria-label': t('source'),
+                    onChange: (e) => {
+                      setPage(0)
+                      setSource(e.target.value)
+                    },
+                    children: [
+                      jsx('option', { value: '', children: t('source') + ' *' }),
+                      jsx('option', {
+                        value: 'csp',
+                        children: sourceLabel('csp'),
+                      }),
+                      jsx('option', {
+                        value: 'et',
+                        children: sourceLabel('et'),
+                      }),
+                      jsx('option', {
+                        value: 'ft',
+                        children: sourceLabel('ft'),
+                      }),
+                    ],
+                  }),
+                  jsxs('select', {
+                    style: css.input,
+                    value: decision,
+                    'aria-label': t('decision'),
+                    onChange: (e) => {
+                      setPage(0)
+                      setDecision(e.target.value)
+                    },
+                    children: [
+                      jsx('option', { value: '', children: t('decision') + ' *' }),
+                      jsx('option', {
+                        value: 'UNREVIEWED',
+                        children: t('unreviewed'),
+                      }),
+                      jsx('option', { value: 'YES', children: t('yes') }),
+                      jsx('option', { value: 'NO', children: t('no') }),
+                      jsx('option', { value: 'MAYBE', children: t('maybe') }),
+                    ],
+                  }),
+                  jsxs('select', {
+                    style: css.input,
+                    value: application,
+                    'aria-label': t('application'),
+                    onChange: (e) => {
+                      setPage(0)
+                      setApplication(e.target.value)
+                    },
+                    children: [
+                      jsx('option', { value: '', children: t('application') + ' *' }),
+                      jsx('option', { value: 'NONE', children: t('appNone') }),
+                      jsx('option', {
+                        value: 'TO_PREPARE',
+                        children: t('toPrepare'),
+                      }),
+                      jsx('option', { value: 'READY', children: t('ready') }),
+                      jsx('option', { value: 'APPLIED', children: t('applied') }),
+                    ],
+                  }),
+                  jsx('input', {
+                    style: { ...css.input, minWidth: '5rem' },
+                    placeholder: t('minScore'),
+                    'aria-label': t('minScore'),
+                    value: minScore,
+                    onChange: (e) => {
+                      setPage(0)
+                      setMinScore(e.target.value)
+                    },
+                  }),
+                ],
+              }),
+              bannerErr
+                ? jsx('div', { style: css.error, role: 'alert', children: bannerErr })
+                : null,
+              jsxs('div', {
+                style: css.listPane,
+                'data-scroll-pane': true,
+                'data-testid': 'job-researcher-list',
+                children: [
+                  jsxs('table', {
+                    style: css.table,
+                    children: [
+                      jsx('thead', {
+                        children: jsxs('tr', {
+                          children: [
+                            jsx('th', { style: css.th, children: 'Score' }),
+                            jsx('th', { style: css.th, children: 'Titre' }),
+                            jsx('th', { style: css.th, children: 'Entreprise' }),
+                            jsx('th', { style: css.th, children: 'Lieu' }),
+                            jsx('th', { style: css.th, children: 'Src' }),
+                            jsx('th', { style: css.th, children: 'Intérêt' }),
+                            jsx('th', { style: css.th, children: 'Candidature' }),
+                            jsx('th', { style: css.th, children: 'Actions' }),
+                          ],
+                        }),
+                      }),
+                      jsx('tbody', {
+                        children:
+                          (offers.rows || []).length === 0
+                            ? jsx('tr', {
+                                children: jsx('td', {
+                                  style: css.td,
+                                  colSpan: 8,
+                                  children: t('empty'),
+                                }),
+                              })
+                            : offers.rows.map((row) => {
+                                const rowBusy = Boolean(offerBusy[row.id])
+                                const decisionLabel = (d) =>
+                                  d === 'YES'
+                                    ? t('yes')
+                                    : d === 'NO'
+                                      ? t('no')
+                                      : d === 'MAYBE'
+                                        ? t('maybe')
+                                        : d || '—'
+                                return jsxs(
+                                  'tr',
+                                  {
+                                    tabIndex: 0,
+                                    'aria-selected': selected?.id === row.id,
+                                    onClick: (e) => {
+                                      if (e.target !== e.currentTarget) {
+                                        const interactive = e.target.closest?.(
+                                          'button, a, input, textarea, select',
+                                        )
+                                        if (interactive && interactive !== e.currentTarget) {
+                                          return
+                                        }
+                                      }
+                                      selectOffer(row)
+                                    },
+                                    onKeyDown: (e) => {
+                                      if (e.target !== e.currentTarget) return
+                                      if (e.key === 'Enter' || e.key === ' ') {
+                                        e.preventDefault()
+                                        selectOffer(row)
+                                      }
+                                    },
+                                    style: {
+                                      cursor: 'pointer',
+                                      ...(selected?.id === row.id
+                                        ? css.selectedRow
+                                        : {}),
+                                    },
+                                    children: [
+                                      jsx('td', {
+                                        style: css.td,
+                                        children: jsx('span', {
+                                          style: scoreBadgeStyle(row.score),
+                                          children: row.score ?? '—',
+                                        }),
+                                      }),
+                                      jsx('td', {
+                                        style: css.td,
+                                        children: jsx('button', {
+                                          type: 'button',
+                                          style: css.titleBtn,
+                                          'aria-label': `${t('openOffer')}: ${row.title}`,
+                                          onClick: (e) => {
+                                            stopRowEvent(e)
+                                            selectOffer(row)
+                                          },
+                                          onKeyDown: stopRowEvent,
+                                          children: row.title,
+                                        }),
+                                      }),
+                                      jsx('td', {
+                                        style: css.td,
+                                        children: row.employer,
+                                      }),
+                                      jsx('td', {
+                                        style: css.td,
+                                        children: `${row.location || '—'} · ${row.remote || '?'}`,
+                                      }),
+                                      jsx('td', {
+                                        style: css.td,
+                                        children: sourceLabel(row.source),
+                                      }),
+                                      jsx('td', {
+                                        style: css.td,
+                                        children: decisionLabel(row.user_decision),
+                                      }),
+                                      jsx('td', {
+                                        style: css.td,
+                                        children: applicationLabel(
+                                          t,
+                                          row.application_status,
+                                        ),
+                                      }),
+                                      jsxs('td', {
+                                        style: css.actionCell,
+                                        children: [
+                                          jsxs('div', {
+                                            style: css.actionGroup,
+                                            children: [
+                                              jsx('button', {
+                                                type: 'button',
+                                                style: css.btnIcon,
+                                                title: t('yes'),
+                                                'aria-label': decisionAria(
+                                                  t('yes'),
+                                                  row.title,
+                                                ),
+                                                'aria-pressed':
+                                                  row.user_decision === 'YES',
+                                                disabled: rowBusy,
+                                                onClick: (e) => {
+                                                  stopRowEvent(e)
+                                                  void decide(row.id, 'YES')
+                                                },
+                                                onKeyDown: stopRowEvent,
+                                                children: '✓',
+                                              }),
+                                              jsx('button', {
+                                                type: 'button',
+                                                style: css.btnIcon,
+                                                title: t('no'),
+                                                'aria-label': decisionAria(
+                                                  t('no'),
+                                                  row.title,
+                                                ),
+                                                'aria-pressed':
+                                                  row.user_decision === 'NO',
+                                                disabled: rowBusy,
+                                                onClick: (e) => {
+                                                  stopRowEvent(e)
+                                                  void decide(row.id, 'NO')
+                                                },
+                                                onKeyDown: stopRowEvent,
+                                                children: '✗',
+                                              }),
+                                              jsx('button', {
+                                                type: 'button',
+                                                style: css.btnIcon,
+                                                title: t('maybe'),
+                                                'aria-label': decisionAria(
+                                                  t('maybe'),
+                                                  row.title,
+                                                ),
+                                                'aria-pressed':
+                                                  row.user_decision === 'MAYBE',
+                                                disabled: rowBusy,
+                                                onClick: (e) => {
+                                                  stopRowEvent(e)
+                                                  void decide(row.id, 'MAYBE')
+                                                },
+                                                onKeyDown: stopRowEvent,
+                                                children: '?',
+                                              }),
+                                            ],
+                                          }),
+                                          rowErrors[row.id]
+                                            ? jsxs('div', {
+                                                style: {
+                                                  ...css.muted,
+                                                  marginTop: '0.25rem',
+                                                },
+                                                role: 'alert',
+                                                children: [
+                                                  rowErrors[row.id],
+                                                  ' ',
+                                                  jsx('button', {
+                                                    type: 'button',
+                                                    style: css.btn,
+                                                    disabled: rowBusy,
+                                                    onClick: (e) => {
+                                                      stopRowEvent(e)
+                                                      void decide(
+                                                        row.id,
+                                                        retryDecisionById[row.id] ||
+                                                          'YES',
+                                                        { force: true },
+                                                      )
+                                                    },
+                                                    onKeyDown: stopRowEvent,
+                                                    children: t('retry'),
+                                                  }),
+                                                ],
+                                              })
+                                            : null,
+                                        ],
+                                      }),
+                                    ],
+                                  },
+                                  row.id,
+                                )
+                              }),
+                      }),
+                    ],
+                  }),
+                  jsxs('div', {
+                    style: { ...css.row, marginTop: '0.5rem' },
+                    children: [
+                      jsx('span', {
+                        style: css.muted,
+                        children: `${offers.total || 0} offres · page ${page + 1}`,
+                      }),
+                      jsx('button', {
+                        type: 'button',
+                        style: btnStyle(css.btn, page === 0),
+                        disabled: page === 0,
+                        'aria-label': t('prevPage'),
+                        onClick: () => setPage((p) => Math.max(0, p - 1)),
+                        children: '←',
+                      }),
+                      jsx('button', {
+                        type: 'button',
+                        style: btnStyle(
+                          css.btn,
+                          (page + 1) * limit >= (offers.total || 0),
+                        ),
+                        disabled: (page + 1) * limit >= (offers.total || 0),
+                        'aria-label': t('nextPage'),
+                        onClick: () => setPage((p) => p + 1),
+                        children: '→',
+                      }),
+                    ],
+                  }),
+                ],
+              }),
+            ],
+          }),
+          jsx(OfferDetailModal, {
+            t,
+            selected,
+            busy,
+            offerBusy,
+            comment,
+            tags,
+            draftDirty,
+            feedbackMsg,
+            err: selected ? err : '',
+            onClose: closeDetail,
+            onComment: onCommentChange,
+            onToggleTag: toggleTag,
+            onSaveFeedback: saveFeedback,
+            onDecide: decide,
+            onAppStatus: setAppStatus,
+          }),
         ],
       })
     }
@@ -550,26 +2535,76 @@ window.__ModuleLoader__.load({
         () => ctx.locale.register(LOCALE_NS, { en: DICT.en, fr: DICT.fr }),
         `${PLUGIN_ID}: locale`,
       )
+      ctx.effect(
+        () =>
+          ctx.locale.register(SETTINGS_LOCALE_NS, {
+            en: SETTINGS_DICT.en,
+            fr: SETTINGS_DICT.fr,
+          }),
+        `${PLUGIN_ID}: settings locale`,
+      )
       const t = tBound(ctx)
-      const injected = () => ({ t })
+      const settingsT = settingsTBound(ctx)
+      const panelInject = () => ({
+        t,
+        closePanel: () => {
+          try {
+            ctx.layout?.selectPanel?.(null)
+          } catch {
+            /* ignore */
+          }
+        },
+        openSettings: () => tryOpenHostSettings(ctx),
+        openSecrets: () => tryOpenHostSettings(ctx, 'secrets'),
+      })
+      const settingsInject = () => ({
+        t: settingsT,
+        openSecrets: () => tryOpenHostSettings(ctx, 'secrets'),
+      })
+      ctx.slots.inject('main', () =>
+        ctx.slots.register(
+          {
+            name: 'main',
+            key: PANEL_ID,
+            locale: LOCALE_NS,
+            inject: panelInject,
+          },
+          JobResearcherPanel,
+        ),
+      )
+      ctx.slots.inject('sidebar.panellist', () =>
+        ctx.slots.register(
+          {
+            name: 'sidebar.panellist',
+            id: PANEL_ID,
+            order: ORDER,
+            label: () => t('nav'),
+            locale: LOCALE_NS,
+          },
+          JobResearcherIcon,
+        ),
+      )
       ctx.slots.inject('settings.section', () =>
         ctx.slots.register(
           {
             name: 'settings.section',
             id: SECTION_ID,
-            order: ORDER,
-            label: () => t('nav'),
-            locale: LOCALE_NS,
-            inject: injected,
+            order: SETTINGS_ORDER,
+            label: () => settingsT('nav'),
+            locale: SETTINGS_LOCALE_NS,
+            inject: settingsInject,
           },
-          JobResearcherSection,
+          JobResearcherSettings,
         ),
       )
     }
 
     exports.apply = apply
-    exports.inject = ['slots', 'locale', 'settingsScope']
-    exports.JobResearcherSection = JobResearcherSection
+    exports.inject = ['slots', 'locale', 'layout', 'settingsScope']
+    exports.JobResearcherPanel = JobResearcherPanel
+    exports.JobResearcherSettings = JobResearcherSettings
+    exports.JobResearcherIcon = JobResearcherIcon
+    exports.JobMark = JobMark
     return module.exports
   },
 })

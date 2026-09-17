@@ -7,6 +7,11 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
+
+class FtAuthError(RuntimeError):
+    """France Travail auth / credential failure — catchable by partial-failure policy."""
+
+
 def _resolve_data_dir() -> Path:
     """Plugin-owned data under DSH, with legacy fallback for rollback tooling."""
     explicit = os.getenv("JOB_RESEARCHER_DATA_DIR") or os.getenv("DB_PATH")
@@ -138,21 +143,38 @@ class Settings:
         "les-offres-diffusees-sur-choisir-le-service-public/"
     )
     departement: str = "38"
+    # CSP filtre path override (localisation/…/domaine/…/categorie/…)
+    csp_filtre_path: str = (
+        "localisation/334/domaine/3522/categorie/1806"
+    )
     # Part-time filter intentionally OFF (Ikigai: revisit later)
     filter_part_time: bool = False
 
+    @property
+    def et_departement(self) -> str:
+        """Emploi territorial uses zero-padded 3-digit department codes."""
+        digits = "".join(c for c in str(self.departement) if c.isdigit()) or "38"
+        return digits.zfill(3)
+
     def require_ft_credentials(self) -> None:
         if not self.ft_client_id or not self.ft_client_secret:
-            raise SystemExit(
-                "Missing FT_CLIENT_ID / FT_CLIENT_SECRET. "
-                "Copy .env.example → .env and create an app on francetravail.io "
-                "(subscribe to Offres d'emploi v2)."
+            dsh = bool(os.getenv("JOB_RESEARCHER_DATA_DIR") or os.getenv("DSH_HOME"))
+            hint = (
+                "Add FT_CLIENT_ID and FT_CLIENT_SECRET in Settings → Secrets "
+                "(DSH credential plane — never shell/.env on the primary path)."
+                if dsh
+                else "For local/dev only: copy .env.example → .env "
+                "(subscribe to Offres d'emploi v2 on francetravail.io)."
             )
+            raise FtAuthError(f"Missing FT_CLIENT_ID / FT_CLIENT_SECRET. {hint}")
 
 
 def load_settings() -> Settings:
-    # Prefer process env (DSH secrets materialize). Optional dotenv for local/dev only.
-    load_dotenv(ROOT / ".env", override=False)
+    # DSH primary path: credentials arrive via secrets.materialize into child env only.
+    # Never load .env under JOB_RESEARCHER_DATA_DIR / DSH_HOME (Secrets Boundary v1.1).
+    dsh_runtime = bool(os.getenv("JOB_RESEARCHER_DATA_DIR") or os.getenv("DSH_HOME"))
+    if not dsh_runtime:
+        load_dotenv(ROOT / ".env", override=False)
     data_dir = _resolve_data_dir()
     cache_dir = data_dir / "cache"
     data_dir.mkdir(parents=True, exist_ok=True)

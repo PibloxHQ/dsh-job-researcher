@@ -1,7 +1,7 @@
 # DSH Job Researcher Migration
 
 **Date:** 2026-09-16  
-**Status:** PARTIAL (primary DSH runtime live; FT secrets missing; Discord notify not enabled; some legacy `et` URLs still empty)
+**Status:** PARTIAL (primary DSH runtime live; FT vault keys **present** 2026-09-17 — live FT run pending; Discord notify not enabled; some legacy `et` URLs still empty)
 
 ---
 
@@ -11,7 +11,20 @@ Hermes cron `job-search-debrief` (`7abaf1c80aa4`, `0 12 * * *` UTC) → agent + 
 
 ## Target Architecture
 
-DSH plugin `dsh-job-researcher` owns: plugin wall-clock scheduler (DSH has **no** native cron), Python worker under `$DSH_HOME/job-researcher/.venv`, DSH-owned SQLite, Settings UI, HTTP API. Hermes cron **disabled** (retained). Secrets via `dsh-piblox-secrets` when present.
+```text
+Operator → Settings → Secrets → dsh-piblox-secrets (store + vault)
+                                      │
+                                      └── Cordis "secrets"
+                                              │
+                                              ▼
+                                    dsh-job-researcher
+                                              │
+                                              └── materialize(FT_*) → Python child env
+```
+
+DSH plugin owns: wall-clock scheduler (DSH has **no** native cron), Python worker under `$DSH_HOME/job-researcher/.venv`, DSH-owned SQLite, Settings UI, HTTP API. Hermes cron **disabled** (retained).
+
+**Secrets Boundary v1.1:** hard `inject: ['secrets']` — not optional `ctx.get('secrets')`. No npm embedding of the vault. No FT values in `cordis.patch.yml` / `.env` / host `process.env` / shell `set`. Operator path = **Settings → Secrets** only. Child env is minimal + `materialize([...])`. Missing FT keys → **throw** (fail closed), not soft degrade.
 
 ## Runtime Migration
 
@@ -28,7 +41,7 @@ DSH plugin `dsh-job-researcher` owns: plugin wall-clock scheduler (DSH has **no*
 | Install | `scripts/setup-venv.sh` → `pip install -e runtime/python` |
 | Command | `…/.venv/bin/python -m job_radar.dsh_pipeline --trigger …` |
 | Data | `JOB_RESEARCHER_DATA_DIR` / `$DSH_HOME/job-researcher` |
-| Env | `DB_PATH`, `FT_CLIENT_ID`, `FT_CLIENT_SECRET` (from vault resolve when available) |
+| Env | Minimal child env + FT via `secrets.materialize` (DSH path skips `.env`) |
 
 ## Database Migration
 
@@ -46,16 +59,17 @@ Interest map → YES/MAYBE/NO/UNREVIEWED.
 
 | Name | Status |
 |------|--------|
-| FT_CLIENT_ID | missing (empty legacy `.env`; not in vault) |
-| FT_CLIENT_SECRET | missing |
-| Backend | dsh-piblox-secrets (`resolve`) |
-| Legacy `.env` | retained for rollback; not used by DSH primary path when vault resolves |
+| FT_CLIENT_ID | **present** (Settings → Secrets; verified names + materialize 2026-09-17) |
+| FT_CLIENT_SECRET | **present** |
+| Backend | Cordis `secrets` from dsh-piblox-secrets (`materialize`) |
+| Operator path | Settings → Secrets (create both keys). Secrets CLI = break-glass only — not JR procedure |
+| Legacy `.env` | rollback / local-dev only — **not** loaded when `JOB_RESEARCHER_DATA_DIR` or `DSH_HOME` is set |
 
 No secret values logged or committed.
 
 ## Scheduler Migration
 
-DSH has no calendar cron. Plugin implements UTC cron matcher + 30s `ctx.interval` poll. Expression: `0 12 * * *` UTC. Manual `POST /api/job-researcher/run` uses the **same** pipeline.
+DSH has no calendar cron. Plugin implements UTC cron matcher + 30s `ctx.interval` poll. Expression: `0 12 * * *` UTC. Manual `POST /api/job-researcher/run` uses the **same** pipeline (fail-closed on missing FT).
 
 ## Source Migration
 
@@ -63,12 +77,14 @@ DSH has no calendar cron. Plugin implements UTC cron matcher + 30s `ctx.interval
 |--------|---------------------------|
 | csp-filtre | ok |
 | et | ok (URL parser fixed for new parses) |
-| ft | degraded — missing credentials |
+| ft | **ready** (vault keys present 2026-09-17; live FT OAuth smoke pending) |
 | csp | available via CLI/pipeline sources list |
 
 ## Scoring Migration
 
-`triage.py::score_offer` as `score_version=legacy-v1`. Rules unchanged. Persisted: score, classification, details JSON.
+`triage.py::score_offer` as `score_version=v4-feedback` (was `legacy-v1`). Base rules unchanged; optional user-origin feedback tags apply a capped explainable adjustment (±2). Persisted: score, classification, details JSON (`base_score`, `feedback_adjustment`, `learned_signals`, `reasons`).
+
+**Provenance note (2026-09-16):** all 4,128 migrated `offer_feedback.comment` values equalled `offers.notes` (system score reasons). Schema v4 moves those to `system_reason` and clears `comment`; learning ignores `feedback_origin=legacy`. See `docs/feedback-learning-v4-2026-09-16.md`.
 
 ## State / Checkpoint Migration
 
@@ -76,7 +92,7 @@ DSH has no calendar cron. Plugin implements UTC cron matcher + 30s `ctx.interval
 
 ## Dashboard
 
-Settings section `job-researcher`: ops strip, filters, pagination, YES/NO/MAYBE, comment, detail drawer, Run now.
+Settings section `job-researcher`: ops strip, filters, pagination, YES/NO/MAYBE, comment, detail drawer, Run now. Status reports `blocked_missing_ft_secrets` until vault keys present.
 
 ## Notifications
 
@@ -89,13 +105,11 @@ Settings section `job-researcher`: ops strip, filters, pagination, YES/NO/MAYBE,
 | Offer count old vs new | 4128 = 4128 |
 | by_source | csp 3780 · et 13 · ft 335 |
 | feedback seeded | YES 396 · MAYBE 1871 · NO 1861 |
-| Smoke run | run_id=1 status=ok (csp-filtre+et) |
+| Smoke run | run_id=1 status=ok (csp-filtre+et) — pre-fail-closed |
 
 ## Tests
 
-`npm test` in plugin: cron + manifest + store — PASS.  
-ET URL unit assert — PASS.  
-Pipeline smoke — PASS (partial without FT).
+`npm test` in plugin: cron + manifest + store + pipeline boundary — PASS.
 
 ## Cutover
 
@@ -104,7 +118,7 @@ Pipeline smoke — PASS (partial without FT).
 3. Wire web bundles + relink ✓  
 4. Disable Hermes cron ✓ (backup JSON retained)  
 5. Discord notify deferred  
-6. FT secrets still missing  
+6. **P0 closed (2026-09-17):** FT secrets in vault via Settings → Secrets; next = live `materialize` + full run including `ft` after web reload if needed
 
 ## Hermes Fallback
 
@@ -116,7 +130,7 @@ Documented in runbook. Cron config preserved (`enabled=false`).
 
 ## Known Limitations
 
-1. FT credentials not in vault → FT source fails soft.  
+1. Live FT OAuth / full pipeline smoke still pending after vault fill (2026-09-17).  
 2. Discord notifications not cut over.  
 3. Legacy `et` rows may still have empty `url` until re-synced with fixed parser (2 rows already have URLs post-smoke).  
 4. Plugin scheduler is in-process (survives only while DSH web process runs).  
@@ -132,7 +146,7 @@ See git history on `PibloxHQ/dsh-job-researcher` and lab `INSTALL-MAP` / web `pa
 PRIMARY_RUNTIME: DSH (dsh-job-researcher)
 HERMES_CRON: DISABLED (rollback ready)
 DB_PRIMARY: $DSH_HOME/job-researcher/radar.db
-SECRETS: dsh-piblox-secrets (FT missing)
+SECRETS: Cordis secrets required (hard inject); FT = present (2026-09-17)
 SCHEDULE: plugin cron 0 12 * * * UTC
 NOTIFICATIONS: skipped
 ```

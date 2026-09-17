@@ -1,4 +1,5 @@
-# Scaffold only — not wired into profiles yet (see INSTALL-MAP.md status: scaffold).
+# Requires Cordis service `secrets` from dsh-piblox-secrets (hard inject).
+# Do not put FT credentials here — operator adds them in Settings → Secrets.
 - insert:
     - id: dsh-job-researcher
       name: 'dsh-job-researcher'

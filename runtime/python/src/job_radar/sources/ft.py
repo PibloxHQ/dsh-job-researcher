@@ -1,13 +1,24 @@
 from __future__ import annotations
 
 import time
-from typing import Any, Iterator
+from typing import Any, Iterable, Iterator
 
 import httpx
 
-from job_radar.config import PREFERRED_COMMUNE_INSEE, QUERY_PROFILES, Settings
+from job_radar.config import FtAuthError, PREFERRED_COMMUNE_INSEE, QUERY_PROFILES, Settings
 from job_radar.models import Offer
 from job_radar.normalize import normalize_ft
+
+# Re-export for callers that imported from sources.ft
+__all__ = [
+    "FtAuthError",
+    "TOKEN_CACHE",
+    "get_token",
+    "search_offers",
+    "iter_profile_offers",
+    "iter_ft_offers",
+]
+
 
 TOKEN_CACHE: dict[str, Any] = {"access_token": None, "expires_at": 0.0}
 
@@ -32,8 +43,9 @@ def get_token(settings: Settings, client: httpx.Client | None = None) -> str:
             headers={"Content-Type": "application/x-www-form-urlencoded"},
         )
         if resp.status_code >= 400:
-            raise SystemExit(
-                f"FT OAuth failed ({resp.status_code}): {resp.text[:300]}\n"
+            # Never SystemExit — AUT-06 / REV-02: partial-failure policy must catch this.
+            raise FtAuthError(
+                f"FT OAuth failed ({resp.status_code}): {resp.text[:300]}. "
                 "Check app subscription to Offres d'emploi v2 on francetravail.io."
             )
         data = resp.json()
@@ -139,3 +151,32 @@ def iter_profile_offers(
                 offer = normalize_ft(raw, profile_tags=tags + ["geo_remote"])
                 if offer.external_id:
                     yield offer
+
+
+def iter_ft_offers(
+    settings: Settings,
+    *,
+    profiles: Iterable[str] | None = None,
+    include_remote_national: bool = True,
+    max_per_query: int = 50,
+) -> Iterator[Offer]:
+    """Canonical multi-profile FT iterator used by ``dsh_pipeline._sync_source``.
+
+    Deduplicates by ``external_id`` across QUERY_PROFILES sweeps.
+    """
+    selected = list(profiles) if profiles is not None else list(QUERY_PROFILES.keys())
+    seen: set[str] = set()
+    for profile in selected:
+        if profile not in QUERY_PROFILES:
+            continue
+        for offer in iter_profile_offers(
+            settings,
+            profile,
+            include_remote_national=include_remote_national,
+            max_per_query=max_per_query,
+        ):
+            eid = offer.external_id or ""
+            if not eid or eid in seen:
+                continue
+            seen.add(eid)
+            yield offer

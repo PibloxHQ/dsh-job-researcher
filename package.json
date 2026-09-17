@@ -31,8 +31,10 @@
     "node": ">=22"
   },
   "scripts": {
-    "test": "node --test test/*.test.js",
-    "check": "node --check src/index.js && node --check src/cron.js && node --check src/store.js && node --check src/pipeline.js && node --check src/scheduler.js && node --check src/http.js && node --check src/client/index.js",
+    "test": "node --test test/*.test.js && node scripts/run-python-schema-tests.mjs",
+    "test:node": "node --test test/*.test.js",
+    "test:python-schema": "node scripts/run-python-schema-tests.mjs",
+    "check": "node --check src/index.js && node --check src/cron.js && node --check src/store.js && node --check src/feedback.js && node --check src/pipeline.js && node --check src/scheduler.js && node --check src/http.js && node --check src/config.js && node --check src/readiness.js && node --check src/bootstrap.js && node --check src/client/index.js",
     "setup-venv": "bash scripts/setup-venv.sh"
   },
   "dsh": {

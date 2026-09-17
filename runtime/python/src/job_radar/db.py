@@ -7,7 +7,7 @@ from typing import Any, Iterable
 
 from job_radar.config import dumps_tags, loads_tags
 from job_radar.models import Offer
-from job_radar.schema_v2 import SCHEMA_V2
+from job_radar.schema_v2 import SCHEMA_V2, ensure_feedback_learning_schema
 
 SCHEMA = SCHEMA_V2
 
@@ -23,6 +23,7 @@ class Database:
         self._conn = sqlite3.connect(self.path)
         self._conn.row_factory = sqlite3.Row
         self._conn.executescript(SCHEMA)
+        ensure_feedback_learning_schema(self._conn)
         self._conn.commit()
 
     def close(self) -> None:

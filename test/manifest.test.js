@@ -27,6 +27,6 @@ describe('dsh-job-researcher manifest', () => {
     const mod = await import(join(ROOT, 'src/index.js'))
     assert.equal(mod.name, 'dsh-job-researcher')
     assert.equal(typeof mod.apply, 'function')
-    assert.deepEqual(mod.inject, [])
+    assert.deepEqual(mod.inject, ['secrets', 'timer'])
   })
 })
