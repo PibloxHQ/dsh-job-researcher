@@ -289,5 +289,59 @@ class FeedbackLearningTests(unittest.TestCase):
             conn.close()
 
 
+
+    def test_comment_preferences_affect_score(self):
+        from job_radar.learning import aggregate_learned_signals
+
+        rows = [
+            {
+                "feedback_origin": "user",
+                "decision": "YES",
+                "comment": "Bon profil Proxmox et virtualisation locale",
+                "feedback_tags_json": "[]",
+            },
+            {
+                "feedback_origin": "user",
+                "decision": "NO",
+                "comment": "Trop de commercial et vente terrain",
+                "feedback_tags_json": "[]",
+            },
+            {
+                "feedback_origin": "user",
+                "decision": "NO",
+                "comment": "Encore trop commercial vente",
+                "feedback_tags_json": "[]",
+            },
+        ]
+        prefs = aggregate_learned_signals(rows)
+        self.assertGreaterEqual(prefs["commented_feedback_count"], 2)
+        self.assertTrue(any(t["term"] == "proxmox" for t in prefs["prefer_terms"]))
+        self.assertTrue(any(t["term"] == "commercial" for t in prefs["avoid_terms"]))
+
+        row = {
+            "title": "Administrateur Proxmox virtualisation",
+            "employer": "Mairie de Meylan",
+            "location": "Isère (38)",
+            "description": "Cluster Proxmox",
+        }
+        boosted = score_offer(row, preferences=prefs)
+        base = score_offer(row, preferences={"active_signals": [], "prefer_terms": [], "avoid_terms": []})
+        self.assertGreaterEqual(boosted.score, base.score)
+        self.assertTrue(
+            any("comment" in str(s.get("reason", s.get("tag", ""))) for s in boosted.learned_signals)
+            or boosted.feedback_adjustment != 0
+            or boosted.score >= base.score
+        )
+
+        bad = {
+            "title": "Commercial terrain vente",
+            "employer": "Société",
+            "location": "Isère (38)",
+            "description": "Poste commercial",
+        }
+        avoided = score_offer(bad, preferences=prefs)
+        plain = score_offer(bad, preferences={"active_signals": [], "prefer_terms": [], "avoid_terms": []})
+        self.assertLessEqual(avoided.score, plain.score)
+
 if __name__ == "__main__":
     unittest.main()

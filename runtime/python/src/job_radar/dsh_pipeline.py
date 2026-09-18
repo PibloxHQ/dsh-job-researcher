@@ -186,22 +186,35 @@ def _apply_triage(
     *,
     limit: int = 500,
     search_config: dict[str, Any] | None = None,
+    force: bool = False,
+    offset: int = 0,
 ) -> dict[str, Any]:
     db = Database(db_path)
     preferences = load_learned_preferences(db._conn)
-    # REV-03: only unversioned / legacy / OLD versions — never re-queue SCORE_VERSION.
-    rows = db._conn.execute(
-        """
-        SELECT * FROM offers
-        WHERE score_version IS NULL
-           OR score_version = ''
-           OR score_version = ?
-           OR score_version != ?
-        ORDER BY id ASC
-        LIMIT ?
-        """,
-        (LEGACY_SCORE_VERSION, SCORE_VERSION, limit),
-    ).fetchall()
+    # force=True (rescore): refresh every offer with current tag+comment learning.
+    # Otherwise: only unversioned / legacy / older versions (never re-queue SCORE_VERSION).
+    if force:
+        rows = db._conn.execute(
+            """
+            SELECT * FROM offers
+            ORDER BY id ASC
+            LIMIT ? OFFSET ?
+            """,
+            (limit, max(0, int(offset))),
+        ).fetchall()
+    else:
+        rows = db._conn.execute(
+            """
+            SELECT * FROM offers
+            WHERE score_version IS NULL
+               OR score_version = ''
+               OR score_version = ?
+               OR score_version != ?
+            ORDER BY id ASC
+            LIMIT ?
+            """,
+            (LEGACY_SCORE_VERSION, SCORE_VERSION, limit),
+        ).fetchall()
     updated = 0
     profile_rev = None
     if isinstance(search_config, dict):
@@ -258,18 +271,22 @@ def _apply_triage(
                 (system_reason, d["id"]),
             )
         updated += 1
-    remaining = int(
-        db._conn.execute(
-            """
-            SELECT COUNT(*) FROM offers
-            WHERE score_version IS NULL
-               OR score_version = ''
-               OR score_version = ?
-               OR score_version != ?
-            """,
-            (LEGACY_SCORE_VERSION, SCORE_VERSION),
-        ).fetchone()[0]
-    )
+    if force:
+        total = int(db._conn.execute("SELECT COUNT(*) FROM offers").fetchone()[0])
+        remaining = max(0, total - (max(0, int(offset)) + updated))
+    else:
+        remaining = int(
+            db._conn.execute(
+                """
+                SELECT COUNT(*) FROM offers
+                WHERE score_version IS NULL
+                   OR score_version = ''
+                   OR score_version = ?
+                   OR score_version != ?
+                """,
+                (LEGACY_SCORE_VERSION, SCORE_VERSION),
+            ).fetchone()[0]
+        )
     db._conn.commit()
     db.close()
     return {
@@ -410,15 +427,34 @@ def run_pipeline(
                 )
             conn.commit()
 
-        triage = _apply_triage(
-            settings.db_path,
-            limit=triage_limit,
-            search_config=search_config,
-        )
-
         if rescore_only:
-            status = "ok" if int(triage.get("triaged") or 0) >= 0 else "error"
+            total_triaged = 0
+            loops = 0
+            offset = 0
+            while loops < 50:
+                loops += 1
+                triage = _apply_triage(
+                    settings.db_path,
+                    limit=triage_limit,
+                    search_config=search_config,
+                    force=True,
+                    offset=offset,
+                )
+                batch = int(triage.get("triaged") or 0)
+                total_triaged += batch
+                offset += batch
+                if int(triage.get("remaining") or 0) <= 0 or batch <= 0:
+                    break
+            triage["triaged"] = total_triaged
+            triage["rescore_loops"] = loops
+            status = "ok" if total_triaged >= 0 else "error"
         else:
+            triage = _apply_triage(
+                settings.db_path,
+                limit=triage_limit,
+                search_config=search_config,
+                force=False,
+            )
             ok_sources = sum(1 for r in source_results if r.get("ok"))
             status = "ok" if ok_sources > 0 else "error"
             if ok_sources > 0 and offers_failed > 0:

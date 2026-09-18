@@ -34,6 +34,17 @@ async function readJson(req) {
   return JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}')
 }
 
+function tryEnqueueRescore(getScheduler) {
+  try {
+    const sched = typeof getScheduler === 'function' ? getScheduler() : null
+    if (!sched || typeof sched.enqueue !== 'function') return { ok: false, skipped: true }
+    const kickoff = sched.enqueue('rescore', { sources: [] })
+    return kickoff && typeof kickoff === 'object' ? kickoff : { ok: true, accepted: true }
+  } catch (err) {
+    return { ok: false, error: String(err.message || err) }
+  }
+}
+
 function probeSecretStatus(secrets) {
   const secretStatus = {}
   for (const k of SECRET_KEYS) {
@@ -451,10 +462,12 @@ export function registerHttpRoutes(webServer, {
               ? body.comment
               : undefined
           const offer = getStore().setDecision(id, body.decision, comment, { tags })
+          const rescore = tryEnqueueRescore(getScheduler)
           return sendJson(res, 200, {
             ok: true,
             offer,
             learning: getStore().learningSummary(),
+            rescore,
           })
         }
         if (action === 'feedback') {
@@ -464,10 +477,12 @@ export function registerHttpRoutes(webServer, {
             tags: body.tags ?? body.feedback_tags,
             decision: body.decision,
           })
+          const rescore = tryEnqueueRescore(getScheduler)
           return sendJson(res, 200, {
             ok: true,
             offer,
             learning: getStore().learningSummary(),
+            rescore,
           })
         }
         if (action === 'application') {

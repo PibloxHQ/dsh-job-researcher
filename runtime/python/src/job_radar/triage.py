@@ -246,6 +246,7 @@ def score_offer(
         base_score=base_score,
         match_flags=match_flags,
         preferences=preferences,
+        offer_blob_folded=blob_all,
     )
     if adjustment:
         reasons.append(f"feedback_adjustment={adjustment:+d}")

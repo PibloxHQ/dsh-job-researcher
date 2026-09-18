@@ -3,10 +3,80 @@
  * Learn only from feedback_origin=user; never from legacy system notes.
  */
 
-export const FEEDBACK_SCORE_VERSION = 'v4-feedback'
+export const FEEDBACK_SCORE_VERSION = 'v5-feedback'
 export const LEARN_THRESHOLD = 2
 export const PER_TAG_DELTA_CAP = 1
 export const TOTAL_FEEDBACK_CAP = 2
+export const COMMENT_TERM_THRESHOLD = 2
+export const COMMENT_TERM_MIN_LEN = 4
+export const COMMENT_PER_TERM_CAP = 1
+export const COMMENT_TOTAL_CAP = 1
+
+const COMMENT_STOPWORDS = new Set([
+  'le','la','les','un','une','des','de','du','et','ou','a','au','aux','pour','avec','sans','dans','sur','sous','par','qui','que','quoi','dont','est','sont','etre','avoir','fait','faire','plus','moins','tres','trop','pas','non','oui','bien','aussi','comme','tout','tous','toute','toutes','cette','cet','ces','mon','ma','mes','ton','ta','tes','son','sa','ses','notre','nos','votre','vos','leur','leurs','je','tu','il','elle','on','nous','vous','ils','elles','me','te','se','y','en','ce','cela','offre','offres','poste','postes','emploi','job','annonce','candidature','retour','commentaire','interessant','interesse','interessante','peut','etre','donc','car','mais','alors','ainsi','entre','chez','vers','apres','avant','encore','deja','toujours','jamais','ici','the','and','for','with','from','this','that','have','will','would','could','should','about','into','over','under','connaissance','connaissances','experience','experiences','formation','formations','gestion','technique','techniques','developpement','developper','environnement','environnements','fonction','fonctions','titulaire','titulaires','client','clients','equipe','equipes','service','services','mission','missions','profil','profils','competence','competences','qualite','niveau','bac','ecole','elements','correspond','recherche','recrute','contrat','cdi','cdd','salaire','cv','http','https','www','gouv','depublier','terminee','califications','qualifications','hospitaliere','infra','reseau','systeme','informatique','administration',
+])
+
+export function tokenizeComment(text) {
+  let folded = String(text || '')
+    .normalize('NFD')
+    .replace(/\p{M}/gu, '')
+    .toLowerCase()
+  folded = folded.replace(/https?:\/\/\S+/g, ' ').replace(/www\.\S+/g, ' ')
+  const out = []
+  const seen = new Set()
+  const re = /[a-z0-9][a-z0-9\-]{2,}/g
+  let m
+  while ((m = re.exec(folded))) {
+    const tok = m[0].replace(/^-+|-+$/g, '')
+    if (tok.length < COMMENT_TERM_MIN_LEN) continue
+    if (tok.length > 28) continue
+    if (COMMENT_STOPWORDS.has(tok)) continue
+    if (/^\d+$/.test(tok)) continue
+    if (['http', 'https', 'www', 'html', 'mailto'].includes(tok)) continue
+    if ((tok.match(/\d/g) || []).length >= 3) continue
+    if (seen.has(tok)) continue
+    seen.add(tok)
+    out.push(tok)
+  }
+  return out
+}
+
+export function aggregateCommentPreferences(rows, { threshold = COMMENT_TERM_THRESHOLD } = {}) {
+  const prefer = Object.create(null)
+  const avoid = Object.create(null)
+  let commented = 0
+  for (const row of rows || []) {
+    if ((row.feedback_origin || '') !== 'user') continue
+    const comment = String(row.comment || '').trim()
+    if (!comment) continue
+    commented += 1
+    const decision = String(row.decision || 'UNREVIEWED').toUpperCase()
+    const tokens = tokenizeComment(comment)
+    const weight = decision === 'YES' ? 2 : decision === 'NO' ? 1 : 1
+    const bucket = decision === 'NO' ? avoid : prefer
+    for (const tok of tokens) bucket[tok] = (bucket[tok] || 0) + weight
+  }
+  const preferTerms = []
+  const avoidTerms = []
+  for (const tok of Object.keys(prefer).sort()) {
+    const net = (prefer[tok] || 0) - (avoid[tok] || 0)
+    if (net < threshold) continue
+    preferTerms.push({ term: tok, count: prefer[tok], delta: COMMENT_PER_TERM_CAP, polarity: 'prefer' })
+  }
+  for (const tok of Object.keys(avoid).sort()) {
+    const net = (avoid[tok] || 0) - (prefer[tok] || 0)
+    if (net < threshold) continue
+    avoidTerms.push({ term: tok, count: avoid[tok], delta: -COMMENT_PER_TERM_CAP, polarity: 'avoid' })
+  }
+  return {
+    commented_feedback_count: commented,
+    prefer_terms: preferTerms.slice(0, 40),
+    avoid_terms: avoidTerms.slice(0, 40),
+    comment_term_threshold: threshold,
+    comment_total_cap: COMMENT_TOTAL_CAP,
+  }
+}
+
 
 /** @type {ReadonlyArray<{ id: string, delta: number, actionable: boolean, labelFr: string, labelEn: string }>} */
 export const FEEDBACK_TAGS = Object.freeze([
@@ -170,6 +240,7 @@ export function aggregateLearnedSignals(rows, { threshold = LEARN_THRESHOLD } = 
     else pending.push(entry)
   }
 
+  const comments = aggregateCommentPreferences(rows)
   return {
     version: FEEDBACK_SCORE_VERSION,
     threshold,
@@ -178,6 +249,7 @@ export function aggregateLearnedSignals(rows, { threshold = LEARN_THRESHOLD } = 
     user_feedback_count: userFeedbackCount,
     active_signals: active,
     pending_signals: pending,
+    ...comments,
   }
 }
 
@@ -189,7 +261,7 @@ function clamp(n, lo, hi) {
 export const FEEDBACK_UI_COPY_FR = Object.freeze({
   whyHeading: 'Pourquoi ce choix ?',
   whyHelper:
-    'Explique pourquoi tu postules, refuses ou hésites. Ce retour affine le classement futur sans envoyer de candidature.',
+    'Les tags et ton commentaire libre influencent le classement (après enregistrement). Pas d’envoi de candidature.',
   saveFeedback: 'Enregistrer le retour',
   systemScore: 'Explication du score (système)',
   toPrepare: 'À préparer',

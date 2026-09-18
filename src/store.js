@@ -649,7 +649,7 @@ export function openStore(dataDir, { now } = {}) {
       const rows = db
         .prepare(
           `
-          SELECT feedback_origin, feedback_tags_json
+          SELECT feedback_origin, feedback_tags_json, comment, decision
           FROM offer_feedback
           WHERE COALESCE(feedback_origin, '') = 'user'
         `,

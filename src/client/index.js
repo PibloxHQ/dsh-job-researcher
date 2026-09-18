@@ -75,9 +75,10 @@ window.__ModuleLoader__.load({
           'Application state is separate from interest. Starts empty until you begin prep. Never auto-applies. Mark submitted only after you personally submitted outside DSH.',
         whyHeading: 'Why this choice?',
         whyHelper:
-          'Explain why you are interested, declining, or unsure. This feedback improves future ranking without submitting an application.',
+          'Explain with tags and a free comment — both update ranking after save (no application sent).',
         saveFeedback: 'Save feedback',
-        feedbackSaved: 'Feedback saved',
+        feedbackSaved: 'Feedback saved — ranking updating…',
+        rankingUpdating: 'Ranking updating in background…',
         systemScore: 'Score explanation (system)',
         learning: 'Learning',
         prevPage: 'Previous page',
@@ -183,9 +184,10 @@ window.__ModuleLoader__.load({
           'État candidature ≠ intérêt. Vide tant que tu n’as pas démarré la prep. Jamais d’envoi auto. Envoyée seulement après soumission manuelle hors DSH.',
         whyHeading: 'Pourquoi ce choix ?',
         whyHelper:
-          'Explique pourquoi tu postules, refuses ou hésites. Ce retour affine le classement futur sans envoyer de candidature.',
+          'Les tags et ton commentaire libre influencent le classement après enregistrement (pas d’envoi de candidature).',
         saveFeedback: 'Enregistrer le retour',
-        feedbackSaved: 'Retour enregistré',
+        feedbackSaved: 'Retour enregistré — classement en cours de mise à jour…',
+        rankingUpdating: 'Classement en cours de mise à jour…',
         systemScore: 'Explication du score (système)',
         learning: 'Apprentissage',
         prevPage: 'Page précédente',
@@ -1919,6 +1921,7 @@ window.__ModuleLoader__.load({
       const closeBtnRef = useRef(null)
       const bodyRef = useRef(null)
       const previousActiveRef = useRef(null)
+      const onCloseRef = useRef(onClose)
       const [showAllTags, setShowAllTags] = useState(false)
       const [copiedMsg, setCopiedMsg] = useState('')
       const rowBusy = selected ? Boolean(offerBusy?.[selected.id]) : false
@@ -1929,6 +1932,12 @@ window.__ModuleLoader__.load({
       const prevRow = idx > 0 ? rows[idx - 1] : null
       const nextRow = idx >= 0 && idx < rows.length - 1 ? rows[idx + 1] : null
 
+      useEffect(() => {
+        onCloseRef.current = onClose
+      }, [onClose])
+
+      // Focus Fermer only when the offer identity changes — not on every
+      // parent re-render (comment keystrokes recreate onClose and stole focus).
       useEffect(() => {
         if (!selected) return undefined
         previousActiveRef.current = document.activeElement
@@ -1944,7 +1953,7 @@ window.__ModuleLoader__.load({
         const onKey = (event) => {
           if (event.key !== 'Escape') return
           event.stopPropagation()
-          onClose()
+          onCloseRef.current?.()
         }
         window.addEventListener('keydown', onKey, false)
         return () => {
@@ -1960,7 +1969,8 @@ window.__ModuleLoader__.load({
             }
           }
         }
-      }, [selected?.id, onClose])
+        // eslint-disable-next-line react-hooks/exhaustive-deps -- selected.id only
+      }, [selected?.id])
 
       useEffect(() => {
         setShowAllTags(false)
@@ -3067,7 +3077,16 @@ window.__ModuleLoader__.load({
                       jsx('span', { children: t('learning') }),
                       jsx('strong', {
                         children: learning
-                          ? `${learning.user_feedback_count || 0} retours`
+                          ? `${learning.user_feedback_count || 0} retours` +
+                            (learning.prefer_terms?.length || learning.avoid_terms?.length
+                              ? ` · ${
+                                  (learning.prefer_terms?.length || 0) +
+                                  (learning.avoid_terms?.length || 0)
+                                } termes`
+                              : '') +
+                            (learning.active_signals?.length
+                              ? ` · ${learning.active_signals.length} tags actifs`
+                              : '')
                           : '—',
                       }),
                     ],
