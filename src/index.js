@@ -22,8 +22,9 @@ import { runBootstrap } from './bootstrap.js'
 
 export const name = PLUGIN_ID
 /** Credential plane required — materialize when FT enabled (Secrets Boundary v1.1).
- *  `timer` required for ctx.interval (Cordis); without it apply throws and kills the whole web profile. */
-export const inject = ['secrets', 'timer']
+ *  `timer` required for ctx.interval (Cordis); without it apply throws and kills the whole web profile.
+ *  `observability` for job lifecycle events (FIX-5). */
+export const inject = ['secrets', 'timer', 'observability']
 
 /**
  * @param {import('@deepseek-ai/cordis').Context} ctx

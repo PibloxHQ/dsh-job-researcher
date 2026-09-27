@@ -142,6 +142,19 @@ export function startScheduler(ctx, {
       ctx.logger?.info?.(
         `dsh-job-researcher: pipeline start trigger=${triggerType} sources=${sources.join(',')} secrets=${JSON.stringify(secretStatus)}`,
       )
+
+      // FIX-5: emit job.run.started
+      ctx.observability?.emit?.('job.run.started', {
+        trigger_type: triggerType,
+        run_id: runRow?.id ?? null,
+        sources,
+        at: new Date().toISOString(),
+      }, {
+        correlation_id: runRow?.id ?? null,
+        source: 'dsh-job-researcher',
+        execution_plane: 'scheduler',
+      })
+
       const result = await runPipelineProcess({
         dataDir,
         env,
@@ -174,6 +187,22 @@ export function startScheduler(ctx, {
         const cron = resolveCron(store, cronExpr)
         if (cron) ensureNextDue(store, cron)
       }
+
+      // FIX-5: emit job.run.succeeded
+      ctx.observability?.emit?.('job.run.succeeded', {
+        trigger_type: triggerType,
+        run_id: result.run_id ?? runRow?.id ?? null,
+        offers_seen: result.offers_seen ?? 0,
+        offers_new: result.offers_new ?? 0,
+        offers_updated: result.offers_updated ?? 0,
+        offers_failed: result.offers_failed ?? 0,
+        at: new Date().toISOString(),
+      }, {
+        correlation_id: result.run_id ?? runRow?.id ?? null,
+        source: 'dsh-job-researcher',
+        execution_plane: 'scheduler',
+      })
+
       ctx.logger?.info?.(
         `dsh-job-researcher: pipeline done status=${result.status} run_id=${result.run_id} new=${result.offers_new}`,
       )
@@ -181,18 +210,31 @@ export function startScheduler(ctx, {
     } catch (err) {
       lastError = String(err?.message || err)
       ctx.logger?.error?.(`dsh-job-researcher: pipeline failed: ${lastError}`)
+
+      // FIX-5: emit job.run.failed
+      ctx.observability?.emit?.('job.run.failed', {
+        trigger_type: triggerType,
+        run_id: runRow?.id ?? null,
+        error: String(err?.message || err).slice(0, 800),
+        at: new Date().toISOString(),
+      }, {
+        correlation_id: runRow?.id ?? null,
+        source: 'dsh-job-researcher',
+        execution_plane: 'scheduler',
+      })
+
       try {
         if (runRow?.id && existsSync(resolveDbPath(dataDir))) {
           getStore()?.updateRun?.(runRow.id, {
             status: 'failed',
             finished_at: new Date().toISOString().replace(/\.\d{3}Z$/, 'Z'),
-            error_summary: lastError.slice(0, 800),
+            error_summary: String(err?.message || err).slice(0, 800),
           })
         }
       } catch {
         /* ignore */
       }
-      return { ok: false, code: 'pipeline_error', error: lastError }
+      return { ok: false, code: 'pipeline_error', error: String(err?.message || err) }
     }
   }
 
