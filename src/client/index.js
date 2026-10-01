@@ -3799,7 +3799,8 @@ window.__ModuleLoader__.load({
     }
 
     exports.apply = apply
-    exports.inject = ['slots', 'locale', 'layout', 'settingsScope']
+    // DSH ≥ 0.2: settingsScope removed (was unused hard inject that blocked boot).
+    exports.inject = ['slots', 'locale', 'layout']
     exports.JobResearcherPanel = JobResearcherPanel
     exports.JobResearcherSettings = JobResearcherSettings
     exports.JobResearcherIcon = JobResearcherIcon

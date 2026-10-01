@@ -1,6 +1,6 @@
 {
   "name": "dsh-job-researcher",
-  "version": "0.2.0-dev",
+  "version": "0.2.0",
   "description": "DSH Job Researcher \u2014 primary job-search runtime (Python worker + Settings UI)",
   "type": "module",
   "main": "src/index.js",

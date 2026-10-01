@@ -53,7 +53,7 @@ describe('client feedback / DSH token contract', () => {
     assert.match(src, /'data-testid':\s*'job-researcher-settings'/)
     assert.match(src, /'data-testid':\s*'job-researcher-needs-setup'/)
     assert.match(src, /settings\.job-researcher/)
-    assert.match(src, /settingsScope/)
+    assert.match(src, /exports\.inject = \['slots', 'locale', 'layout'\]/)
   })
 
   it('opens offer detail in a body-portaled modal popup', () => {
