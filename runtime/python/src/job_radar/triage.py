@@ -84,7 +84,6 @@ STRONG_ROLE_TOKENS = (
     "exploitant",
     "exploitation",
     "sre",
-    "cloud",
     "infrastructur",
     "ingenieur systeme",
     "ingenieur reseau",
@@ -201,7 +200,7 @@ def score_offer(
     tags = _row_tags(row)
     blob_title = fold(title)
     blob_all = fold(f"{title} | {employer} | {location} | {desc} | {contract}")
-    it_context = is_it_offer(title, skills=desc)
+    it_context = is_it_offer(title)
 
     score = 0
     reasons: list[str] = []
@@ -232,7 +231,7 @@ def score_offer(
 
     # Role fit
     role_blob = fold(f"{title} | {desc}") if it_context else blob_title
-    strong = [t for t in STRONG_ROLE_TOKENS if fold(t) in role_blob]
+    strong = [t for t in STRONG_ROLE_TOKENS if it_context and fold(t) in role_blob]
     if strong:
         score += 2
         strong_hit = True
@@ -288,9 +287,10 @@ def score_offer(
             reasons.append(f"learned:{sig['tag']}({sig['delta']:+d})")
 
     score = final_score
-    if score >= 3:
+    role_relevant = strong_hit or support_hit
+    if score >= 3 and role_relevant:
         verdict = "interested"
-    elif score >= 1:
+    elif score >= 1 and role_relevant:
         verdict = "maybe"
     else:
         verdict = "skip"
