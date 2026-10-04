@@ -290,6 +290,26 @@ class FeedbackLearningTests(unittest.TestCase):
 
 
 
+
+    def test_generic_hr_terms_do_not_become_preferences(self):
+        prefs = aggregate_learned_signals(
+            [
+                {
+                    "feedback_origin": "user",
+                    "decision": "NO",
+                    "comment": "Vous justifiez de cinq ans d'expérience",
+                    "feedback_tags_json": "[]",
+                },
+                {
+                    "feedback_origin": "user",
+                    "decision": "NO",
+                    "comment": "Vous justifiez d'une solide expérience",
+                    "feedback_tags_json": "[]",
+                },
+            ]
+        )
+        self.assertFalse(any(t["term"] == "justifiez" for t in prefs["avoid_terms"]))
+
     def test_comment_preferences_affect_score(self):
         from job_radar.learning import aggregate_learned_signals
 
