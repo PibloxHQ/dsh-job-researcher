@@ -59,6 +59,54 @@ def test_unknown_town_no_role_is_skip():
     assert tr.verdict == "skip"
 
 
+
+def test_student_negation_in_description_is_not_penalized():
+    tr = score_offer(
+        _row(
+            "Ingénieur Planificateur (H/F)",
+            "PARLYM",
+            "38 - Grenoble",
+            "Expérience d'au moins 6 ans sur un poste similaire (hors alternance ou stage)",
+        )
+    )
+    assert tr.base_score == 2
+    assert not any("alternance/stage" in reason for reason in tr.reasons)
+
+
+def test_generic_support_prose_does_not_create_it_role_fit():
+    tr = score_offer(
+        _row(
+            "INGÉNIEUR SM QSE MULTI-SITES (F/H)",
+            "Industrie",
+            "38 - Isle-d'Abeau",
+            "Animation & Support QSE et système documentaire",
+        )
+    )
+    assert not any("support/assistance" in reason for reason in tr.reasons)
+    assert tr.verdict == "skip"
+
+
+def test_normalized_geo_tag_can_supply_corridor_signal():
+    row = _row("Technicien informatique", "Collectivité", "Isère | 38")
+    row["tags"] = '["geo_preferred"]'
+    tr = score_offer(row)
+    assert tr.base_score >= 2
+    assert any("signal géo normalisé" in reason for reason in tr.reasons)
+
+
+def test_embedded_software_role_is_detected():
+    tr = score_offer(
+        _row(
+            "Ingénieur de développement logiciel embarqué (H/F)",
+            "Atos",
+            "38 - Grenoble",
+            "Développement de fonctions logicielles et protocoles réseau",
+        )
+    )
+    assert tr.verdict == "interested"
+    assert any("métier infra/dev" in reason for reason in tr.reasons)
+
+
 def test_first_seen_ids_not_required():
     # scoring must not depend on tags/interest columns
     tr = score_offer(_row("Technicien d'exploitation", "Mairie de Sassenage"))
