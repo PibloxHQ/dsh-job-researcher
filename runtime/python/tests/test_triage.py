@@ -134,6 +134,23 @@ def test_cloud_sales_title_is_not_devops_fit():
     assert not any("métier infra/dev" in reason for reason in tr.reasons)
 
 
+
+@pytest.mark.parametrize(
+    "title",
+    [
+        "Ingénieur Système Windows, Virtualisation, Sauvegarde et Stockage (H/F)",
+        "TECH LEAD / LEAD DEVELOPER PHP SYMFONY (H/F)",
+        "Ingénieur DevSecOps H/F",
+        "Architecte Data (H/F)",
+        "Ingénieur Test Automatisé H/F",
+    ],
+)
+def test_explicit_it_role_titles_remain_relevant(title):
+    tr = score_offer(_row(title, "Entreprise", "38 - Grenoble"))
+    assert tr.verdict in ("maybe", "interested")
+    assert any("métier infra/dev" in reason for reason in tr.reasons)
+
+
 def test_first_seen_ids_not_required():
     # scoring must not depend on tags/interest columns
     tr = score_offer(_row("Technicien d'exploitation", "Mairie de Sassenage"))
