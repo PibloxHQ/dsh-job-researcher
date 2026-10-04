@@ -15,12 +15,13 @@ preferences behaves as before (base score only).
 
 from __future__ import annotations
 
+import json
 import re
 from dataclasses import dataclass, field
 from typing import Any
 
 from job_radar.learning import SCORE_VERSION, apply_learned_adjustment
-from job_radar.normalize import fold
+from job_radar.normalize import fold, is_it_offer
 
 
 def _has_word(text: str, token: str) -> bool:
@@ -83,7 +84,6 @@ STRONG_ROLE_TOKENS = (
     "exploitant",
     "exploitation",
     "sre",
-    "cloud",
     "infrastructur",
     "ingenieur systeme",
     "ingenieur reseau",
@@ -92,6 +92,22 @@ STRONG_ROLE_TOKENS = (
     "full stack",
     "developpeur",
     "developpeuse",
+    "developpement logiciel",
+    "logiciel embarque",
+    "ingenieur logiciel",
+    "informatique industrielle",
+    "devsecops",
+    "tech lead",
+    "lead developer",
+    "lead developpeur",
+    "architecte data",
+    "ingenieur test",
+    "test automatise",
+    "informatique",
+    "java",
+    "devop",
+    "testeur",
+    "modern workplace",
 )
 # Support / helpdesk / application-level: still infra-adjacent → +1.
 SUPPORT_ROLE_TOKENS = (
@@ -165,6 +181,24 @@ def _extract_town(title: str, employer: str, location: str) -> str:
     return ""
 
 
+def _row_tags(row: dict[str, Any]) -> set[str]:
+    raw = row.get("tags") or []
+    if isinstance(raw, str):
+        try:
+            raw = json.loads(raw)
+        except json.JSONDecodeError:
+            raw = [raw]
+    if not isinstance(raw, list):
+        return set()
+    return {fold(str(tag)).strip() for tag in raw if str(tag).strip()}
+
+
+def _student_track_hit(title: str, contract: str) -> bool:
+    """Only score explicit student-track identity, not prose such as 'hors alternance'."""
+    identity_blob = fold(f"{title} | {contract}")
+    return any(fold(token) in identity_blob for token in STUDENT_TOKENS)
+
+
 def score_offer(
     row: dict[str, Any],
     preferences: dict[str, Any] | None = None,
@@ -175,8 +209,14 @@ def score_offer(
     desc = row.get("description") or ""
     contract = row.get("contract_type") or ""
     town = _extract_town(title, employer, location)
+    tags = _row_tags(row)
     blob_title = fold(title)
     blob_all = fold(f"{title} | {employer} | {location} | {desc} | {contract}")
+    explicit_role_title = any(
+        fold(token) in blob_title
+        for token in (*STRONG_ROLE_TOKENS, *SUPPORT_ROLE_TOKENS)
+    )
+    it_context = is_it_offer(title) or explicit_role_title
 
     score = 0
     reasons: list[str] = []
@@ -189,10 +229,15 @@ def score_offer(
     contract_bad_hit = False
 
     # Geo
-    if town and any(_has_word(town, t) for t in CORRIDOR_TOKENS):
+    if (
+        town and any(_has_word(town, fold(t)) for t in CORRIDOR_TOKENS)
+    ) or "geo_preferred" in tags or "geo_grenoble" in tags:
         score += 2
         corridor = True
-        reasons.append(f"corridor Grenoble (commune '{town}')")
+        reasons.append(
+            f"corridor Grenoble (commune '{town}')" if town
+            else "corridor Grenoble (signal géo normalisé)"
+        )
     elif any(_has_word(blob_all, t) for t in FAR_TOKENS):
         score -= 1
         far = True
@@ -201,12 +246,16 @@ def score_offer(
         reasons.append("commune indéterminée → géo à confirmer")
 
     # Role fit
-    strong = [t for t in STRONG_ROLE_TOKENS if t in blob_all]
+    role_blob = fold(f"{title} | {desc}") if it_context else blob_title
+    strong = [t for t in STRONG_ROLE_TOKENS if it_context and fold(t) in role_blob]
     if strong:
         score += 2
         strong_hit = True
         reasons.append("métier infra/dev ({}".format(", ".join(sorted(set(strong))[:3])) + ")")
-    support = [t for t in SUPPORT_ROLE_TOKENS if t in blob_all]
+    support = [
+        t for t in SUPPORT_ROLE_TOKENS
+        if it_context and fold(t) in blob_title
+    ]
     if support:
         score += 1
         support_hit = True
@@ -220,7 +269,7 @@ def score_offer(
         reasons.append(f"employeur: {employer}")
 
     # Student track → skip unless strong infra fit and full-time.
-    if any(fold(t) in blob_all for t in STUDENT_TOKENS):
+    if _student_track_hit(title, contract):
         score -= 2
         student_hit = True
         reasons.append("alternance/stage (hors parcours)")
@@ -254,9 +303,10 @@ def score_offer(
             reasons.append(f"learned:{sig['tag']}({sig['delta']:+d})")
 
     score = final_score
-    if score >= 3:
+    role_relevant = strong_hit or support_hit
+    if score >= 3 and role_relevant:
         verdict = "interested"
-    elif score >= 1:
+    elif score >= 1 and role_relevant:
         verdict = "maybe"
     else:
         verdict = "skip"
