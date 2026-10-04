@@ -206,7 +206,7 @@ _COMMENT_STOPWORDS = frozenset(
         "depublier", "terminee", "termine", "califications", "qualifications",
         "qualification", "hospitaliere", "hospitalier", "infra", "reseau",
         "reseaux", "systeme", "systemes", "informatique", "administratif",
-        "administration",
+        "administration", "justifiez", "justifie", "justifier",
     }
 )
 
