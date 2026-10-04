@@ -3,7 +3,7 @@
  * Learn only from feedback_origin=user; never from legacy system notes.
  */
 
-export const FEEDBACK_SCORE_VERSION = 'v5-feedback'
+export const FEEDBACK_SCORE_VERSION = 'v6-feedback'
 export const LEARN_THRESHOLD = 2
 export const PER_TAG_DELTA_CAP = 1
 export const TOTAL_FEEDBACK_CAP = 2
@@ -13,7 +13,7 @@ export const COMMENT_PER_TERM_CAP = 1
 export const COMMENT_TOTAL_CAP = 1
 
 const COMMENT_STOPWORDS = new Set([
-  'le','la','les','un','une','des','de','du','et','ou','a','au','aux','pour','avec','sans','dans','sur','sous','par','qui','que','quoi','dont','est','sont','etre','avoir','fait','faire','plus','moins','tres','trop','pas','non','oui','bien','aussi','comme','tout','tous','toute','toutes','cette','cet','ces','mon','ma','mes','ton','ta','tes','son','sa','ses','notre','nos','votre','vos','leur','leurs','je','tu','il','elle','on','nous','vous','ils','elles','me','te','se','y','en','ce','cela','offre','offres','poste','postes','emploi','job','annonce','candidature','retour','commentaire','interessant','interesse','interessante','peut','etre','donc','car','mais','alors','ainsi','entre','chez','vers','apres','avant','encore','deja','toujours','jamais','ici','the','and','for','with','from','this','that','have','will','would','could','should','about','into','over','under','connaissance','connaissances','experience','experiences','formation','formations','gestion','technique','techniques','developpement','developper','environnement','environnements','fonction','fonctions','titulaire','titulaires','client','clients','equipe','equipes','service','services','mission','missions','profil','profils','competence','competences','qualite','niveau','bac','ecole','elements','correspond','recherche','recrute','contrat','cdi','cdd','salaire','cv','http','https','www','gouv','depublier','terminee','califications','qualifications','hospitaliere','infra','reseau','systeme','informatique','administration',
+  'le','la','les','un','une','des','de','du','et','ou','a','au','aux','pour','avec','sans','dans','sur','sous','par','qui','que','quoi','dont','est','sont','etre','avoir','fait','faire','plus','moins','tres','trop','pas','non','oui','bien','aussi','comme','tout','tous','toute','toutes','cette','cet','ces','mon','ma','mes','ton','ta','tes','son','sa','ses','notre','nos','votre','vos','leur','leurs','je','tu','il','elle','on','nous','vous','ils','elles','me','te','se','y','en','ce','cela','offre','offres','poste','postes','emploi','job','annonce','candidature','retour','commentaire','interessant','interesse','interessante','peut','etre','donc','car','mais','alors','ainsi','entre','chez','vers','apres','avant','encore','deja','toujours','jamais','ici','the','and','for','with','from','this','that','have','will','would','could','should','about','into','over','under','connaissance','connaissances','experience','experiences','formation','formations','gestion','technique','techniques','developpement','developper','environnement','environnements','fonction','fonctions','titulaire','titulaires','client','clients','equipe','equipes','service','services','mission','missions','profil','profils','competence','competences','qualite','niveau','bac','ecole','elements','correspond','recherche','recrute','contrat','cdi','cdd','salaire','cv','http','https','www','gouv','depublier','terminee','califications','qualifications','hospitaliere','infra','reseau','systeme','informatique','administration','justifiez','justifie','justifier',
 ])
 
 export function tokenizeComment(text) {
