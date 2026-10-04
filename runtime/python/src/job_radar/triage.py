@@ -108,6 +108,12 @@ STRONG_ROLE_TOKENS = (
     "devop",
     "testeur",
     "modern workplace",
+    "ingenieur cloud",
+    "architecte cloud",
+    "cloud engineer",
+    "data engineer",
+    "data scientist",
+    "ingenieur data",
 )
 # Support / helpdesk / application-level: still infra-adjacent → +1.
 SUPPORT_ROLE_TOKENS = (
