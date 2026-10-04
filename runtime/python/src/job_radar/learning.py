@@ -17,7 +17,7 @@ from typing import Any
 from job_radar.normalize import fold
 
 # Keep in sync with src/feedback.js
-SCORE_VERSION = "v5-feedback"
+SCORE_VERSION = "v6-feedback"
 LEARN_THRESHOLD = 2
 PER_TAG_DELTA_CAP = 1
 TOTAL_FEEDBACK_CAP = 2
