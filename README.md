@@ -44,7 +44,7 @@ Do **not** reinstall on every UI tweak. The repo under `~/dsh-lab/plugins/dsh-jo
 | POST | `/api/job-researcher/bootstrap` | Setup idempotent venv+DB |
 | GET | `/api/job-researcher/sources` | Sources + enabled |
 | POST | `/api/job-researcher/runs` | `202` enqueue (alias `POST /run`) |
-| POST | `/api/job-researcher/rescore` | File triage `v4-feedback` |
+| POST | `/api/job-researcher/rescore` | File triage `v5-feedback` |
 
 Secrets FT : **Settings → Secrets** uniquement (`FT_CLIENT_ID` / `FT_CLIENT_SECRET`). JR n’affiche que présent/manquant.
 
@@ -97,14 +97,14 @@ $DSH_HOME/job-researcher/.venv/bin/python runtime/python/scripts/migrate_db.py \
 
 Prefer **Run now** / scheduled fire from the plugin (materialize path).
 
-## Feedback learning (v4)
+## Feedback learning (schema v4 / scoring v5)
 
 Comments refine **future search/scoring**. Structured tags + optional free text are user feedback (`feedback_origin=user`). Legacy rows where `comment` equalled `offers.notes` are **system score reasons** — migrated to `system_reason` and never used for learning.
 
 | | |
 |--|--|
 | Schema | additive v4 on `offer_feedback` (`system_reason`, `feedback_tags_json`, `feedback_origin`, `feedback_updated_at`) |
-| Score version | `v4-feedback` (base + capped feedback adjustment ≤ ±2) |
+| Score version | `v5-feedback` (base + capped feedback adjustment ≤ ±2) |
 | Learn from | `feedback_origin=user` only · ≥2 confirmations per tag |
 | API | `PATCH …/feedback`, `PATCH …/decision` (tags), `GET …/learning` |
 | UI | « Pourquoi ce choix ? » + tag chips + « Enregistrer le retour » |
