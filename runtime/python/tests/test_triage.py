@@ -143,6 +143,11 @@ def test_cloud_sales_title_is_not_devops_fit():
         "Ingénieur DevSecOps H/F",
         "Architecte Data (H/F)",
         "Ingénieur Test Automatisé H/F",
+        "Expert JAVA H/F",
+        "Senior Azure DevOp F/H",
+        "Testeur fonctionnel F/H",
+        "Technicien spécialisé informatique",
+        "Ingénieur modern workplace H/F",
     ],
 )
 def test_explicit_it_role_titles_remain_relevant(title):
