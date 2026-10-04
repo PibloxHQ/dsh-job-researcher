@@ -96,6 +96,13 @@ STRONG_ROLE_TOKENS = (
     "logiciel embarque",
     "ingenieur logiciel",
     "informatique industrielle",
+    "devsecops",
+    "tech lead",
+    "lead developer",
+    "lead developpeur",
+    "architecte data",
+    "ingenieur test",
+    "test automatise",
 )
 # Support / helpdesk / application-level: still infra-adjacent → +1.
 SUPPORT_ROLE_TOKENS = (
@@ -200,7 +207,11 @@ def score_offer(
     tags = _row_tags(row)
     blob_title = fold(title)
     blob_all = fold(f"{title} | {employer} | {location} | {desc} | {contract}")
-    it_context = is_it_offer(title)
+    explicit_role_title = any(
+        fold(token) in blob_title
+        for token in (*STRONG_ROLE_TOKENS, *SUPPORT_ROLE_TOKENS)
+    )
+    it_context = is_it_offer(title) or explicit_role_title
 
     score = 0
     reasons: list[str] = []
