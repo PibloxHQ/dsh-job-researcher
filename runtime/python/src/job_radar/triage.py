@@ -62,7 +62,7 @@ FAR_TOKENS = (
     "vienne",
     "bourgoin",
     "l'isle-d'abeau",
-    "isle-d-abeau",
+    "isle-d'abeau",
     "la tour-du-pin",
     "tour-du-pin",
     "pont-de-beauvoisin",
