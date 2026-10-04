@@ -148,6 +148,12 @@ def test_cloud_sales_title_is_not_devops_fit():
         "Testeur fonctionnel F/H",
         "Technicien spécialisé informatique",
         "Ingénieur modern workplace H/F",
+        "Ingénieur Cloud H/F",
+        "Architecte Cloud H/F",
+        "Cloud Engineer H/F",
+        "Data Engineer H/F",
+        "Data Scientist H/F",
+        "Ingénieur Data H/F",
     ],
 )
 def test_explicit_it_role_titles_remain_relevant(title):
