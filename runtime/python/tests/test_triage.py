@@ -107,6 +107,33 @@ def test_embedded_software_role_is_detected():
     assert any("métier infra/dev" in reason for reason in tr.reasons)
 
 
+
+def test_location_and_feedback_cannot_make_non_it_role_interested():
+    prefs = {
+        "active_signals": [
+            {"tag": "location_good", "delta": 1, "count": 4, "actionable": True},
+        ]
+    }
+    tr = score_offer(
+        _row("INGENIEUR EN CHARPENTE METALLIQUE / ALLUMINIUM (H/F)", "", "38 - Grenoble"),
+        preferences=prefs,
+    )
+    assert tr.verdict == "skip"
+
+
+def test_cloud_sales_title_is_not_devops_fit():
+    tr = score_offer(
+        _row(
+            "Directeur Grands Comptes - Solutions Cloud (H/F)",
+            "Entreprise",
+            "38 - Grenoble",
+            "Vente de solutions cloud aux grands comptes",
+        )
+    )
+    assert tr.verdict == "skip"
+    assert not any("métier infra/dev" in reason for reason in tr.reasons)
+
+
 def test_first_seen_ids_not_required():
     # scoring must not depend on tags/interest columns
     tr = score_offer(_row("Technicien d'exploitation", "Mairie de Sassenage"))
