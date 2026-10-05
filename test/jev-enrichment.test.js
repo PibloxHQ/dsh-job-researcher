@@ -14,7 +14,7 @@ describe('Jev Career shadow contract', () => {
       score_classification: 'interested',
       score_version: 'v6-feedback',
       score_details: { base_score: 4 },
-    }, { roles: { selected: ['platform'] } })
+    }, { schema_version: 'career-profile.v1', markdown: '## Positionnement\n- platform' })
     assert.equal(request.contract, CAREER_CONTRACT_VERSION)
     assert.equal(request.state.deterministic_score.score, 4)
     assert.ok(request.state.offer.description.length < 20_000)
@@ -22,6 +22,7 @@ describe('Jev Career shadow contract', () => {
     assert.equal(request.questions.candidate_to_job.type, 'score')
     assert.equal(request.questions.dimension_growth_path.type, 'score')
     assert.equal(request.questions.salary_evidence.type, 'noul')
+    assert.equal(request.state.profile.schema_version, 'career-profile.v1')
   })
 
   it('normalizes typed answers and rejects malformed envelopes', () => {

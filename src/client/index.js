@@ -22,6 +22,7 @@ window.__ModuleLoader__.load({
     const ORDER = 20
     const SETTINGS_ORDER = 17
     const SOURCE_OPTIONS = ['csp-filtre', 'et', 'ft']
+    const PROFILE_TEMPLATE = '# Profil candidat\n\n## Identité\n- Nom / prénom: à compléter\n- Localisation: à compléter\n- Mobilité: à compléter\n\n## Positionnement\n- Titres ciblés: à compléter\n- Niveau: à compléter\n- Années d’expérience: à compléter\n\n## Compétences\n### Cœur\n- à compléter\n### Adjacent\n- à compléter\n\n## Expérience\n- Réalisations importantes: à compléter\n- Environnements / secteurs: à compléter\n\n## Préférences\n- Contrats: à compléter\n- Travail: à compléter\n- Salaire minimum: à compléter\n\n## Contraintes non négociables\n- à compléter\n\n## Préférences souples\n- à compléter\n\n## Contexte pour Jev\n- Ce que je recherche réellement: à compléter\n- Ce que je veux éviter: à compléter\n'
     const SOURCE_LABELS = {
       'csp-filtre': 'CSP Filtre',
       csp: 'CSP Filtre',
@@ -295,6 +296,14 @@ window.__ModuleLoader__.load({
         sectionSources: 'Sources',
         sectionRhythm: 'Rhythm',
         sectionPrefs: 'Preferences',
+        sectionProfile: 'Career profile for matching',
+        profileHint: 'Paste a complete Markdown profile. It is stored as the source text and a small derived view is sent to Jev.',
+        profilePlaceholder: 'Paste your Markdown profile here…',
+        profileFile: 'Import .md',
+        profileTemplate: 'Insert template',
+        profilePrompt: 'Prompt to format a profile',
+        copyPrompt: 'Copy prompt',
+        promptCopied: 'Prompt copied',
         sectionAdvanced: 'Advanced',
         summaryPrefix: 'Searching in',
         summaryFor: 'for',
@@ -334,6 +343,14 @@ window.__ModuleLoader__.load({
         sectionSources: 'Sources',
         sectionRhythm: 'Rythme',
         sectionPrefs: 'Préférences',
+        sectionProfile: 'Profil carrière pour le matching',
+        profileHint: 'Collez un profil Markdown complet. Le texte est conservé comme source et une vue dérivée compacte est envoyée à Jev.',
+        profilePlaceholder: 'Collez votre profil Markdown ici…',
+        profileFile: 'Importer un .md',
+        profileTemplate: 'Insérer le modèle',
+        profilePrompt: 'Prompt de mise en forme',
+        copyPrompt: 'Copier le prompt',
+        promptCopied: 'Prompt copié',
         sectionAdvanced: 'Avancé',
         summaryPrefix: 'Recherche dans',
         summaryFor: 'pour',
@@ -1444,6 +1461,8 @@ window.__ModuleLoader__.load({
       const [allowNewProfile, setAllowNewProfile] = useState(false)
       const [dirty, setDirty] = useState(false)
       const [revision, setRevision] = useState(0)
+      const configDraftRef = useRef({})
+      const [profileMarkdown, setProfileMarkdown] = useState('')
       const [departments, setDepartments] = useState('')
       const [cron, setCron] = useState('0 12 * * *')
       const [dailyTarget, setDailyTarget] = useState(0)
@@ -1456,11 +1475,13 @@ window.__ModuleLoader__.load({
       const [readinessMsg, setReadinessMsg] = useState('')
 
       const applyConfig = useCallback((config, version) => {
+        configDraftRef.current = structuredClone(config || {})
         const deps = config?.location?.departments
         setDepartments(Array.isArray(deps) ? deps.join(', ') : '')
         setCron(config?.schedule?.cron || '0 12 * * *')
         const n = Number(config?.schedule?.daily_application_target)
         setDailyTarget(Number.isFinite(n) ? n : 0)
+        setProfileMarkdown(config?.profile?.markdown || '')
         const src = config?.sources?.enabled || SOURCE_OPTIONS
         const next = {}
         for (const id of SOURCE_OPTIONS) next[id] = src.includes(id)
@@ -1515,16 +1536,39 @@ window.__ModuleLoader__.load({
         }
         setFieldErr('')
         const n = Number(dailyTarget)
-        return {
-          location: { departments: deps },
-          sources: {
-            enabled: SOURCE_OPTIONS.filter((id) => enabled[id]),
-          },
-          schedule: {
-            cron: cron.trim(),
-            daily_application_target: Number.isFinite(n) ? n : 0,
-          },
+        const payload = structuredClone(configDraftRef.current || {})
+        payload.location = { ...(payload.location || {}), departments: deps }
+        payload.sources = {
+          ...(payload.sources || {}),
+          enabled: SOURCE_OPTIONS.filter((id) => enabled[id]),
         }
+        payload.schedule = {
+          ...(payload.schedule || {}),
+          cron: cron.trim(),
+          daily_application_target: Number.isFinite(n) ? n : 0,
+        }
+        payload.profile = {
+          ...(payload.profile || {}),
+          markdown: profileMarkdown,
+          source: 'operator',
+          updated_at: new Date().toISOString(),
+        }
+        return payload
+      }
+
+      async function importProfileFile(event) {
+        const file = event.target.files?.[0]
+        if (!file) return
+        const text = await file.text()
+        setProfileMarkdown(text)
+        markDirty()
+        event.target.value = ''
+      }
+
+      async function copyProfilePrompt() {
+        const prompt = 'Transforme mes notes/CV en un profil Markdown pour Job Researcher.\n\nRègles : conserve uniquement les faits fournis, n’invente aucune compétence, date, rémunération ou préférence. Utilise les sections Identité, Positionnement, Compétences (Cœur et Adjacent), Expérience, Préférences, Contraintes non négociables, Préférences souples et Contexte pour Jev. Quand une information manque, écris « à compléter ». Retourne uniquement le Markdown.'
+        await navigator.clipboard?.writeText(prompt)
+        setMsg(t('promptCopied'))
       }
 
       const canEdit = configLoaded || allowNewProfile
@@ -1616,6 +1660,42 @@ window.__ModuleLoader__.load({
             style: css.settingsSummary,
             'data-testid': 'jr-settings-summary',
             children: `${t('summaryPrefix')} [${departments.trim() || '—'}], ${t('summaryVia')} [${SOURCE_OPTIONS.filter((id) => enabled[id]).map(sourceLabel).join(', ') || '—'}], ${t('summaryAt')} [${cron.trim() || '—'}]`,
+          }),
+          jsxs('div', {
+            style: css.settingsSection,
+            'data-testid': 'jr-settings-section-profile',
+            children: [
+              jsx('h3', { style: css.settingsSectionTitle, children: t('sectionProfile') }),
+              jsx('p', { style: css.settingsHint, children: t('profileHint') }),
+              jsx('textarea', {
+                id: 'jr-profile-markdown',
+                value: profileMarkdown,
+                placeholder: t('profilePlaceholder'),
+                rows: 18,
+                disabled: busy || !canEdit,
+                onChange: (e) => { setProfileMarkdown(e.target.value); markDirty() },
+                style: { ...css.input, width: '100%', minWidth: 0, resize: 'vertical', fontFamily: 'monospace' },
+                'data-testid': 'jr-settings-profile-markdown',
+              }),
+              jsxs('div', {
+                style: { display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.5rem' },
+                children: [
+                  jsx('label', {
+                    style: btnStyle(css.btn, busy || !canEdit),
+                    children: [t('profileFile'), jsx('input', { type: 'file', accept: '.md,.markdown,text/markdown', hidden: true, disabled: busy || !canEdit, onChange: importProfileFile })],
+                  }),
+                  jsx('button', {
+                    type: 'button', style: btnStyle(css.btn, busy || !canEdit), disabled: busy || !canEdit,
+                    onClick: () => { setProfileMarkdown(PROFILE_TEMPLATE); markDirty() }, children: t('profileTemplate'),
+                  }),
+                  jsx('button', { type: 'button', style: btnStyle(css.btn, false), onClick: () => void copyProfilePrompt(), children: t('copyPrompt') }),
+                ],
+              }),
+              jsx('details', {
+                style: { marginTop: '0.5rem' },
+                children: [jsx('summary', { children: t('profilePrompt') }), jsx('pre', { style: { whiteSpace: 'pre-wrap', ...css.settingsHint }, children: 'Transforme mes notes/CV en un profil Markdown pour Job Researcher. Conserve les faits, n’invente rien, utilise les sections standard et écris « à compléter » si une information manque.' })],
+              }),
+            ],
           }),
           jsxs('div', {
             style: css.settingsSection,
@@ -3799,7 +3879,8 @@ window.__ModuleLoader__.load({
     }
 
     exports.apply = apply
-    exports.inject = ['slots', 'locale', 'layout', 'settingsScope']
+    // DSH 0.2 removed settingsScope; settings.section is provided by slots.
+    exports.inject = ['slots', 'locale', 'layout']
     exports.JobResearcherPanel = JobResearcherPanel
     exports.JobResearcherSettings = JobResearcherSettings
     exports.JobResearcherIcon = JobResearcherIcon

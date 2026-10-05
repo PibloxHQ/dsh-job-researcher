@@ -119,6 +119,8 @@ export function buildCareerJevRequest(offer, profile = {}) {
         remote: bounded(offer.remote, 100),
         description: bounded(offer.description, JEV_ENRICHMENT_MAX_DESCRIPTION),
       },
+      // Only the explicit career profile crosses the Jev boundary. Search
+      // sources, schedule, revision and credentials are host concerns.
       profile: clone(profile),
       deterministic_score: {
         score: offer.score ?? null,

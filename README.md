@@ -40,6 +40,29 @@ Do **not** reinstall on every UI tweak. The repo under `~/dsh-lab/plugins/dsh-jo
 | GET | `/api/job-researcher/status` | Readiness agrégée (`needs_setup`…`blocked`) |
 | GET/PUT | `/api/job-researcher/config` | Profil de recherche versionné (pas de secrets) |
 | POST | `/api/job-researcher/config/validate` | Dry-run validation |
+
+### Profil carrière personnel
+
+Le profil personnel est distinct des filtres de recherche. Il est stocké dans
+`search_config_json.profile` (avec un snapshot dans `search_profiles`) :
+
+- `profile.markdown` est la source éditable, importable depuis un fichier `.md`
+  ou collable depuis Claude/ChatGPT ; la taille est limitée à 24 000 caractères ;
+- `profile.derived` est une vue déterministe et bornée par sections, régénérée à
+  chaque sauvegarde ; elle ne remplace pas le Markdown et n'invente rien ;
+- `profile.source` et `profile.updated_at` donnent la provenance et la date de
+  mise à jour.
+
+Settings expose une zone Markdown, un import de fichier, un modèle et le prompt
+de mise en forme. Jev reçoit uniquement ce profil carrière explicite. Les
+sources, le cron, la révision de configuration et les secrets restent dans le
+plan de contrôle DSH et ne franchissent pas la frontière Jev.
+
+Le format recommandé est un Markdown simple avec les sections `Identité`,
+`Positionnement`, `Compétences`, `Expérience`, `Préférences`, `Contraintes non
+négociables`, `Préférences souples` et `Contexte pour Jev`. Une sortie LLM doit
+être relue puis enregistrée par l'opérateur ; elle n'est jamais considérée
+comme une vérité automatique.
 | GET | `/api/job-researcher/diagnostics` | Python/venv/schema/secrets presence |
 | POST | `/api/job-researcher/bootstrap` | Setup idempotent venv+DB |
 | GET | `/api/job-researcher/sources` | Sources + enabled |

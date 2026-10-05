@@ -5,6 +5,7 @@
  */
 
 import { createHash } from 'node:crypto'
+import { defaultCareerProfile, normalizeCareerProfile } from './profile.js'
 
 export const CONFIG_SCHEMA_VERSION = 1
 export const SETTINGS_NAMESPACE = 'dsh-job-researcher'
@@ -80,6 +81,7 @@ export function defaultSearchConfig() {
       engine: 'triage',
       feedback_learning: true,
     },
+    profile: defaultCareerProfile(),
   }
 }
 
@@ -222,6 +224,11 @@ export function validateSearchConfig(input, { base = defaultSearchConfig() } = {
     if (raw.scoring.feedback_learning != null) {
       cfg.scoring.feedback_learning = Boolean(raw.scoring.feedback_learning)
     }
+  }
+
+  if (raw.profile != null) {
+    if (!isPlainObject(raw.profile)) errors.push('profile must be an object')
+    else cfg.profile = normalizeCareerProfile(raw.profile)
   }
 
   return { ok: errors.length === 0, config: cfg, errors }

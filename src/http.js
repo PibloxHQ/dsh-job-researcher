@@ -643,7 +643,7 @@ export function registerHttpRoutes(webServer, {
     }
     const store = safeStore()
     if (!store) return sendJson(res, 503, { ok: false, error: 'store_unavailable' })
-    const profile = store.getSearchConfig?.().config || {}
+    const profile = store.getSearchConfig?.().config?.profile || {}
     const results = []
     for (const id of ids) {
       const offer = store.getOffer(id)

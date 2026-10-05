@@ -15,6 +15,16 @@ describe('validateSearchConfig', () => {
     assert.equal(errors.length, 0)
     assert.ok(config.sources.enabled.includes('ft'))
     assert.equal(config.schema_version, 1)
+    assert.equal(config.profile.schema_version, 'career-profile.v1')
+  })
+
+  it('normalizes a Markdown career profile into a bounded derived view', () => {
+    const { ok, config } = validateSearchConfig({
+      profile: { markdown: '# Profil\n\n## Compétences\n- TypeScript' },
+    })
+    assert.equal(ok, true)
+    assert.equal(config.profile.markdown.includes('TypeScript'), true)
+    assert.deepEqual(config.profile.derived.skills.core, ['TypeScript'])
   })
 
   it('accepts partial overlay on base', () => {
