@@ -121,6 +121,9 @@ offer IDs (maximum 20), stores additive `career.v1` signals, and preserves
 back to the deterministic result. Ranking influence is deliberately deferred
 until a replay/canary comparison is reviewed.
 
+The endpoint also enforces the deterministic candidate gate `score >= 5`, so
+Jev is never fanned out across the full offer database.
+
 The request currently batches 15 typed questions: the three legacy enrichment
 signals, four directional match scores, seven detail dimensions, and a salary
 evidence gate. The

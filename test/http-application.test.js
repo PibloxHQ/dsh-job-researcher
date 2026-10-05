@@ -62,7 +62,7 @@ function createFixtureDir() {
   const now = '2026-09-15T10:00:00Z'
   db.prepare(
     `INSERT INTO offers (source, external_id, title, employer, location, first_seen_at, last_seen_at, interest, score)
-     VALUES ('csp', 'x1', 'Role', 'Acme', 'Paris', ?, ?, 'interested', 2)`,
+     VALUES ('csp', 'x1', 'Role', 'Acme', 'Paris', ?, ?, 'interested', 5)`,
   ).run(now, now)
   db.prepare(
     `INSERT INTO offer_feedback (offer_id, decision, comment, viewed, decision_updated_at)
@@ -262,7 +262,7 @@ describe('HTTP application API', () => {
     assert.equal(response.body.affects_score, false)
     assert.equal(calls.length, 1)
     const offer = store.getOffer(1)
-    assert.equal(offer.score, 2)
+    assert.equal(offer.score, 5)
     assert.equal(offer.user_decision, 'YES')
     assert.equal(offer.application_status, 'NONE')
     assert.equal(offer.jev_model, 'jev-1.13.0')

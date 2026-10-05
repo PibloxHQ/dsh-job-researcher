@@ -14,7 +14,9 @@ Mission Hub: [#231](https://mission-hub.lan/missions/231).
 
 ## Phase 1 delivered
 
-`POST /api/job-researcher/jev-enrich` accepts 1–20 explicit offer IDs and:
+`POST /api/job-researcher/jev-enrich` accepts 1–20 explicit offer IDs and only
+enriches deterministic candidates with `score >= 5`; lower scores are returned
+as deterministic fallback without a Jev call. It:
 
 1. builds a bounded `career.v1` state from the offer, profile and deterministic score;
 2. asks the optional DSH `jev` host service for the legacy typed signals (`location_fit`, `role_family`, `semantic_fit`) plus four directional scores and seven weighted dimensions;

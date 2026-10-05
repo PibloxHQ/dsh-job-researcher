@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
-import { buildCareerJevRequest, normalizeCareerJevResult, CAREER_CONTRACT_VERSION } from '../src/jev-enrichment.js'
+import { buildCareerJevRequest, normalizeCareerJevResult, CAREER_CONTRACT_VERSION, isJevCandidate } from '../src/jev-enrichment.js'
 
 describe('Jev Career shadow contract', () => {
   it('builds bounded state without changing the deterministic score', () => {
@@ -44,5 +44,12 @@ describe('Jev Career shadow contract', () => {
     assert.equal(normalized.weighted_match.overall_coverage, 100)
     assert.equal(normalized.weighted_match.dimensions.salary.score, null)
     assert.throws(() => normalizeCareerJevResult({ answers: [] }), /answers must be an object/)
+  })
+
+  it('only sends deterministic candidates at score 5 or above to Jev', () => {
+    assert.equal(isJevCandidate({ score: 5 }), true)
+    assert.equal(isJevCandidate({ score: 7 }), true)
+    assert.equal(isJevCandidate({ score: 4 }), false)
+    assert.equal(isJevCandidate({ score: null }), false)
   })
 })

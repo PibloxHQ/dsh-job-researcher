@@ -23,6 +23,8 @@ import { runBootstrap } from './bootstrap.js'
 import {
   JEV_ENRICHMENT_MAX_OFFERS,
   buildCareerJevRequest,
+  isJevCandidate,
+  JEV_ENRICHMENT_MIN_SCORE,
   normalizeCareerJevResult,
 } from './jev-enrichment.js'
 
@@ -647,6 +649,17 @@ export function registerHttpRoutes(webServer, {
       const offer = store.getOffer(id)
       if (!offer) {
         results.push({ id, ok: false, error: 'not_found' })
+        continue
+      }
+      if (!isJevCandidate(offer)) {
+        results.push({
+          id,
+          ok: false,
+          error: 'below_deterministic_threshold',
+          min_score: JEV_ENRICHMENT_MIN_SCORE,
+          score: offer.score ?? null,
+          fallback: 'deterministic',
+        })
         continue
       }
       try {

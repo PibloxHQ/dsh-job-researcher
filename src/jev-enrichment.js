@@ -12,6 +12,11 @@ import { computeMatchMatrix } from './match-scoring.js'
 export const CAREER_CONTRACT_VERSION = 'career.v1'
 export const JEV_ENRICHMENT_MAX_OFFERS = 20
 export const JEV_ENRICHMENT_MAX_DESCRIPTION = 12_000
+export const JEV_ENRICHMENT_MIN_SCORE = 5
+
+export function isJevCandidate(offer) {
+  return Number.isFinite(Number(offer?.score)) && Number(offer.score) >= JEV_ENRICHMENT_MIN_SCORE
+}
 
 const MATCH_SCORE_CRITERIA = ['very poor', 'poor', 'partial', 'strong', 'excellent']
 
