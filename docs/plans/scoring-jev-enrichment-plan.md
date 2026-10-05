@@ -6,7 +6,7 @@ Mission Hub: [#231](https://mission-hub.lan/missions/231).
 ## Runtime baseline — 2026-10-05
 
 - Job Researcher is `ready` and `can_run=true`.
-- Live score version: `v6-feedback`.
+- Live score version observed after the Web restart: `v5-feedback`.
 - Live database observed: 4203 offers, 500 current and 3703 stale.
 - Active production scorer: `runtime/python/src/job_radar/triage.py::score_offer`.
 - The claims/profile scorer is not the active cron scorer.
