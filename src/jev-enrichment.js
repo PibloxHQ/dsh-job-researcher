@@ -7,11 +7,30 @@
  * deterministic scorer.
  */
 
-import { computeMatchMatrix, MATCH_POLICY_VERSION } from './match-scoring.js'
+import { computeMatchMatrix } from './match-scoring.js'
 
 export const CAREER_CONTRACT_VERSION = 'career.v1'
 export const JEV_ENRICHMENT_MAX_OFFERS = 20
 export const JEV_ENRICHMENT_MAX_DESCRIPTION = 12_000
+
+const MATCH_SCORE_CRITERIA = ['very poor', 'poor', 'partial', 'strong', 'excellent']
+
+const MATCH_AXIS_QUESTIONS = Object.freeze({
+  candidate_to_job: 'How well does this job match the candidate\'s stated skills, experience and work preferences?',
+  job_to_candidate: 'How well does the candidate appear to meet the job\'s explicit needs and constraints?',
+  candidate_to_company: 'How well does the company environment appear to match the candidate\'s stated preferences?',
+  company_to_candidate: 'Based only on the offer evidence, how well might the candidate fit this company\'s team environment?',
+})
+
+const MATCH_DIMENSION_QUESTIONS = Object.freeze({
+  skills: 'How well do the candidate skills match the skills required by this offer?',
+  experience: 'How well does the candidate experience match the seniority and responsibilities of this offer?',
+  work_preference: 'How well do the work arrangement and constraints match the candidate preferences?',
+  location: 'How well does the offer location and commute/remote arrangement match the candidate preferences?',
+  salary: 'How well does the stated or inferable compensation match the candidate requirements? Return unknown-like low confidence when salary is absent.',
+  culture: 'How well does the company culture and working environment in the evidence match the candidate preferences? Do not invent facts.',
+  growth_path: 'How well does the role offer a plausible growth path matching the candidate goals? Do not treat missing information as a mismatch.',
+})
 
 export const CAREER_QUESTIONS = Object.freeze({
   location_fit: Object.freeze({
@@ -33,6 +52,14 @@ export const CAREER_QUESTIONS = Object.freeze({
     instructions: 'How well do the responsibilities and required skills fit the target profile?',
     criteria: ['poor', 'partial', 'strong'],
   }),
+  ...Object.fromEntries(Object.entries(MATCH_AXIS_QUESTIONS).map(([id, instructions]) => [
+    id,
+    Object.freeze({ type: 'score', instructions, criteria: MATCH_SCORE_CRITERIA }),
+  ])),
+  ...Object.fromEntries(Object.entries(MATCH_DIMENSION_QUESTIONS).map(([id, instructions]) => [
+    `dimension_${id}`,
+    Object.freeze({ type: 'score', instructions, criteria: MATCH_SCORE_CRITERIA }),
+  ])),
 })
 
 function bounded(value, max) {
@@ -42,6 +69,20 @@ function bounded(value, max) {
 
 function clone(value) {
   return JSON.parse(JSON.stringify(value))
+}
+
+function scoreFromAnswer(answer) {
+  if (!answer || typeof answer !== 'object' || typeof answer.score !== 'number') return null
+  const max = answer.legend && typeof answer.legend === 'object'
+    ? Math.max(...Object.keys(answer.legend).map(Number).filter(Number.isFinite))
+    : MATCH_SCORE_CRITERIA.length - 1
+  return Number.isFinite(max) && max > 0 ? Math.max(0, Math.min(1, answer.score / max)) : null
+}
+
+function buildWeightedMatch(answers) {
+  const axes = Object.fromEntries(Object.keys(MATCH_AXIS_QUESTIONS).map((id) => [id, scoreFromAnswer(answers[id])]))
+  const dimensions = Object.fromEntries(Object.keys(MATCH_DIMENSION_QUESTIONS).map((id) => [id, scoreFromAnswer(answers[`dimension_${id}`])]))
+  return computeMatchMatrix({ axes, dimensions })
 }
 
 /** Build the public-job state sent to the host Jev service. */
@@ -90,9 +131,7 @@ export function normalizeCareerJevResult(result) {
   return {
     contract: CAREER_CONTRACT_VERSION,
     answers: clone(result.answers),
-    weighted_match: result.answers.match
-      ? computeMatchMatrix(result.answers.match)
-      : { policy_version: MATCH_POLICY_VERSION, overall: null, overall_coverage: 0 },
+    weighted_match: buildWeightedMatch(result.answers),
     model: typeof result.model === 'string' ? result.model : null,
     usage: clone(result.usage || { input_tokens: 0, output_tokens: 0 }),
     provenance: 'jev-typed-answers',

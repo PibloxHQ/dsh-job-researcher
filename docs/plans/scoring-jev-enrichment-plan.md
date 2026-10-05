@@ -17,13 +17,17 @@ Mission Hub: [#231](https://mission-hub.lan/missions/231).
 `POST /api/job-researcher/jev-enrich` accepts 1–20 explicit offer IDs and:
 
 1. builds a bounded `career.v1` state from the offer, profile and deterministic score;
-2. asks the optional DSH `jev` host service for typed `location_fit`, `role_family`, and `semantic_fit` answers;
+2. asks the optional DSH `jev` host service for the legacy typed signals (`location_fit`, `role_family`, `semantic_fit`) plus four directional scores and seven weighted dimensions;
 3. stores Jev answers additively (`jev_model`, `jev_schema_version`, `jev_signals_json`, `jev_scored_at`, `jev_error`);
 4. reports `shadow_mode: true` and never changes `score`, `interest`, or `application_status`;
 5. falls back to the deterministic result on missing Jev, timeout, invalid response, or upstream failure.
 
 The endpoint is intentionally explicit and bounded. It does not call Jev for
 the whole database and does not influence ranking yet.
+
+The expanded envelope currently contains 14 typed questions. The four axes and
+seven dimensions are normalized into `career-match.v1`; missing answers keep the
+overall score unknown and reduce coverage rather than being treated as failure.
 
 ## Weighted match policy (`career-match.v1`)
 

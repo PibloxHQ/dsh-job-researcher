@@ -121,6 +121,11 @@ offer IDs (maximum 20), stores additive `career.v1` signals, and preserves
 back to the deterministic result. Ranking influence is deliberately deferred
 until a replay/canary comparison is reviewed.
 
+The request currently batches 14 typed questions: the three legacy enrichment
+signals, four directional match scores, and seven detail dimensions. The
+directional/dimension answers are normalized into `career-match.v1`; missing
+answers remain `unknown` and reduce coverage.
+
 The shadow contract also contains the versioned `career-match.v1` weighted
 policy: four directional scores (45/30/15/10) and seven detail dimensions
 (25/20/15/15/10/8/7). Weights are normalized, missing evidence is reported as
