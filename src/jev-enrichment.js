@@ -7,6 +7,8 @@
  * deterministic scorer.
  */
 
+import { computeMatchMatrix, MATCH_POLICY_VERSION } from './match-scoring.js'
+
 export const CAREER_CONTRACT_VERSION = 'career.v1'
 export const JEV_ENRICHMENT_MAX_OFFERS = 20
 export const JEV_ENRICHMENT_MAX_DESCRIPTION = 12_000
@@ -88,6 +90,9 @@ export function normalizeCareerJevResult(result) {
   return {
     contract: CAREER_CONTRACT_VERSION,
     answers: clone(result.answers),
+    weighted_match: result.answers.match
+      ? computeMatchMatrix(result.answers.match)
+      : { policy_version: MATCH_POLICY_VERSION, overall: null, overall_coverage: 0 },
     model: typeof result.model === 'string' ? result.model : null,
     usage: clone(result.usage || { input_tokens: 0, output_tokens: 0 }),
     provenance: 'jev-typed-answers',

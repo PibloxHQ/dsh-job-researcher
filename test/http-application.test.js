@@ -267,6 +267,7 @@ describe('HTTP application API', () => {
     assert.equal(offer.application_status, 'NONE')
     assert.equal(offer.jev_model, 'jev-1.13.0')
     assert.equal(offer.jev_schema_version, 'career.v1')
+    assert.ok(offer.jev_signals_json.includes('weighted_match'))
     store.close()
   })
 })

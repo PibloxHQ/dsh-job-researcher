@@ -548,7 +548,10 @@ export function openStore(dataDir, { now } = {}) {
       `).run(
         normalized?.model || '',
         normalized?.contract || '',
-        JSON.stringify(normalized?.answers || {}),
+        JSON.stringify({
+          ...(normalized?.answers || {}),
+          ...(normalized?.weighted_match ? { weighted_match: normalized.weighted_match } : {}),
+        }),
         stamp,
         String(error || ''),
         oid,

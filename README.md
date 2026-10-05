@@ -121,6 +121,12 @@ offer IDs (maximum 20), stores additive `career.v1` signals, and preserves
 back to the deterministic result. Ranking influence is deliberately deferred
 until a replay/canary comparison is reviewed.
 
+The shadow contract also contains the versioned `career-match.v1` weighted
+policy: four directional scores (45/30/15/10) and seven detail dimensions
+(25/20/15/15/10/8/7). Weights are normalized, missing evidence is reported as
+unknown with coverage, and this policy does not change ranking until benchmark
+and sensitivity gates approve it.
+
 ### Restart required
 
 Host / Cordis / Python changes apply after **restart of the DSH web profile**. Client UI (`src/client/index.js`) is served from the same `file:` tree — after a client-only edit, a **hard browser refresh** is usually enough; restart only if the overlay still shows stale ModuleLoader output.

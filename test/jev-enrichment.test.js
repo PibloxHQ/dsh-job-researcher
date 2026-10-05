@@ -29,6 +29,8 @@ describe('Jev Career shadow contract', () => {
     })
     assert.equal(normalized.contract, CAREER_CONTRACT_VERSION)
     assert.equal(normalized.provenance, 'jev-typed-answers')
+    assert.equal(normalized.weighted_match.policy_version, 'career-match.v1')
+    assert.equal(normalized.weighted_match.overall, null)
     assert.throws(() => normalizeCareerJevResult({ answers: [] }), /answers must be an object/)
   })
 })

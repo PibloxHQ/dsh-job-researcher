@@ -1,6 +1,6 @@
 # Scoring Jev enrichment — implementation plan
 
-Status: **Phase 1 shadow mode implemented; policy promotion not implemented**.
+Status: **Phase 1 shadow mode implemented; `career-match.v1` weighted policy is a non-ranking shadow calculation; policy promotion not implemented**.
 Mission Hub: [#231](https://mission-hub.lan/missions/231).
 
 ## Runtime baseline — 2026-10-05
@@ -24,6 +24,31 @@ Mission Hub: [#231](https://mission-hub.lan/missions/231).
 
 The endpoint is intentionally explicit and bounded. It does not call Jev for
 the whole database and does not influence ranking yet.
+
+## Weighted match policy (`career-match.v1`)
+
+The implementation follows the weighted-sum/SAW pattern used in
+multi-criteria decision analysis: every criterion is put on a common 0–100
+scale, weights are normalized to 100%, and coverage is reported separately.
+Missing evidence is `unknown`, not zero and not 100%. Hard blockers remain
+outside the weighted sum.
+
+Initial reviewable priors are:
+
+| Direction | Weight |
+| --- | ---: |
+| Candidate → Job | 45% |
+| Job → Candidate | 30% |
+| Candidate → Company | 15% |
+| Company → Candidate | 10% |
+
+Dimension detail weights are: skills 25%, experience 20%, work preference 15%,
+location 15%, salary 10%, culture 8%, growth path 7%. These are versioned
+defaults, not empirical truths; sensitivity analysis and replay are required
+before they can influence ranking. The deterministic score remains authoritative.
+
+The policy emits the overall score, coverage, four directional values and the
+seven-dimension breakdown, each marked as evidence-backed or unknown.
 
 ## Next gates
 
