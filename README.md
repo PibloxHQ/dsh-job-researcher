@@ -45,6 +45,7 @@ Do **not** reinstall on every UI tweak. The repo under `~/dsh-lab/plugins/dsh-jo
 | GET | `/api/job-researcher/sources` | Sources + enabled |
 | POST | `/api/job-researcher/runs` | `202` enqueue (alias `POST /run`) |
 | POST | `/api/job-researcher/rescore` | File triage `v6-feedback` |
+| POST | `/api/job-researcher/jev-enrich` | Bounded `career.v1` Jev shadow enrichment; never changes score/status |
 
 Secrets FT : **Settings → Secrets** uniquement (`FT_CLIENT_ID` / `FT_CLIENT_SECRET`). JR n’affiche que présent/manquant.
 
@@ -111,6 +112,15 @@ Comments refine **future search/scoring**. Structured tags + optional free text 
 
 No LLM. No silent `profile.yaml` mutation. Application state remains independent.
 
+### Jev scoring enrichment (shadow mode)
+
+Jev is an optional typed-signal layer, not a replacement for the deterministic
+`v6-feedback` scorer. `POST /api/job-researcher/jev-enrich` accepts explicit
+offer IDs (maximum 20), stores additive `career.v1` signals, and preserves
+`score`, `interest`, and `application_status`. Missing or failing Jev falls
+back to the deterministic result. Ranking influence is deliberately deferred
+until a replay/canary comparison is reviewed.
+
 ### Restart required
 
 Host / Cordis / Python changes apply after **restart of the DSH web profile**. Client UI (`src/client/index.js`) is served from the same `file:` tree — after a client-only edit, a **hard browser refresh** is usually enough; restart only if the overlay still shows stale ModuleLoader output.
@@ -137,6 +147,7 @@ Opening a job URL, marking YES, or preparing a draft never creates an applicatio
 - Hermes rollback: [`docs/runbooks/job-researcher-hermes-rollback.md`](docs/runbooks/job-researcher-hermes-rollback.md)
 - Daily applications evidence (2026-09-16): [`docs/daily-applications-2026-09-16.md`](docs/daily-applications-2026-09-16.md)
 - Feedback learning v4 evidence (2026-09-16): [`docs/feedback-learning-v4-2026-09-16.md`](docs/feedback-learning-v4-2026-09-16.md)
+- Scoring/Jev implementation plan: [`docs/plans/scoring-jev-enrichment-plan.md`](docs/plans/scoring-jev-enrichment-plan.md)
 
 ## Still open
 

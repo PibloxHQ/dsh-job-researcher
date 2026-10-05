@@ -226,4 +226,47 @@ describe('HTTP application API', () => {
 
     store.close()
   })
+
+  it('Jev enrichment is bounded shadow mode and preserves business state', async () => {
+    const dir = createFixtureDir()
+    const store = openStore(dir)
+    const server = mockWebServer()
+    const calls = []
+    registerHttpRoutes(server, {
+      getStore: () => store,
+      getScheduler: () => null,
+      secrets: { hasKey: () => false },
+      jev: {
+        async ask(input) {
+          calls.push(input)
+          return {
+            model: 'jev-1.13.0',
+            answers: { semantic_fit: { type: 'score', score: 0.8 } },
+            usage: { input_tokens: 10, output_tokens: 1 },
+          }
+        },
+      },
+    })
+    const route = findRoute(server, '/api/job-researcher/jev-enrich')
+    const response = mockRes()
+    await route.handler(
+      Object.assign(bodyStream({ offer_ids: [1] }), {
+        method: 'POST',
+        url: '/api/job-researcher/jev-enrich',
+      }),
+      response,
+    )
+    assert.equal(response.statusCode, 200)
+    assert.equal(response.body.ok, true)
+    assert.equal(response.body.shadow_mode, true)
+    assert.equal(response.body.affects_score, false)
+    assert.equal(calls.length, 1)
+    const offer = store.getOffer(1)
+    assert.equal(offer.score, 2)
+    assert.equal(offer.user_decision, 'YES')
+    assert.equal(offer.application_status, 'NONE')
+    assert.equal(offer.jev_model, 'jev-1.13.0')
+    assert.equal(offer.jev_schema_version, 'career.v1')
+    store.close()
+  })
 })

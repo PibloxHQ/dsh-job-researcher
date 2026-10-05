@@ -85,11 +85,18 @@ export function apply(ctx, config = {}) {
 
   ctx.inject(['webServer'], (webCtx) => {
     if (!webCtx.webServer?.register) return
+    let jev
+    try {
+      jev = ctx.get?.('jev')
+    } catch {
+      jev = undefined
+    }
     registerHttpRoutes(webCtx.webServer, {
       getStore,
       getScheduler,
       secrets,
       dataDir,
+      jev,
     })
     webCtx.logger?.info?.(`${PLUGIN_ID}: HTTP API registered under /api/job-researcher`)
   })

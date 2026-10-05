@@ -101,6 +101,8 @@ export const DAILY_APPLICATION_TARGET = 1
 export const APPLICATION_TIMEZONE = 'Europe/Paris'
 export { FEEDBACK_SCORE_VERSION }
 
+export const JEV_ENRICHMENT_SCHEMA_VERSION = 'career.v1'
+
 export function utcIso(date = new Date()) {
   return date.toISOString().replace(/\.\d{3}Z$/, 'Z')
 }
@@ -282,6 +284,19 @@ export function ensureFeedbackLearningSchema(db, { now = new Date() } = {}) {
 export function ensureAutonomySchema(db, { now = new Date() } = {}) {
   ensureFeedbackLearningSchema(db, { now })
   const stamp = utcIso(now)
+
+  const offerCols = new Set(db.prepare('PRAGMA table_info(offers)').all().map((r) => r.name))
+  const alterOfferIfMissing = (name, decl) => {
+    if (!offerCols.has(name)) {
+      db.exec(`ALTER TABLE offers ADD COLUMN ${name} ${decl}`)
+      offerCols.add(name)
+    }
+  }
+  alterOfferIfMissing('jev_model', "TEXT DEFAULT ''")
+  alterOfferIfMissing('jev_schema_version', "TEXT DEFAULT ''")
+  alterOfferIfMissing('jev_signals_json', "TEXT DEFAULT '{}'" )
+  alterOfferIfMissing('jev_scored_at', 'TEXT')
+  alterOfferIfMissing('jev_error', "TEXT DEFAULT ''")
 
   db.exec(`
     CREATE TABLE IF NOT EXISTS search_profiles (
@@ -512,6 +527,33 @@ export function openStore(dataDir, { now } = {}) {
       if (oid == null) return null
       const row = db.prepare(`${OFFER_SELECT} WHERE o.id = ?`).get(oid) || null
       return row ? decorateOffer(row) : null
+    },
+
+    /**
+     * Persist Jev shadow output without changing deterministic score or
+     * interest/application state. Errors are retained for observability.
+     */
+    setJevEnrichment(id, { result = null, error = '' } = {}, { now = new Date() } = {}) {
+      const oid = parseOfferId(id)
+      if (oid == null) throw new Error('not_found')
+      const exists = db.prepare('SELECT id FROM offers WHERE id = ?').get(oid)
+      if (!exists) throw new Error('not_found')
+      const stamp = utcIso(now)
+      const normalized = result && typeof result === 'object' ? result : null
+      db.prepare(`
+        UPDATE offers
+        SET jev_model = ?, jev_schema_version = ?, jev_signals_json = ?,
+            jev_scored_at = ?, jev_error = ?
+        WHERE id = ?
+      `).run(
+        normalized?.model || '',
+        normalized?.contract || '',
+        JSON.stringify(normalized?.answers || {}),
+        stamp,
+        String(error || ''),
+        oid,
+      )
+      return this.getOffer(oid)
     },
 
     /**

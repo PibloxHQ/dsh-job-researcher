@@ -20,6 +20,11 @@ import {
 } from './config.js'
 import { computeReadiness, probeFilesystem } from './readiness.js'
 import { runBootstrap } from './bootstrap.js'
+import {
+  JEV_ENRICHMENT_MAX_OFFERS,
+  buildCareerJevRequest,
+  normalizeCareerJevResult,
+} from './jev-enrichment.js'
 
 function sendJson(res, status, body) {
   res.statusCode = status
@@ -82,6 +87,7 @@ export function registerHttpRoutes(webServer, {
   getScheduler,
   secrets,
   dataDir,
+  jev,
 }) {
   const base = '/api/job-researcher'
   let bootstrapRunning = false
@@ -604,6 +610,75 @@ export function registerHttpRoutes(webServer, {
     })
   }
 
+  /**
+   * Run bounded Jev enrichment in shadow mode. This endpoint never updates
+   * score, interest, or application_status; it only stores typed signals and
+   * error metadata on the selected offers.
+   */
+  async function handleJevEnrich(req, res) {
+    if (methodOf(req) !== 'POST') {
+      return sendJson(res, 405, { ok: false, error: 'method_not_allowed' })
+    }
+    if (!jev || typeof jev.ask !== 'function') {
+      return sendJson(res, 503, { ok: false, error: 'jev_unavailable', fallback: 'deterministic' })
+    }
+    let body
+    try {
+      body = await readJson(req)
+    } catch {
+      return sendJson(res, 400, { ok: false, error: 'invalid_json' })
+    }
+    const rawIds = Array.isArray(body?.offer_ids) ? body.offer_ids : []
+    if (!rawIds.length || rawIds.length > JEV_ENRICHMENT_MAX_OFFERS) {
+      return sendJson(res, 400, {
+        ok: false,
+        error: `offer_ids must contain 1-${JEV_ENRICHMENT_MAX_OFFERS} ids`,
+      })
+    }
+    const ids = [...new Set(rawIds.map(parseOfferId).filter((id) => id != null))]
+    if (ids.length !== rawIds.length) {
+      return sendJson(res, 400, { ok: false, error: 'offer_ids must contain positive integer ids' })
+    }
+    const store = safeStore()
+    if (!store) return sendJson(res, 503, { ok: false, error: 'store_unavailable' })
+    const profile = store.getSearchConfig?.().config || {}
+    const results = []
+    for (const id of ids) {
+      const offer = store.getOffer(id)
+      if (!offer) {
+        results.push({ id, ok: false, error: 'not_found' })
+        continue
+      }
+      try {
+        const request = buildCareerJevRequest(offer, profile)
+        const answer = await jev.ask({
+          state: request.state,
+          questions: request.questions,
+          source: 'host',
+        })
+        const normalized = normalizeCareerJevResult(answer)
+        store.setJevEnrichment(id, { result: normalized })
+        results.push({ id, ok: true, model: normalized.model, contract: normalized.contract })
+      } catch (error) {
+        const message = String(error?.message || error)
+        try {
+          store.setJevEnrichment(id, { error: message })
+        } catch {
+          /* preserve the original enrichment error */
+        }
+        results.push({ id, ok: false, error: message, fallback: 'deterministic' })
+      }
+    }
+    return sendJson(res, 200, {
+      ok: results.every((item) => item.ok),
+      shadow_mode: true,
+      affects_score: false,
+      affects_interest: false,
+      affects_application_status: false,
+      results,
+    })
+  }
+
   // One registration per path — method dispatch inside handlers (see file header).
   // Prefix paths MUST NOT end with `/`: DSH match is `p` or `p/<rest>`; a trailing
   // slash makes `p/` require `p//…` and every `/offers/123` falls through to SPA 404.
@@ -633,4 +708,5 @@ export function registerHttpRoutes(webServer, {
   webServer.register({ kind: 'exact', path: `${base}/run`, handler: handleRunAlias })
   webServer.register({ kind: 'prefix', path: `${base}/runs`, handler: handleRunsPrefix })
   webServer.register({ kind: 'exact', path: `${base}/rescore`, handler: handleRescore })
+  webServer.register({ kind: 'exact', path: `${base}/jev-enrich`, handler: handleJevEnrich })
 }
