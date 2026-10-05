@@ -47,7 +47,7 @@ Le profil personnel est distinct des filtres de recherche. Il est stocké dans
 `search_config_json.profile` (avec un snapshot dans `search_profiles`) :
 
 - `profile.markdown` est la source éditable, importable depuis un fichier `.md`
-  ou collable depuis Claude/ChatGPT ; la taille est limitée à 24 000 caractères ;
+  ou collable depuis Claude/ChatGPT ; la taille est limitée à 80 000 caractères ;
 - `profile.derived` est une vue déterministe et bornée par sections, régénérée à
   chaque sauvegarde ; elle ne remplace pas le Markdown et n'invente rien ;
 - `profile.source` et `profile.updated_at` donnent la provenance et la date de

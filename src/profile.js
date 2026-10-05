@@ -5,7 +5,9 @@
  */
 
 export const PROFILE_SCHEMA_VERSION = 'career-profile.v1'
-export const PROFILE_MARKDOWN_MAX = 24_000
+// Large enough for a complete CV/portfolio profile, while leaving room for
+// the offer and typed questions inside Jev's practical context budget.
+export const PROFILE_MARKDOWN_MAX = 80_000
 
 export const PROFILE_TEMPLATE = `# Profil candidat
 

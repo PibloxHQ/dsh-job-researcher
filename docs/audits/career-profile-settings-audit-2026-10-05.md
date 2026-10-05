@@ -19,7 +19,7 @@ Markdown est la source humaine portable ; une vue structurée déterministe est
 générée pour le matching. Le LLM peut produire un brouillon via le prompt
 affiché dans Settings, mais l'opérateur relit et enregistre le résultat.
 
-Le profil est limité à 24 000 caractères et Jev reçoit uniquement
+Le profil est limité à 80 000 caractères et Jev reçoit uniquement
 `config.profile`, jamais `sources`, `schedule`, `revision` ou des secrets.
 
 ## Implantation

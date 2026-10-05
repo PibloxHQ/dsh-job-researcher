@@ -27,6 +27,14 @@ describe('validateSearchConfig', () => {
     assert.deepEqual(config.profile.derived.skills.core, ['TypeScript'])
   })
 
+  it('allows a complete long-form profile within the Jev-safe bound', () => {
+    const { ok, config } = validateSearchConfig({
+      profile: { markdown: `## Expérience\n- ${'x'.repeat(70_000)}` },
+    })
+    assert.equal(ok, true)
+    assert.equal(config.profile.markdown.length, 70_016)
+  })
+
   it('accepts partial overlay on base', () => {
     const { ok, config } = validateSearchConfig({
       location: { departments: ['69'], communes: [], prefer_remote: false },
