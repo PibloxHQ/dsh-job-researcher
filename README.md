@@ -121,8 +121,9 @@ offer IDs (maximum 20), stores additive `career.v1` signals, and preserves
 back to the deterministic result. Ranking influence is deliberately deferred
 until a replay/canary comparison is reviewed.
 
-The request currently batches 14 typed questions: the three legacy enrichment
-signals, four directional match scores, and seven detail dimensions. The
+The request currently batches 15 typed questions: the three legacy enrichment
+signals, four directional match scores, seven detail dimensions, and a salary
+evidence gate. The
 directional/dimension answers are normalized into `career-match.v1`; missing
 answers remain `unknown` and reduce coverage.
 

@@ -60,6 +60,10 @@ export const CAREER_QUESTIONS = Object.freeze({
     `dimension_${id}`,
     Object.freeze({ type: 'score', instructions, criteria: MATCH_SCORE_CRITERIA }),
   ])),
+  salary_evidence: Object.freeze({
+    type: 'noul',
+    instructions: 'Is compensation explicitly stated in the offer evidence?',
+  }),
 })
 
 function bounded(value, max) {
@@ -81,7 +85,12 @@ function scoreFromAnswer(answer) {
 
 function buildWeightedMatch(answers) {
   const axes = Object.fromEntries(Object.keys(MATCH_AXIS_QUESTIONS).map((id) => [id, scoreFromAnswer(answers[id])]))
-  const dimensions = Object.fromEntries(Object.keys(MATCH_DIMENSION_QUESTIONS).map((id) => [id, scoreFromAnswer(answers[`dimension_${id}`])]))
+  const dimensions = Object.fromEntries(Object.keys(MATCH_DIMENSION_QUESTIONS).map((id) => [
+    id,
+    id === 'salary' && !(answers.salary_evidence && answers.salary_evidence.noul >= 0.5)
+      ? null
+      : scoreFromAnswer(answers[`dimension_${id}`]),
+  ]))
   return computeMatchMatrix({ axes, dimensions })
 }
 

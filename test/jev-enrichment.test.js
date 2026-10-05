@@ -18,9 +18,10 @@ describe('Jev Career shadow contract', () => {
     assert.equal(request.contract, CAREER_CONTRACT_VERSION)
     assert.equal(request.state.deterministic_score.score, 4)
     assert.ok(request.state.offer.description.length < 20_000)
-    assert.equal(Object.keys(request.questions).length, 14)
+    assert.equal(Object.keys(request.questions).length, 15)
     assert.equal(request.questions.candidate_to_job.type, 'score')
     assert.equal(request.questions.dimension_growth_path.type, 'score')
+    assert.equal(request.questions.salary_evidence.type, 'noul')
   })
 
   it('normalizes typed answers and rejects malformed envelopes', () => {
@@ -32,6 +33,7 @@ describe('Jev Career shadow contract', () => {
         job_to_candidate: { type: 'score', score: 3, legend: { 0: 'very poor', 1: 'poor', 2: 'partial', 3: 'strong', 4: 'excellent' } },
         candidate_to_company: { type: 'score', score: 2, legend: { 0: 'very poor', 1: 'poor', 2: 'partial', 3: 'strong', 4: 'excellent' } },
         company_to_candidate: { type: 'score', score: 1, legend: { 0: 'very poor', 1: 'poor', 2: 'partial', 3: 'strong', 4: 'excellent' } },
+        salary_evidence: { type: 'noul', noul: 0.1 },
       },
       usage: { input_tokens: 12, output_tokens: 2 },
     })
@@ -40,6 +42,7 @@ describe('Jev Career shadow contract', () => {
     assert.equal(normalized.weighted_match.policy_version, 'career-match.v1')
     assert.equal(normalized.weighted_match.overall, 78)
     assert.equal(normalized.weighted_match.overall_coverage, 100)
+    assert.equal(normalized.weighted_match.dimensions.salary.score, null)
     assert.throws(() => normalizeCareerJevResult({ answers: [] }), /answers must be an object/)
   })
 })

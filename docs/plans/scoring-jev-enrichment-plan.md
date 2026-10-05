@@ -25,8 +25,8 @@ Mission Hub: [#231](https://mission-hub.lan/missions/231).
 The endpoint is intentionally explicit and bounded. It does not call Jev for
 the whole database and does not influence ranking yet.
 
-The expanded envelope currently contains 14 typed questions. The four axes and
-seven dimensions are normalized into `career-match.v1`; missing answers keep the
+The expanded envelope currently contains 15 typed questions, including an
+explicit salary-evidence gate. The four axes and seven dimensions are normalized into `career-match.v1`; missing answers keep the
 overall score unknown and reduce coverage rather than being treated as failure.
 
 ## Weighted match policy (`career-match.v1`)
