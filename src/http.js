@@ -29,6 +29,7 @@ import {
   JEV_ENRICHMENT_MIN_SCORE,
   normalizeCareerJevResult,
 } from './jev-enrichment.js'
+import { applyProfileProposal, createProfileProposal } from './career-writes.js'
 
 function sendJson(res, status, body) {
   res.statusCode = status
@@ -96,6 +97,7 @@ export function registerHttpRoutes(webServer, {
   const base = '/api/job-researcher'
   let bootstrapRunning = false
   let lastBootstrap = null
+  const profileProposals = new Map()
 
   function safeStore() {
     try {
@@ -322,6 +324,40 @@ export function registerHttpRoutes(webServer, {
       bootstrap_running: bootstrapRunning,
       last_bootstrap: lastBootstrap,
     })
+  }
+
+  async function handleProfileProposals(req, res) {
+    const store = safeStore()
+    if (!store) return sendJson(res, 503, { ok: false, error: 'store_unavailable' })
+    if (methodOf(req) === 'GET') {
+      return sendJson(res, 200, { ok: true, proposals: [...profileProposals.values()].slice(-20) })
+    }
+    if (methodOf(req) !== 'POST') return sendJson(res, 405, { ok: false, error: 'method_not_allowed' })
+    try {
+      const body = await readJson(req)
+      const bundle = store.getSearchConfig()
+      if (body.action === 'accept') {
+        const proposal = profileProposals.get(String(body.proposal_id))
+        if (!proposal) return sendJson(res, 404, { ok: false, error: 'proposal_not_found' })
+        const accepted = applyProfileProposal(store, proposal, {
+          expectedRevision: body.expected_revision ?? bundle.version,
+          confirmed: body.confirmed === true,
+        })
+        profileProposals.set(proposal.proposal_id, accepted)
+        return sendJson(res, 200, { ok: true, proposal: accepted })
+      }
+      const proposal = createProfileProposal({
+        current: { markdown: bundle.config?.profile?.markdown || '', version: bundle.version },
+        nextMarkdown: body.markdown,
+        sessionId: body.session_id,
+        reason: body.reason,
+      })
+      profileProposals.set(proposal.proposal_id, proposal)
+      return sendJson(res, 201, { ok: true, proposal })
+    } catch (err) {
+      const status = /revision_mismatch/.test(String(err?.message)) ? 409 : 400
+      return sendJson(res, status, { ok: false, error: String(err?.message || err) })
+    }
   }
 
   async function handleBootstrap(req, res) {
@@ -813,4 +849,5 @@ export function registerHttpRoutes(webServer, {
   webServer.register({ kind: 'exact', path: `${base}/rescore`, handler: handleRescore })
   webServer.register({ kind: 'exact', path: `${base}/jev-enrich`, handler: handleJevEnrich })
   webServer.register({ kind: 'exact', path: `${base}/jev-runs`, handler: handleJevRuns })
+  webServer.register({ kind: 'exact', path: `${base}/profile-proposals`, handler: handleProfileProposals })
 }

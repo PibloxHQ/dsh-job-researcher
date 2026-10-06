@@ -4424,6 +4424,7 @@ window.__ModuleLoader__.load({
               else ctx.uiWorkspace?.startSession?.()
             }),
             register('context', '/context — ouvrir le contexte carrière', () => ctx.sidebarRight?.openTab?.(CAREER_TAB_KIND)),
+            register('profile', '/profile — afficher le profil actif', () => ctx.sidebarRight?.openTab?.(CAREER_TAB_KIND)),
             register('offer', '/offer — ouvrir la revue des offres', () => ctx.sidebarRight?.openTab?.(CAREER_TAB_KIND)),
             register('compare', '/compare — comparer les offres sélectionnées', () => ctx.sidebarRight?.openTab?.(CAREER_TAB_KIND)),
           ]
