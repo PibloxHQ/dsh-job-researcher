@@ -150,6 +150,55 @@ export const FEEDBACK_TAGS = Object.freeze([
     labelFr: 'Manque de détails',
     labelEn: 'Needs details',
   },
+  {
+    id: 'role_mismatch',
+    delta: 0,
+    actionable: false,
+    labelFr: 'Métier pas recherché',
+    labelEn: 'Role mismatch',
+  },
+  {
+    id: 'skills_gap',
+    delta: 0,
+    actionable: false,
+    labelFr: 'Compétences insuffisantes',
+    labelEn: 'Skills gap',
+  },
+  {
+    id: 'experience_gap',
+    delta: 0,
+    actionable: false,
+    labelFr: 'Expérience / niveau décalé',
+    labelEn: 'Experience mismatch',
+  },
+  {
+    id: 'work_preference_bad',
+    delta: 0,
+    actionable: false,
+    labelFr: 'Organisation non adaptée',
+    labelEn: 'Work preference mismatch',
+  },
+  {
+    id: 'salary_bad',
+    delta: 0,
+    actionable: false,
+    labelFr: 'Rémunération non adaptée',
+    labelEn: 'Salary mismatch',
+  },
+  {
+    id: 'culture_bad',
+    delta: 0,
+    actionable: false,
+    labelFr: 'Environnement non adapté',
+    labelEn: 'Culture mismatch',
+  },
+  {
+    id: 'growth_bad',
+    delta: 0,
+    actionable: false,
+    labelFr: 'Évolution peu intéressante',
+    labelEn: 'Growth mismatch',
+  },
 ])
 
 export const FEEDBACK_TAG_IDS = Object.freeze(FEEDBACK_TAGS.map((t) => t.id))

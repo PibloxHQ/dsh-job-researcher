@@ -42,6 +42,13 @@ window.__ModuleLoader__.load({
       { id: 'contract_bad', labelFr: 'Contrat non' },
       { id: 'missing_diploma', labelFr: 'Diplôme manquant' },
       { id: 'needs_details', labelFr: 'Manque de détails' },
+      { id: 'role_mismatch', labelFr: 'Métier pas recherché' },
+      { id: 'skills_gap', labelFr: 'Compétences insuffisantes' },
+      { id: 'experience_gap', labelFr: 'Expérience / niveau décalé' },
+      { id: 'work_preference_bad', labelFr: 'Organisation non adaptée' },
+      { id: 'salary_bad', labelFr: 'Rémunération non adaptée' },
+      { id: 'culture_bad', labelFr: 'Environnement non adapté' },
+      { id: 'growth_bad', labelFr: 'Évolution peu intéressante' },
     ]
 
     const DICT = {
@@ -1391,9 +1398,19 @@ window.__ModuleLoader__.load({
       },
       {
         id: 'missing',
-        labelFr: 'Profil / informations',
+        labelFr: 'Adéquation au profil',
         labelEn: 'Missing info',
-        tags: ['missing_diploma', 'needs_details'],
+        tags: [
+          'role_mismatch',
+          'skills_gap',
+          'experience_gap',
+          'work_preference_bad',
+          'salary_bad',
+          'culture_bad',
+          'growth_bad',
+          'missing_diploma',
+          'needs_details',
+        ],
       },
     ]
 

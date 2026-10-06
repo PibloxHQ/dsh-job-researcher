@@ -57,6 +57,13 @@ FEEDBACK_TAGS: list[dict[str, Any]] = [
         "actionable": False,
         "label_fr": "Manque de détails",
     },
+    {"id": "role_mismatch", "delta": 0, "actionable": False, "label_fr": "Métier pas recherché"},
+    {"id": "skills_gap", "delta": 0, "actionable": False, "label_fr": "Compétences insuffisantes"},
+    {"id": "experience_gap", "delta": 0, "actionable": False, "label_fr": "Expérience / niveau décalé"},
+    {"id": "work_preference_bad", "delta": 0, "actionable": False, "label_fr": "Organisation non adaptée"},
+    {"id": "salary_bad", "delta": 0, "actionable": False, "label_fr": "Rémunération non adaptée"},
+    {"id": "culture_bad", "delta": 0, "actionable": False, "label_fr": "Environnement non adapté"},
+    {"id": "growth_bad", "delta": 0, "actionable": False, "label_fr": "Évolution peu intéressante"},
 ]
 
 TAG_BY_ID = {t["id"]: t for t in FEEDBACK_TAGS}
