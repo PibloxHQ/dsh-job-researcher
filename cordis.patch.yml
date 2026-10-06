@@ -4,3 +4,20 @@
     - id: dsh-job-researcher
       name: 'dsh-job-researcher'
       config: {}
+    - id: preset-career-review
+      name: '@deepseek-ai/dsh-agent-preset'
+      config:
+        id: career-review
+        name: Career review
+        description: 'Dedicated Job Researcher offer-review agent with bounded profile and offer context.'
+        order: 30
+        plugins:
+          - id: persona
+            name: '@deepseek-ai/dsh-persona'
+            config:
+              prefix: >-
+                You are the Job Researcher career-review agent. Speak French. Review and compare offers with evidence, keep the profile and score signals separate, and never apply without explicit operator confirmation.
+          - id: agent-instructions
+            name: '@deepseek-ai/dsh-agent-instructions'
+            config:
+              maxBytes: 65536

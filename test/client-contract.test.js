@@ -48,6 +48,14 @@ describe('client feedback / DSH token contract', () => {
     assert.match(src, /settings\.section/)
   })
 
+  it('uses the native resizable right-sidebar tab contract for career review', () => {
+    const source = readFileSync(CLIENT, 'utf8')
+    assert.match(source, /sidebarRightTabs\.register/)
+    assert.match(source, /sidebar\.right\.pane\.tab/)
+    assert.match(source, /openTab\?\./)
+    assert.match(source, /CAREER_TAB_KIND/)
+  })
+
   it('exposes readiness badge and settings gear', () => {
     const src = readFileSync(CLIENT, 'utf8')
     assert.match(src, /'data-testid':\s*'job-researcher-readiness'/)

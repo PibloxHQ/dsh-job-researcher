@@ -15,6 +15,8 @@ window.__ModuleLoader__.load({
 
     const PLUGIN_ID = 'dsh-job-researcher'
     const PANEL_ID = 'job-researcher'
+    const CAREER_TAB_ID = 'dsh-job-researcher/career-review'
+    const CAREER_TAB_KIND = 'dsh-job-researcher/career-review'
     const SECTION_ID = 'job-researcher'
     const LOCALE_NS = 'job-researcher'
     const SETTINGS_LOCALE_NS = 'settings.job-researcher'
@@ -2842,6 +2844,7 @@ window.__ModuleLoader__.load({
       const closePanel = props.closePanel
       const openSettings = props.openSettings
       const openSecrets = props.openSecrets
+      const openCareerChat = props.openCareerChat
       const [status, setStatus] = useState(null)
       const [offers, setOffers] = useState({ total: 0, rows: [] })
       const [qInput, setQInput] = useState('')
@@ -3577,6 +3580,15 @@ window.__ModuleLoader__.load({
               jsxs('div', {
                 style: css.navActions,
                 children: [
+                  openCareerChat
+                    ? jsx('button', {
+                        type: 'button',
+                        style: css.btn,
+                        'aria-label': 'Ouvrir la revue carrière',
+                        onClick: openCareerChat,
+                        children: '💬 Revue',
+                      })
+                    : null,
                   jsx('button', {
                     type: 'button',
                     style: btnStyle(css.btn, busy),
@@ -4281,6 +4293,35 @@ window.__ModuleLoader__.load({
       })
     }
 
+    function CareerReviewSidebar() {
+      const [status, setStatus] = useState('loading')
+      const [profile, setProfile] = useState(null)
+      const [offers, setOffers] = useState([])
+      useEffect(() => {
+        let cancelled = false
+        Promise.all([
+          fetch(`${API}/status`).then((r) => r.ok ? r.json() : null),
+          fetch(`${API}/offers?limit=5&sort=jev_desc`).then((r) => r.ok ? r.json() : null),
+        ]).then(([nextStatus, nextOffers]) => {
+          if (cancelled) return
+          setStatus(nextStatus ? 'ready' : 'unavailable')
+          setProfile(nextStatus?.config?.profile || nextStatus?.profile || null)
+          setOffers(nextOffers?.rows || [])
+        }).catch(() => { if (!cancelled) setStatus('unavailable') })
+        return () => { cancelled = true }
+      }, [])
+      return jsxs('div', {
+        'data-testid': 'job-researcher-career-review',
+        style: { padding: '1rem', display: 'grid', gap: '0.8rem', color: 'var(--dsw-alias-text-primary)' },
+        children: [
+          jsxs('div', { children: [jsx('h2', { style: { margin: 0 }, children: 'Revue carrière' }), jsx('p', { style: css.muted, children: status === 'ready' ? 'Contexte Job Researcher chargé.' : 'Contexte indisponible.' })] }),
+          jsxs('section', { children: [jsx('h3', { children: 'Profil actif' }), jsx('p', { style: css.muted, children: profile?.markdown ? 'Profil Markdown configuré.' : 'Profil Markdown vide ou non configuré.' })] }),
+          jsxs('section', { children: [jsx('h3', { children: 'Offres prioritaires' }), offers.length ? offers.map((offer) => jsxs('div', { style: { padding: '0.55rem 0', borderBottom: '1px solid var(--dsw-alias-border-subtle)' }, children: [jsx('strong', { children: offer.title || 'Offre sans titre' }), jsx('div', { style: css.muted, children: `${offer.employer || 'Employeur inconnu'} · Jev ${offer.jev?.weighted_match?.overall ?? '—'}` })] }, offer.id)) : jsx('p', { style: css.muted, children: 'Aucune offre prioritaire chargée.' })] }),
+          jsx('p', { style: css.muted, children: 'Cette vue est le cockpit de revue. La conversation dédiée utilise le preset career-review et les outils Job Researcher bornés.' }),
+        ],
+      })
+    }
+
     function apply(ctx) {
       if (!ctx.slots || !ctx.slots.inject) return
       ctx.effect(
@@ -4308,6 +4349,7 @@ window.__ModuleLoader__.load({
         },
         openSettings: () => tryOpenHostSettings(ctx),
         openSecrets: () => tryOpenHostSettings(ctx, 'secrets'),
+        openCareerChat: () => ctx.sidebarRight?.openTab?.(CAREER_TAB_KIND, { preferNewPane: false }),
       })
       const settingsInject = () => ({
         t: settingsT,
@@ -4349,11 +4391,50 @@ window.__ModuleLoader__.load({
           JobResearcherSettings,
         ),
       )
+      if (ctx.sidebarRightTabs?.register && ctx.sidebarRight && ctx.slots) {
+        ctx.effect(() => ctx.sidebarRightTabs.register({
+          id: CAREER_TAB_ID,
+          kind: CAREER_TAB_KIND,
+          priority: 'extension',
+          title: () => 'Revue carrière',
+          keepMounted: true,
+        }), `${PLUGIN_ID}: career review sidebar type`)
+        ctx.slots.inject('sidebar.right.pane.tab', () => ctx.slots.register({
+          name: 'sidebar.right.pane.tab',
+          key: CAREER_TAB_ID,
+          locale: LOCALE_NS,
+        }, CareerReviewSidebar))
+      }
+      if (ctx.commandUi?.register) {
+        ctx.effect(() => {
+          const spec = (run) => ({ kind: 'action', run })
+          const register = (name, label, run) => ctx.commandUi.register({
+            name, label: () => label,
+            description: () => 'Job Researcher · session carrière dédiée',
+            available: () => true, ui: spec(run),
+          })
+          const decorate = (name, run) => ctx.commandUi.decorate({
+            name, available: () => true, ui: spec(run),
+          })
+          const disposers = [
+            decorate('new', () => ctx.uiWorkspace?.startSession?.()),
+            decorate('reset', (session) => {
+              const id = session?.sessionId || session?.id
+              if (id && ctx.uiWorkspace?.forkSession) void ctx.uiWorkspace.forkSession(id).then((next) => ctx.uiWorkspace.openSession(next))
+              else ctx.uiWorkspace?.startSession?.()
+            }),
+            register('context', '/context — ouvrir le contexte carrière', () => ctx.sidebarRight?.openTab?.(CAREER_TAB_KIND)),
+            register('offer', '/offer — ouvrir la revue des offres', () => ctx.sidebarRight?.openTab?.(CAREER_TAB_KIND)),
+            register('compare', '/compare — comparer les offres sélectionnées', () => ctx.sidebarRight?.openTab?.(CAREER_TAB_KIND)),
+          ]
+          return () => disposers.forEach((dispose) => dispose?.())
+        }, `${PLUGIN_ID}: career commands`)
+      }
     }
 
     exports.apply = apply
     // DSH 0.2 removed settingsScope; settings.section is provided by slots.
-    exports.inject = ['slots', 'locale', 'layout']
+    exports.inject = ['slots', 'locale', 'layout', 'sidebarRight', 'sidebarRightTabs', 'commandUi', 'uiWorkspace']
     exports.JobResearcherPanel = JobResearcherPanel
     exports.JobResearcherSettings = JobResearcherSettings
     exports.JobResearcherIcon = JobResearcherIcon
