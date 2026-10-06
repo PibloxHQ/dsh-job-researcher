@@ -2121,6 +2121,9 @@ window.__ModuleLoader__.load({
       const contract = metaOrUnknown(selected.contract_type, unknown)
       const remote = remoteLabel(t, selected.remote)
       const matchLabel = scoreMatchLabel(t, selected.score)
+      const displayMatch = jevMatch?.overall != null
+        ? `Jev ${jevMatch.overall}/100 · D${selected.score ?? '—'}`
+        : `${matchLabel} · D${selected.score ?? '—'}`
       const interestLabel = decisionLabel(t, selected.user_decision)
       const appLabel = applicationLabel(t, selected.application_status)
       const desc = String(selected.description || '').trim()
@@ -2285,7 +2288,7 @@ window.__ModuleLoader__.load({
                             jsxs('span', {
                               style: css.metaChip,
                               title: `${selected.score ?? '—'} · ${selected.score_version || '—'}`,
-                              children: [t('match'), ': ', matchLabel],
+                              children: [t('match'), ': ', displayMatch],
                             }),
                           ],
                         }),
@@ -2345,9 +2348,7 @@ window.__ModuleLoader__.load({
                                     children: [
                                       jsx('p', {
                                         style: css.muted,
-                                        children: `${matchLabel} · score ${selected.score ?? '—'} (${
-                                          selected.score_version || '—'
-                                        })${
+                                        children: `${displayMatch} · score ${selected.score ?? '—'} (${selected.score_version || '—'})${
                                           selected.score_classification
                                             ? ` · ${selected.score_classification}`
                                             : ''
@@ -3709,15 +3710,15 @@ window.__ModuleLoader__.load({
                                           style: { display: 'inline-flex', alignItems: 'center', gap: '0.35rem' },
                                           children: [
                                             jsx('span', {
-                                              style: scoreBadgeStyle(row.score),
-                                              children: row.score ?? '—',
+                                              style: scoreBadgeStyle(rowJev?.overall != null ? rowJev.overall / 20 : row.score),
+                                              children: rowJev?.overall != null ? `J${rowJev.overall}` : row.score ?? '—',
                                             }),
                                             rowJev?.overall != null
                                               ? jsx('span', {
                                                   style: { ...css.muted, fontSize: '0.72rem' },
-                                                  title: `Jev ${rowJev.overall}/100`,
+                                                  title: `Déterministe ${row.score ?? '—'}`,
                                                   'data-testid': `jev-score-${row.id}`,
-                                                  children: `J${rowJev.overall}`,
+                                                  children: `D${row.score ?? '—'}`,
                                                 })
                                               : null,
                                           ],
