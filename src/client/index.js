@@ -2818,7 +2818,7 @@ window.__ModuleLoader__.load({
         const reqId = ++offersReqId.current
         try {
           const list = await api(
-            `/offers?q=${encodeURIComponent(q)}&source=${encodeURIComponent(source)}&decision=${encodeURIComponent(decision)}&application=${encodeURIComponent(application)}&minScore=${encodeURIComponent(minScore)}&limit=${limit}&offset=${page * limit}`,
+            `/offers?q=${encodeURIComponent(q)}&source=${encodeURIComponent(source)}&decision=${encodeURIComponent(decision)}&application=${encodeURIComponent(application)}&minScore=${encodeURIComponent(minScore)}&sort=jev_desc&limit=${limit}&offset=${page * limit}`,
           )
           if (reqId !== offersReqId.current) return
           setOffers(list)

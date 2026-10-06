@@ -505,7 +505,7 @@ export function openStore(dataDir, { now } = {}) {
         minScore = null,
         limit = 50,
         offset = 0,
-        sort = 'score_desc',
+        sort = 'jev_desc',
       } = filters
       const clauses = []
       const params = []
@@ -540,6 +540,17 @@ export function openStore(dataDir, { now } = {}) {
       if (sort === 'title') order = 'o.title ASC'
       // SQLite lacks NULLS LAST — emulate
       if (sort === 'score_desc') order = 'CASE WHEN o.score IS NULL THEN 1 ELSE 0 END, o.score DESC, o.last_seen_at DESC'
+      if (sort === 'jev_desc') {
+        // Jev is the primary ranking when available. Offers without a valid
+        // weighted match stay behind and retain deterministic score ordering.
+        order = `
+          CASE WHEN json_extract(o.jev_signals_json, '$.weighted_match.overall') IS NULL THEN 1 ELSE 0 END,
+          CAST(json_extract(o.jev_signals_json, '$.weighted_match.overall') AS REAL) DESC,
+          CASE WHEN o.score IS NULL THEN 1 ELSE 0 END,
+          o.score DESC,
+          o.last_seen_at DESC
+        `
+      }
 
       const countSql = `
         SELECT COUNT(*) AS n

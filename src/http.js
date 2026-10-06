@@ -428,7 +428,7 @@ export function registerHttpRoutes(webServer, {
         minScore: url.searchParams.get('minScore'),
         limit: url.searchParams.get('limit') || 50,
         offset: url.searchParams.get('offset') || 0,
-        sort: url.searchParams.get('sort') || 'score_desc',
+        sort: url.searchParams.get('sort') || 'jev_desc',
       })
       sendJson(res, 200, result)
     } catch (err) {
