@@ -76,9 +76,15 @@ export function deriveProfile(markdown) {
   const sections = {}
   let current = 'root'
   for (const line of source.split(/\r?\n/)) {
-    const heading = line.match(/^#{2,3}\s+(.+?)\s*$/)?.[1]
-    if (heading) current = heading.toLowerCase()
-    else (sections[current] ||= []).push(line)
+    const heading = line.match(/^(#{2,3})\s+(.+?)\s*$/)
+    if (heading && heading[1] === '##') {
+      // Keep ###/subsections attached to their parent H2. This lets a long
+      // profile use readable subsections without losing its bullet evidence.
+      current = heading[2].toLowerCase()
+      sections[current] ||= []
+    } else if (!heading) {
+      (sections[current] ||= []).push(line)
+    }
   }
   const find = (...names) => {
     const key = Object.keys(sections).find((candidate) =>

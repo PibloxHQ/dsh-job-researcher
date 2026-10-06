@@ -35,6 +35,14 @@ describe('validateSearchConfig', () => {
     assert.equal(config.profile.markdown.length, 70_016)
   })
 
+  it('keeps bullets under Markdown subsections in the derived profile', () => {
+    const { config } = validateSearchConfig({
+      profile: { markdown: '## Expériences\n### Projet\n- Node.js\n\n## Compétences techniques\n### Fortement étayées\n- Linux' },
+    })
+    assert.deepEqual(config.profile.derived.experience, ['Node.js'])
+    assert.deepEqual(config.profile.derived.skills.core, ['Linux'])
+  })
+
   it('accepts partial overlay on base', () => {
     const { ok, config } = validateSearchConfig({
       location: { departments: ['69'], communes: [], prefer_remote: false },
