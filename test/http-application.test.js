@@ -268,6 +268,21 @@ describe('HTTP application API', () => {
     assert.equal(offer.jev_model, 'jev-1.13.0')
     assert.equal(offer.jev_schema_version, 'career.v1')
     assert.ok(offer.jev_signals_json.includes('weighted_match'))
+    assert.equal(Number(response.body.run_id) > 0, true)
+    const evalRoute = findRoute(server, '/api/job-researcher/offers', 'prefix')
+    const evalResponse = mockRes()
+    await evalRoute.handler({
+      method: 'GET',
+      url: '/api/job-researcher/offers/1/jev-evaluations?limit=5',
+    }, evalResponse)
+    assert.equal(evalResponse.statusCode, 200)
+    assert.equal(evalResponse.body.evaluations.length, 1)
+    assert.equal(evalResponse.body.evaluations[0].status, 'completed')
+    const runsRoute = findRoute(server, '/api/job-researcher/jev-runs')
+    const runsResponse = mockRes()
+    await runsRoute.handler({ method: 'GET', url: '/api/job-researcher/jev-runs' }, runsResponse)
+    assert.equal(runsResponse.statusCode, 200)
+    assert.equal(runsResponse.body.runs[0].completed_offers, 1)
     store.close()
   })
 })

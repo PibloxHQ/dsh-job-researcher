@@ -1,4 +1,5 @@
 import { existsSync } from 'node:fs'
+import { createHash } from 'node:crypto'
 import { nextCronUtc } from './cron.js'
 import {
   DEFAULT_CRON,
@@ -22,6 +23,7 @@ import { computeReadiness, probeFilesystem } from './readiness.js'
 import { runBootstrap } from './bootstrap.js'
 import {
   JEV_ENRICHMENT_MAX_OFFERS,
+  CAREER_QUESTION_SET_VERSION,
   buildCareerJevRequest,
   isJevCandidate,
   JEV_ENRICHMENT_MIN_SCORE,
@@ -445,6 +447,12 @@ export function registerHttpRoutes(webServer, {
 
     if (method === 'GET') {
       try {
+        if (parts[1] === 'jev-evaluations') {
+          return sendJson(res, 200, {
+            ok: true,
+            evaluations: getStore().listJevEvaluations(id, url.searchParams.get('limit') || 20),
+          })
+        }
         const offer = getStore().getOffer(id)
         if (!offer) return sendJson(res, 404, { ok: false, error: 'not_found' })
         return sendJson(res, 200, { offer })
@@ -643,8 +651,19 @@ export function registerHttpRoutes(webServer, {
     }
     const store = safeStore()
     if (!store) return sendJson(res, 503, { ok: false, error: 'store_unavailable' })
-    const profile = store.getSearchConfig?.().config?.profile || {}
+    const searchConfig = store.getSearchConfig?.() || {}
+    const profile = searchConfig.config?.profile || {}
+    const runId = store.startJevRun?.({
+      profileRevision: searchConfig.version,
+      profileHash: searchConfig.config_hash,
+      questionSetVersion: CAREER_QUESTION_SET_VERSION,
+      model: 'jev-latest',
+      totalOffers: ids.length,
+    }) || null
     const results = []
+    let completedOffers = 0
+    let failedOffers = 0
+    let skippedOffers = 0
     for (const id of ids) {
       const offer = store.getOffer(id)
       if (!offer) {
@@ -660,27 +679,73 @@ export function registerHttpRoutes(webServer, {
           score: offer.score ?? null,
           fallback: 'deterministic',
         })
+        skippedOffers += 1
+        if (runId) {
+          store.recordJevEvaluation({
+            runId,
+            offerId: id,
+            requestHash: `skipped:${id}:${searchConfig.config_hash || ''}`,
+            profileRevision: searchConfig.version,
+            profileHash: searchConfig.config_hash,
+            questionSetVersion: CAREER_QUESTION_SET_VERSION,
+            model: 'jev-latest',
+            status: 'skipped',
+            error: 'below_deterministic_threshold',
+          })
+        }
         continue
       }
       try {
         const request = buildCareerJevRequest(offer, profile)
+        const requestHash = createHash('sha256')
+          .update(JSON.stringify({ model: 'jev-latest', state: request.state, questions: request.questions }))
+          .digest('hex')
         const answer = await jev.ask({
           state: request.state,
           questions: request.questions,
           source: 'host',
         })
         const normalized = normalizeCareerJevResult(answer)
-        store.setJevEnrichment(id, { result: normalized })
+        store.setJevEnrichment(id, { result: normalized }, {
+          evaluation: {
+            runId,
+            requestHash,
+            profileRevision: searchConfig.version,
+            profileHash: searchConfig.config_hash,
+            questionSetVersion: CAREER_QUESTION_SET_VERSION,
+          },
+        })
+        completedOffers += 1
         results.push({ id, ok: true, model: normalized.model, contract: normalized.contract })
       } catch (error) {
         const message = String(error?.message || error)
         try {
-          store.setJevEnrichment(id, { error: message })
+          const requestHash = createHash('sha256')
+            .update(JSON.stringify({ id, profileHash: searchConfig.config_hash, questionSetVersion: CAREER_QUESTION_SET_VERSION }))
+            .digest('hex')
+          store.setJevEnrichment(id, { error: message }, {
+            evaluation: {
+              runId,
+              requestHash,
+              profileRevision: searchConfig.version,
+              profileHash: searchConfig.config_hash,
+              questionSetVersion: CAREER_QUESTION_SET_VERSION,
+            },
+          })
         } catch {
           /* preserve the original enrichment error */
         }
+        failedOffers += 1
         results.push({ id, ok: false, error: message, fallback: 'deterministic' })
       }
+    }
+    if (runId) {
+      store.finishJevRun(runId, {
+        status: failedOffers ? (completedOffers ? 'partial' : 'failed') : 'completed',
+        completedOffers,
+        failedOffers,
+        skippedOffers,
+      })
     }
     return sendJson(res, 200, {
       ok: results.every((item) => item.ok),
@@ -688,8 +753,24 @@ export function registerHttpRoutes(webServer, {
       affects_score: false,
       affects_interest: false,
       affects_application_status: false,
+      run_id: runId,
       results,
     })
+  }
+
+  async function handleJevRuns(req, res) {
+    if (methodOf(req) !== 'GET') {
+      return sendJson(res, 405, { ok: false, error: 'method_not_allowed' })
+    }
+    try {
+      const url = new URL(req.url, 'http://localhost')
+      return sendJson(res, 200, {
+        ok: true,
+        runs: getStore().listJevRuns(url.searchParams.get('limit') || 20),
+      })
+    } catch (err) {
+      return sendJson(res, 500, { ok: false, error: String(err.message || err) })
+    }
   }
 
   // One registration per path — method dispatch inside handlers (see file header).
@@ -722,4 +803,5 @@ export function registerHttpRoutes(webServer, {
   webServer.register({ kind: 'prefix', path: `${base}/runs`, handler: handleRunsPrefix })
   webServer.register({ kind: 'exact', path: `${base}/rescore`, handler: handleRescore })
   webServer.register({ kind: 'exact', path: `${base}/jev-enrich`, handler: handleJevEnrich })
+  webServer.register({ kind: 'exact', path: `${base}/jev-runs`, handler: handleJevRuns })
 }
