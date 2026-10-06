@@ -648,6 +648,29 @@ export function openStore(dataDir, { now } = {}) {
       `).all(oid, Math.min(100, Math.max(1, Number(limit) || 20)))
     },
 
+    listPendingJevOffers(limit = 20) {
+      return db.prepare(`
+        SELECT id
+        FROM offers
+        WHERE score >= 5
+          AND (jev_model IS NULL OR jev_model = '' OR COALESCE(jev_error, '') <> '')
+        ORDER BY score DESC, last_seen_at DESC, id DESC
+        LIMIT ?
+      `).all(Math.min(20, Math.max(1, Number(limit) || 20)))
+    },
+
+    hasSuccessfulJevScore(offerId) {
+      const oid = parseOfferId(offerId)
+      if (oid == null) return false
+      const row = db.prepare(`
+        SELECT 1 AS found
+        FROM offers
+        WHERE id = ? AND COALESCE(jev_model, '') <> ''
+          AND jev_scored_at IS NOT NULL AND COALESCE(jev_error, '') = ''
+      `).get(oid)
+      return Boolean(row?.found)
+    },
+
     recordJevEvaluation({
       runId,
       offerId,

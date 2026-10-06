@@ -638,19 +638,22 @@ export function registerHttpRoutes(webServer, {
     } catch {
       return sendJson(res, 400, { ok: false, error: 'invalid_json' })
     }
-    const rawIds = Array.isArray(body?.offer_ids) ? body.offer_ids : []
+    const requestedIds = Array.isArray(body?.offer_ids) ? body.offer_ids : null
+    const store = safeStore()
+    if (!store) return sendJson(res, 503, { ok: false, error: 'store_unavailable' })
+    const rawIds = requestedIds?.length
+      ? requestedIds
+      : (store.listPendingJevOffers?.(JEV_ENRICHMENT_MAX_OFFERS) || []).map((row) => row.id)
     if (!rawIds.length || rawIds.length > JEV_ENRICHMENT_MAX_OFFERS) {
       return sendJson(res, 400, {
         ok: false,
-        error: `offer_ids must contain 1-${JEV_ENRICHMENT_MAX_OFFERS} ids`,
+        error: requestedIds ? `offer_ids must contain 1-${JEV_ENRICHMENT_MAX_OFFERS} ids` : 'no_pending_jev_offers',
       })
     }
     const ids = [...new Set(rawIds.map(parseOfferId).filter((id) => id != null))]
     if (ids.length !== rawIds.length) {
       return sendJson(res, 400, { ok: false, error: 'offer_ids must contain positive integer ids' })
     }
-    const store = safeStore()
-    if (!store) return sendJson(res, 503, { ok: false, error: 'store_unavailable' })
     const searchConfig = store.getSearchConfig?.() || {}
     const profile = searchConfig.config?.profile || {}
     const runId = store.startJevRun?.({
@@ -668,6 +671,11 @@ export function registerHttpRoutes(webServer, {
       const offer = store.getOffer(id)
       if (!offer) {
         results.push({ id, ok: false, error: 'not_found' })
+        continue
+      }
+      if (store.hasSuccessfulJevScore?.(id)) {
+        results.push({ id, ok: true, skipped: true, reason: 'already_scored' })
+        skippedOffers += 1
         continue
       }
       if (!isJevCandidate(offer)) {
