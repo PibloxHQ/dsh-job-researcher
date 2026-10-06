@@ -871,6 +871,10 @@ window.__ModuleLoader__.load({
         display: 'flex',
         flexDirection: 'column',
         gap: '0.35rem',
+        padding: '0.9rem 1rem 0.85rem',
+        borderRadius: '0.6rem',
+        border: '0.5px solid var(--dsw-alias-border-l2)',
+        background: 'var(--dsw-alias-bg-layer-2)',
       },
       sheetTitle: {
         margin: 0,
@@ -899,6 +903,12 @@ window.__ModuleLoader__.load({
         border: '0.5px solid var(--dsw-alias-border-l3)',
         background: 'var(--dsw-alias-bg-layer-3, transparent)',
         color: 'var(--dsw-alias-label-secondary, inherit)',
+      },
+      metaChipScore: {
+        color: 'var(--dsw-alias-label-primary, inherit)',
+        borderColor: 'color-mix(in oklab, var(--dsw-alias-button-primary-fill) 45%, transparent)',
+        background: 'color-mix(in oklab, var(--dsw-alias-button-primary-fill) 12%, transparent)',
+        fontWeight: 650,
       },
       sheetGrid: {
         display: 'grid',
@@ -929,6 +939,9 @@ window.__ModuleLoader__.load({
         lineHeight: 1.55,
         maxWidth: '42rem',
         color: 'var(--dsw-alias-label-primary, inherit)',
+      },
+      descriptionParagraph: {
+        margin: '0 0 0.8rem',
       },
       reasonList: {
         margin: '0.35rem 0 0.5rem',
@@ -1048,7 +1061,10 @@ window.__ModuleLoader__.load({
       feedbackBlock: {
         marginTop: '0.35rem',
         paddingTop: '0.75rem',
-        borderTop: '0.5px solid var(--dsw-alias-border-l2)',
+        padding: '0.85rem',
+        border: '0.5px solid var(--dsw-alias-border-l2)',
+        borderRadius: '0.55rem',
+        background: 'var(--dsw-alias-bg-layer-1)',
         display: 'flex',
         flexDirection: 'column',
         gap: '0.45rem',
@@ -1189,6 +1205,19 @@ window.__ModuleLoader__.load({
       } catch {
         return { reasons: [String(raw)] }
       }
+    }
+
+    function formatOfferDescription(raw) {
+      const text = String(raw || '')
+        .replace(/\r/g, '')
+        .replace(/[ \t]+/g, ' ')
+        .replace(/([.!?])(?=[A-ZÀ-ÖØ-Þ])/g, '$1\n\n')
+        .replace(/\s*:\s*(?=[A-ZÀ-ÖØ-Þ])/g, ':\n')
+        .trim()
+      return text
+        .split(/\n{2,}/)
+        .map((part) => part.trim())
+        .filter(Boolean)
     }
 
     function parseJevSignals(raw) {
@@ -2198,6 +2227,7 @@ window.__ModuleLoader__.load({
       const interestLabel = decisionLabel(t, selected.user_decision)
       const appLabel = applicationLabel(t, selected.application_status)
       const desc = String(selected.description || '').trim()
+      const descriptionParagraphs = formatOfferDescription(desc)
       const isExcerpt = Boolean(desc) && desc.length < 280 && !desc.includes('\n\n')
 
       const interestOptions = [
@@ -2287,6 +2317,7 @@ window.__ModuleLoader__.load({
               children: [
                 jsxs('div', {
                   style: css.sheetTopBar,
+                  className: 'jr-sheet-topbar',
                   children: [
                     jsxs('div', {
                       style: css.sheetNavGroup,
@@ -2325,9 +2356,11 @@ window.__ModuleLoader__.load({
                 jsxs('div', {
                   ref: bodyRef,
                   style: css.sheetBody,
+                  className: 'jr-sheet-body',
                   children: [
                     jsxs('header', {
                       style: css.sheetHeader,
+                      className: 'jr-sheet-header',
                       children: [
                         jsx('h2', {
                           style: css.sheetTitle,
@@ -2360,7 +2393,7 @@ window.__ModuleLoader__.load({
                               children: [t('source'), ': ', sourceLabel(selected.source)],
                             }),
                             jsxs('span', {
-                              style: css.metaChip,
+                              style: { ...css.metaChip, ...css.metaChipScore },
                               title: `${selected.score ?? '—'} · ${selected.score_version || '—'}`,
                               children: [t('match'), ': ', displayMatch],
                             }),
@@ -2390,7 +2423,14 @@ window.__ModuleLoader__.load({
                                   : null,
                                 jsx('div', {
                                   style: css.descriptionReadable,
-                                  children: desc || t('noDescription'),
+                                  children: descriptionParagraphs.length
+                                    ? descriptionParagraphs.map((paragraph, index) =>
+                                        jsx('p', {
+                                          style: css.descriptionParagraph,
+                                          children: paragraph,
+                                        }, `description-${index}`),
+                                      )
+                                    : t('noDescription'),
                                 }),
                               ],
                             }),
@@ -2862,6 +2902,29 @@ window.__ModuleLoader__.load({
   border-radius: 8px;
 }
 @media (max-width: 720px) {
+  [data-testid="offer-detail-modal"] {
+    padding: 0.35rem !important;
+  }
+  [data-testid="offer-detail"] {
+    max-height: calc(100vh - 0.7rem) !important;
+    border-radius: 0.5rem !important;
+  }
+  [data-testid="offer-detail"] .jr-sheet-topbar {
+    padding: 0.5rem 0.65rem !important;
+  }
+  [data-testid="offer-detail"] .jr-sheet-body {
+    padding: 0.7rem !important;
+    gap: 0.7rem !important;
+  }
+  [data-testid="offer-detail"] .jr-sheet-header {
+    padding: 0.75rem !important;
+  }
+  [data-testid="offer-detail"] .jr-sheet-header h2 {
+    font-size: 1.1rem !important;
+  }
+  [data-testid="offer-detail"] [data-testid="offer-actions-panel"] {
+    padding: 0.7rem !important;
+  }
   [data-testid="job-researcher-navbar"] {
     align-items: flex-start !important;
     flex-wrap: wrap !important;
