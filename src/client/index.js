@@ -3672,6 +3672,7 @@ window.__ModuleLoader__.load({
                               })
                             : offers.rows.map((row) => {
                                 const rowBusy = Boolean(offerBusy[row.id])
+                                const rowJev = parseJevSignals(row.jev_signals_json)?.weighted_match
                                 return jsxs(
                                   'tr',
                                   {
@@ -3704,9 +3705,22 @@ window.__ModuleLoader__.load({
                                     children: [
                                       jsx('td', {
                                         style: css.td,
-                                        children: jsx('span', {
-                                          style: scoreBadgeStyle(row.score),
-                                          children: row.score ?? '—',
+                                        children: jsxs('div', {
+                                          style: { display: 'inline-flex', alignItems: 'center', gap: '0.35rem' },
+                                          children: [
+                                            jsx('span', {
+                                              style: scoreBadgeStyle(row.score),
+                                              children: row.score ?? '—',
+                                            }),
+                                            rowJev?.overall != null
+                                              ? jsx('span', {
+                                                  style: { ...css.muted, fontSize: '0.72rem' },
+                                                  title: `Jev ${rowJev.overall}/100`,
+                                                  'data-testid': `jev-score-${row.id}`,
+                                                  children: `J${rowJev.overall}`,
+                                                })
+                                              : null,
+                                          ],
                                         }),
                                       }),
                                       jsx('td', {
