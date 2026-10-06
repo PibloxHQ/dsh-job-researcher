@@ -14,6 +14,8 @@ export const CAREER_QUESTION_SET_VERSION = 'career-questions.v1'
 export const JEV_ENRICHMENT_MAX_OFFERS = 20
 export const JEV_ENRICHMENT_MAX_DESCRIPTION = 12_000
 export const JEV_ENRICHMENT_MIN_SCORE = 5
+export const JEV_LEARNING_MAX_ITEMS = 20
+export const JEV_LEARNING_MAX_TERM_LENGTH = 80
 
 export function isJevCandidate(offer) {
   return Number.isFinite(Number(offer?.score)) && Number(offer.score) >= JEV_ENRICHMENT_MIN_SCORE
@@ -81,6 +83,43 @@ function clone(value) {
   return JSON.parse(JSON.stringify(value))
 }
 
+function boundedList(values, mapper) {
+  return (Array.isArray(values) ? values : [])
+    .slice(0, JEV_LEARNING_MAX_ITEMS)
+    .map(mapper)
+    .filter(Boolean)
+}
+
+/** Keep learned context compact; raw feedback history never crosses to Jev. */
+export function buildJevLearningContext(summary = {}) {
+  const item = (entry) => ({
+    tag: bounded(entry?.tag, JEV_LEARNING_MAX_TERM_LENGTH),
+    label: bounded(entry?.label_fr, JEV_LEARNING_MAX_TERM_LENGTH),
+    count: Number.isFinite(Number(entry?.count)) ? Number(entry.count) : 0,
+    delta: Number.isFinite(Number(entry?.delta)) ? Number(entry.delta) : 0,
+    actionable: Boolean(entry?.actionable),
+  })
+  const term = (entry) => ({
+    term: bounded(entry?.term, JEV_LEARNING_MAX_TERM_LENGTH),
+    count: Number.isFinite(Number(entry?.count)) ? Number(entry.count) : 0,
+    polarity: entry?.polarity === 'avoid' ? 'avoid' : 'prefer',
+  })
+  return {
+    version: bounded(summary?.version, 40),
+    confirmed: boundedList(summary?.active_signals, item),
+    pending: boundedList(summary?.pending_signals, item),
+    preferred_terms: boundedList(summary?.prefer_terms, term),
+    avoided_terms: boundedList(summary?.avoid_terms, term),
+    instructions: [
+      'Use confirmed preferences as contextual evidence, not absolute rules.',
+      'Do not apply pending signals as score adjustments.',
+      'Do not invent preferences or treat missing evidence as a mismatch.',
+      'Explain when a learned preference materially affects the evaluation.',
+      'Do not modify the deterministic score or create a permanent preference.',
+    ],
+  }
+}
+
 function scoreFromAnswer(answer) {
   if (!answer || typeof answer !== 'object' || typeof answer.score !== 'number') return null
   const max = answer.legend && typeof answer.legend === 'object'
@@ -101,7 +140,7 @@ function buildWeightedMatch(answers) {
 }
 
 /** Build the public-job state sent to the host Jev service. */
-export function buildCareerJevRequest(offer, profile = {}) {
+export function buildCareerJevRequest(offer, profile = {}, learning = {}) {
   if (offer == null || typeof offer !== 'object' || Array.isArray(offer)) {
     throw new TypeError('jev enrichment: offer must be an object')
   }
@@ -123,6 +162,7 @@ export function buildCareerJevRequest(offer, profile = {}) {
       // Only the explicit career profile crosses the Jev boundary. Search
       // sources, schedule, revision and credentials are host concerns.
       profile: clone(profile),
+      learned_preferences: buildJevLearningContext(learning),
       deterministic_score: {
         score: offer.score ?? null,
         classification: offer.score_classification ?? null,

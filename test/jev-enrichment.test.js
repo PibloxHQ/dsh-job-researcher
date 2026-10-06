@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
-import { buildCareerJevRequest, normalizeCareerJevResult, CAREER_CONTRACT_VERSION, isJevCandidate } from '../src/jev-enrichment.js'
+import { buildCareerJevRequest, buildJevLearningContext, normalizeCareerJevResult, CAREER_CONTRACT_VERSION, isJevCandidate } from '../src/jev-enrichment.js'
 
 describe('Jev Career shadow contract', () => {
   it('builds bounded state without changing the deterministic score', () => {
@@ -45,6 +45,29 @@ describe('Jev Career shadow contract', () => {
     assert.equal(normalized.weighted_match.overall_coverage, 100)
     assert.equal(normalized.weighted_match.dimensions.salary.score, null)
     assert.throws(() => normalizeCareerJevResult({ answers: [] }), /answers must be an object/)
+  })
+
+  it('injects bounded learned preferences without raw feedback history', () => {
+    const request = buildCareerJevRequest(
+      { id: 1, title: 'Support', description: 'Offer', score: 6 },
+      { schema_version: 'career-profile.v1', markdown: 'profile' },
+      {
+        version: 'v6-feedback',
+        active_signals: [{ tag: 'location_good', label_fr: 'Bon lieu', count: 4, delta: 1, actionable: true }],
+        pending_signals: [{ tag: 'missing_diploma', label_fr: 'Diplôme manquant', count: 1, delta: 0, actionable: false }],
+        prefer_terms: [{ term: 'autonomie', count: 2, polarity: 'prefer' }],
+        avoid_terms: [{ term: 'astreinte', count: 2, polarity: 'avoid' }],
+        comments: ['ne doit jamais être transmis'],
+      },
+    )
+    assert.deepEqual(request.state.learned_preferences.confirmed[0], {
+      tag: 'location_good', label: 'Bon lieu', count: 4, delta: 1, actionable: true,
+    })
+    assert.equal(request.state.learned_preferences.pending[0].delta, 0)
+    assert.equal(request.state.learned_preferences.preferred_terms[0].term, 'autonomie')
+    assert.equal(request.state.learned_preferences.avoided_terms[0].polarity, 'avoid')
+    assert.equal(JSON.stringify(request.state).includes('ne doit jamais être transmis'), false)
+    assert.equal(buildJevLearningContext({}).confirmed.length, 0)
   })
 
   it('only sends deterministic candidates at score 5 or above to Jev', () => {

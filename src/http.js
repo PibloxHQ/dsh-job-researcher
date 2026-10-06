@@ -656,6 +656,7 @@ export function registerHttpRoutes(webServer, {
     }
     const searchConfig = store.getSearchConfig?.() || {}
     const profile = searchConfig.config?.profile || {}
+    const learning = store.learningSummary?.() || {}
     const runId = store.startJevRun?.({
       profileRevision: searchConfig.version,
       profileHash: searchConfig.config_hash,
@@ -704,7 +705,7 @@ export function registerHttpRoutes(webServer, {
         continue
       }
       try {
-        const request = buildCareerJevRequest(offer, profile)
+        const request = buildCareerJevRequest(offer, profile, learning)
         const requestHash = createHash('sha256')
           .update(JSON.stringify({ model: 'jev-latest', state: request.state, questions: request.questions }))
           .digest('hex')
