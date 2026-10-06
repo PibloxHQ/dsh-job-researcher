@@ -35,6 +35,14 @@ CREATE TABLE IF NOT EXISTS offers (
   description TEXT DEFAULT '',
   rome_codes TEXT DEFAULT '[]',
   raw_json TEXT DEFAULT '{}',
+  published_at TEXT,
+  updated_at TEXT,
+  expires_at TEXT,
+  source_scope TEXT DEFAULT '',
+  lifecycle_status TEXT NOT NULL DEFAULT 'active',
+  missing_sync_count INTEGER NOT NULL DEFAULT 0,
+  missing_since TEXT,
+  retired_at TEXT,
   first_seen_at TEXT NOT NULL,
   last_seen_at TEXT NOT NULL,
   interest TEXT DEFAULT 'unset',
@@ -52,6 +60,7 @@ CREATE INDEX IF NOT EXISTS idx_offers_interest ON offers(interest);
 CREATE INDEX IF NOT EXISTS idx_offers_source ON offers(source);
 CREATE INDEX IF NOT EXISTS idx_offers_score ON offers(score);
 CREATE INDEX IF NOT EXISTS idx_offers_notified ON offers(notified_at);
+CREATE INDEX IF NOT EXISTS idx_offers_lifecycle ON offers(lifecycle_status, source);
 
 CREATE TABLE IF NOT EXISTS offer_feedback (
   offer_id INTEGER PRIMARY KEY,

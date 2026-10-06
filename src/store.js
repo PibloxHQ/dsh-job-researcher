@@ -297,6 +297,14 @@ export function ensureAutonomySchema(db, { now = new Date() } = {}) {
   alterOfferIfMissing('jev_signals_json', "TEXT DEFAULT '{}'" )
   alterOfferIfMissing('jev_scored_at', 'TEXT')
   alterOfferIfMissing('jev_error', "TEXT DEFAULT ''")
+  alterOfferIfMissing('published_at', 'TEXT')
+  alterOfferIfMissing('updated_at', 'TEXT')
+  alterOfferIfMissing('expires_at', 'TEXT')
+  alterOfferIfMissing('source_scope', "TEXT DEFAULT ''")
+  alterOfferIfMissing('lifecycle_status', "TEXT NOT NULL DEFAULT 'active'")
+  alterOfferIfMissing('missing_sync_count', 'INTEGER NOT NULL DEFAULT 0')
+  alterOfferIfMissing('missing_since', 'TEXT')
+  alterOfferIfMissing('retired_at', 'TEXT')
 
   db.exec(`
     CREATE TABLE IF NOT EXISTS search_profiles (
@@ -506,9 +514,11 @@ export function openStore(dataDir, { now } = {}) {
         limit = 50,
         offset = 0,
         sort = 'jev_desc',
+        includeInactive = false,
       } = filters
       const clauses = []
       const params = []
+      if (!includeInactive) clauses.push("COALESCE(o.lifecycle_status, 'active') = 'active'")
       if (q) {
         clauses.push('(o.title LIKE ? OR o.employer LIKE ? OR o.location LIKE ? OR o.description LIKE ?)')
         const like = `%${q}%`

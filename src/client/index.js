@@ -146,6 +146,9 @@ window.__ModuleLoader__.load({
         match: 'Match',
         untitledOffer: 'Untitled offer',
         externalId: 'External id',
+        publishedAt: 'Published',
+        updatedAt: 'Updated',
+        lifecycleStatus: 'Lifecycle',
         collectedAt: 'Collected',
         appliedOn: 'Submitted on',
         clearApplied: 'Clear submitted status',
@@ -263,6 +266,9 @@ window.__ModuleLoader__.load({
         match: 'Correspondance',
         untitledOffer: 'Offre sans titre',
         externalId: 'Identifiant source',
+        publishedAt: 'Publiée le',
+        updatedAt: 'Actualisée le',
+        lifecycleStatus: 'État',
         collectedAt: 'Collectée',
         appliedOn: 'Envoyée le',
         clearApplied: 'Retirer le statut envoyée',
@@ -2451,6 +2457,30 @@ window.__ModuleLoader__.load({
                                       }),
                                     ],
                                   }),
+                                  selected.published_at
+                                    ? jsxs('div', {
+                                        children: [
+                                          jsx('dt', { children: t('publishedAt') }),
+                                          jsx('dd', { children: selected.published_at }),
+                                        ],
+                                      })
+                                    : null,
+                                  selected.updated_at
+                                    ? jsxs('div', {
+                                        children: [
+                                          jsx('dt', { children: t('updatedAt') }),
+                                          jsx('dd', { children: selected.updated_at }),
+                                        ],
+                                      })
+                                    : null,
+                                  selected.lifecycle_status && selected.lifecycle_status !== 'active'
+                                    ? jsxs('div', {
+                                        children: [
+                                          jsx('dt', { children: t('lifecycleStatus') }),
+                                          jsx('dd', { children: selected.lifecycle_status }),
+                                        ],
+                                      })
+                                    : null,
                                   selected.url
                                     ? jsxs('div', {
                                         children: [

@@ -33,7 +33,7 @@ import httpx
 
 from job_radar.config import Settings
 from job_radar.models import Offer
-from job_radar.normalize import geo_tags, public_tags
+from job_radar.normalize import geo_tags, normalize_date, public_tags
 
 BASE = "https://www.emploi-territorial.fr"
 
@@ -328,10 +328,11 @@ def row_to_offer(row: dict, *, cat: str) -> Offer:
         url=url,
         description=description,
         rome_codes="[]",
-        raw_json=json.dumps(
+            raw_json=json.dumps(
             {"source": "emploi_territorial", "category": cat, "row": row},
             ensure_ascii=False,
         ),
+        published_at=normalize_date(row.get("published"), day_first=True),
         tags=tags,
     )
 

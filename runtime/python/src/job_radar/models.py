@@ -18,6 +18,9 @@ class Offer:
     description: str = ""
     rome_codes: str = "[]"
     raw_json: str = "{}"
+    published_at: str = ""
+    updated_at: str = ""
+    expires_at: str = ""
     tags: list[str] = field(default_factory=list)
     interest: str = "unset"
     notes: str = ""
@@ -36,6 +39,9 @@ class Offer:
             "description": self.description,
             "rome_codes": self.rome_codes,
             "raw_json": self.raw_json,
+            "published_at": self.published_at,
+            "updated_at": self.updated_at,
+            "expires_at": self.expires_at,
             "tags": self.tags,
             "interest": self.interest,
             "notes": self.notes,

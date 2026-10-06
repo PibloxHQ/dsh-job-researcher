@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import re
 import unicodedata
+from datetime import datetime, timezone
 from typing import Any
 
 from job_radar.config import (
@@ -40,6 +41,22 @@ def fold(s: str) -> str:
 
 def _blob(*parts: str) -> str:
     return " ".join(fold(p) for p in parts if p)
+
+
+def normalize_date(value: Any, *, day_first: bool = False) -> str:
+    """Return a stable UTC-ish ISO date, or empty when the source is unclear."""
+    text = str(value or "").strip()
+    if not text:
+        return ""
+    try:
+        if day_first:
+            return datetime.strptime(text[:10], "%d/%m/%Y").replace(tzinfo=timezone.utc).isoformat().replace("+00:00", "Z")
+        parsed = datetime.fromisoformat(text.replace("Z", "+00:00"))
+        if parsed.tzinfo is None:
+            parsed = parsed.replace(tzinfo=timezone.utc)
+        return parsed.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
+    except ValueError:
+        return ""
 
 
 def detect_remote(*parts: str) -> str:
@@ -135,6 +152,9 @@ def normalize_ft(raw: dict[str, Any], profile_tags: list[str] | None = None) -> 
         description=description,
         rome_codes=json.dumps(rome, ensure_ascii=False),
         raw_json=json.dumps(raw, ensure_ascii=False)[:20000],
+        published_at=normalize_date(raw.get("dateCreation")),
+        updated_at=normalize_date(raw.get("dateActualisation")),
+        expires_at=normalize_date(raw.get("dateFinPublication")),
         tags=tags,
     )
 
@@ -247,6 +267,7 @@ def normalize_csp(row: dict[str, str]) -> Offer | None:
             },
             ensure_ascii=False,
         ),
+        published_at=normalize_date(published, day_first=True),
         tags=tags,
     )
 

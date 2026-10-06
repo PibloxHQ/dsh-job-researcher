@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import sqlite3
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Iterable
 
@@ -29,7 +29,7 @@ class Database:
     def close(self) -> None:
         self._conn.close()
 
-    def upsert_offer(self, offer: Offer) -> int:
+    def upsert_offer(self, offer: Offer, *, source_scope: str = "") -> int:
         now = utc_now()
         tags = dumps_tags(offer.tags)
         self._conn.execute(
@@ -37,9 +37,10 @@ class Database:
             INSERT INTO offers (
               source, external_id, title, employer, location, contract_type,
               work_time, remote, url, description, rome_codes, raw_json,
+              published_at, updated_at, expires_at, source_scope,
               first_seen_at, last_seen_at, interest, notes, tags
             ) VALUES (
-              ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+              ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
             )
             ON CONFLICT(source, external_id) DO UPDATE SET
               title=excluded.title,
@@ -52,6 +53,14 @@ class Database:
               description=excluded.description,
               rome_codes=excluded.rome_codes,
               raw_json=excluded.raw_json,
+              published_at=COALESCE(excluded.published_at, offers.published_at),
+              updated_at=COALESCE(excluded.updated_at, offers.updated_at),
+              expires_at=COALESCE(excluded.expires_at, offers.expires_at),
+              source_scope=excluded.source_scope,
+              lifecycle_status='active',
+              missing_sync_count=0,
+              missing_since=NULL,
+              retired_at=NULL,
               last_seen_at=excluded.last_seen_at
             """,
             (
@@ -67,6 +76,10 @@ class Database:
                 offer.description[:8000],
                 offer.rome_codes,
                 offer.raw_json[:20000],
+                offer.published_at or None,
+                offer.updated_at or None,
+                offer.expires_at or None,
+                source_scope,
                 now,
                 now,
                 offer.interest,
@@ -89,12 +102,60 @@ class Database:
         self._conn.commit()
         return offer_id
 
-    def upsert_many(self, offers: Iterable[Offer]) -> int:
+    def upsert_many(self, offers: Iterable[Offer], *, source_scope: str = "") -> int:
         n = 0
         for offer in offers:
-            self.upsert_offer(offer)
+            self.upsert_offer(offer, source_scope=source_scope)
             n += 1
         return n
+
+    def reconcile_source(self, source: str, source_scope: str, seen_ids: set[str], *, now: str | None = None) -> dict[str, int]:
+        """Reconcile one successful, complete source scope without destructive deletes."""
+        stamp = now or utc_now()
+        seen = sorted({str(value) for value in seen_ids if str(value)})
+        active = 0
+        if seen:
+            placeholders = ",".join("?" for _ in seen)
+            active = self._conn.execute(
+                f"""UPDATE offers
+                    SET lifecycle_status='active', missing_sync_count=0,
+                        missing_since=NULL, retired_at=NULL
+                    WHERE source=? AND source_scope=? AND external_id IN ({placeholders})""",
+                (source, source_scope, *seen),
+            ).rowcount
+            missing_where = f"external_id NOT IN ({placeholders})"
+            params = (source, source_scope, *seen)
+        else:
+            missing_where = "1=1"
+            params = (source, source_scope)
+        missing = self._conn.execute(
+            f"""UPDATE offers
+                SET lifecycle_status=CASE WHEN missing_sync_count + 1 >= 2 THEN 'retired' ELSE 'missing' END,
+                    missing_sync_count=missing_sync_count + 1,
+                    missing_since=COALESCE(missing_since, ?),
+                    retired_at=CASE WHEN missing_sync_count + 1 >= 2 THEN COALESCE(retired_at, ?) ELSE retired_at END
+                WHERE source=? AND source_scope=? AND {missing_where}
+                  AND lifecycle_status NOT IN ('retired', 'stale')""",
+            (stamp, stamp, *params),
+        ).rowcount
+        self._conn.commit()
+        return {"reactivated": int(active), "missing_or_retired": int(missing)}
+
+    def mark_old_offers_stale(self, *, now: str | None = None, max_age_days: int = 30) -> int:
+        stamp = now or utc_now()
+        cutoff = datetime.fromisoformat(stamp.replace("Z", "+00:00")) - timedelta(days=max_age_days)
+        cutoff_iso = cutoff.replace(microsecond=0).isoformat().replace("+00:00", "Z")
+        changed = self._conn.execute(
+            """UPDATE offers
+               SET lifecycle_status='stale'
+               WHERE lifecycle_status='active'
+                 AND COALESCE(updated_at, published_at) IS NOT NULL
+                 AND COALESCE(updated_at, published_at) <> ''
+                 AND COALESCE(updated_at, published_at) < ?""",
+            (cutoff_iso,),
+        ).rowcount
+        self._conn.commit()
+        return int(changed)
 
     def set_interest(self, offer_id: int, interest: str, note: str | None = None) -> None:
         allowed = {"unset", "interested", "maybe", "skip"}
