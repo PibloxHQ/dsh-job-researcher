@@ -29,6 +29,7 @@ COMMENT_TOTAL_CAP = 1
 FEEDBACK_TAGS: list[dict[str, Any]] = [
     {"id": "location_good", "delta": 1, "actionable": True, "label_fr": "Bon lieu"},
     {"id": "too_far", "delta": -1, "actionable": True, "label_fr": "Trop loin"},
+    {"id": "location_bad", "delta": 0, "actionable": False, "label_fr": "Mal situé"},
     {"id": "dev_infra_good", "delta": 1, "actionable": True, "label_fr": "Bon fit infra/dev"},
     {"id": "support_good", "delta": 1, "actionable": True, "label_fr": "Support OK"},
     {"id": "support_bad", "delta": -1, "actionable": True, "label_fr": "Support non"},

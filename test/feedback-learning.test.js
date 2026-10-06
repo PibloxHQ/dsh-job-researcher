@@ -254,6 +254,16 @@ describe('feedback learning (Node)', () => {
     assert.equal(FEEDBACK_UI_COPY_FR.whyHeading, 'Pourquoi ce choix ?')
   })
 
+  it('keeps poorly located as a valid neutral location signal', () => {
+    assert.deepEqual(normalizeFeedbackTags(['location_bad', 'location_bad']), ['location_bad'])
+    const prefs = aggregateLearnedSignals([
+      { feedback_origin: 'user', tags: ['location_bad'] },
+    ])
+    assert.equal(prefs.pending_signals[0].tag, 'location_bad')
+    assert.equal(prefs.pending_signals[0].actionable, false)
+    assert.equal(prefs.pending_signals[0].delta, 0)
+  })
+
   it('generic HR terms are filtered from comment learning', () => {
     assert.equal(FEEDBACK_SCORE_VERSION, 'v6-feedback')
     const agg = aggregateLearnedSignals([

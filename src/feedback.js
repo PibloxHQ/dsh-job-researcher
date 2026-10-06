@@ -95,6 +95,13 @@ export const FEEDBACK_TAGS = Object.freeze([
     labelEn: 'Too far',
   },
   {
+    id: 'location_bad',
+    delta: 0,
+    actionable: false,
+    labelFr: 'Mal situé',
+    labelEn: 'Poorly located',
+  },
+  {
     id: 'dev_infra_good',
     delta: 1,
     actionable: true,

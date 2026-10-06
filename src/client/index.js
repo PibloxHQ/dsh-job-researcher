@@ -34,6 +34,7 @@ window.__ModuleLoader__.load({
     const FEEDBACK_TAG_META = [
       { id: 'location_good', labelFr: 'Bon lieu' },
       { id: 'too_far', labelFr: 'Trop loin' },
+      { id: 'location_bad', labelFr: 'Mal situé' },
       { id: 'dev_infra_good', labelFr: 'Bon fit infra/dev' },
       { id: 'support_good', labelFr: 'Support OK' },
       { id: 'support_bad', labelFr: 'Support non' },
@@ -1382,7 +1383,7 @@ window.__ModuleLoader__.load({
         id: 'location',
         labelFr: 'Lieu / mobilité',
         labelEn: 'Location',
-        tags: ['location_good', 'too_far'],
+        tags: ['location_good', 'too_far', 'location_bad'],
       },
       {
         id: 'job',
@@ -1416,6 +1417,7 @@ window.__ModuleLoader__.load({
 
     const EXCLUSIVE_TAG_PAIRS = [
       ['location_good', 'too_far'],
+      ['location_good', 'location_bad'],
       ['support_good', 'support_bad'],
     ]
 
