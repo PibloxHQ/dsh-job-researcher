@@ -604,6 +604,10 @@ window.__ModuleLoader__.load({
         borderBottom: '0.5px solid var(--dsw-alias-border-l2)',
         verticalAlign: 'top',
       },
+      scoreCell: {
+        whiteSpace: 'nowrap',
+        width: '6.25rem',
+      },
       selectedRow: {
         background: 'var(--dsw-alias-bg-layer-3)',
         outline: '0.5px solid var(--dsw-alias-border-l2)',
@@ -3947,23 +3951,28 @@ window.__ModuleLoader__.load({
                                     },
                                     children: [
                                       jsx('td', {
-                                        style: css.td,
+                                        style: { ...css.td, ...css.scoreCell },
                                         children: jsxs('div', {
-                                          style: { display: 'inline-flex', alignItems: 'center', gap: '0.35rem' },
+                                          style: {
+                                            display: 'inline-flex',
+                                            alignItems: 'center',
+                                            gap: '0.35rem',
+                                            whiteSpace: 'nowrap',
+                                          },
                                           children: [
                                             jsx('span', {
                                               style: scoreBadgeStyle(rowJev?.overall != null ? rowJev.overall / 20 : row.score),
                                               title: rowJev?.overall != null
                                                 ? `Jev ${rowJev.overall}/100`
                                                 : `Déterministe ${row.score ?? '—'}/7`,
-                                              children: rowJev?.overall != null ? `Jev ${rowJev.overall}` : `D ${row.score ?? '—'}`,
+                                              children: rowJev?.overall != null ? `J${rowJev.overall}` : `D${row.score ?? '—'}`,
                                             }),
                                             rowJev?.overall != null
                                               ? jsx('span', {
                                                   style: { ...css.muted, fontSize: '0.72rem' },
                                                   title: `Score déterministe ${row.score ?? '—'}/7`,
                                                   'data-testid': `jev-score-${row.id}`,
-                                                  children: `D ${row.score ?? '—'}/7`,
+                                                  children: `· D${row.score ?? '—'}/7`,
                                                 })
                                               : null,
                                           ],
