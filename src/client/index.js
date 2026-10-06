@@ -117,6 +117,14 @@ window.__ModuleLoader__.load({
         scoreLow: 'Few matching criteria',
         scoreUnknown: 'Score not calculated',
         scoreNoReasons: 'No system reasons available yet.',
+        jevScore: 'Jev match (shadow)',
+        jevNotEvaluated: 'Not evaluated by Jev yet.',
+        jevOverall: 'Overall Jev match',
+        jevAxes: 'Directional match',
+        jevDimensions: 'Detailed dimensions',
+        jevCoverage: 'Coverage',
+        jevModel: 'Model',
+        jevUnknown: 'Unknown',
         sourceInfo: 'Source information',
         myInterest: 'My interest',
         myFeedback: 'My feedback',
@@ -226,6 +234,14 @@ window.__ModuleLoader__.load({
         scoreLow: 'Peu de critères correspondants',
         scoreUnknown: 'Score non calculé',
         scoreNoReasons: 'Aucune raison système pour l’instant.',
+        jevScore: 'Correspondance Jev (shadow)',
+        jevNotEvaluated: 'Pas encore évaluée par Jev.',
+        jevOverall: 'Correspondance globale Jev',
+        jevAxes: 'Adéquation directionnelle',
+        jevDimensions: 'Dimensions détaillées',
+        jevCoverage: 'Couverture',
+        jevModel: 'Modèle',
+        jevUnknown: 'Inconnu',
         sourceInfo: 'Informations de la source',
         myInterest: 'Mon intérêt',
         myFeedback: 'Mon retour',
@@ -1145,6 +1161,37 @@ window.__ModuleLoader__.load({
       }
     }
 
+    function parseJevSignals(raw) {
+      const parsed = parseScoreDetails(raw)
+      if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return null
+      const match = parsed.weighted_match
+      return match && typeof match === 'object' && !Array.isArray(match)
+        ? { ...parsed, weighted_match: match }
+        : null
+    }
+
+    function jevLabel(t, key) {
+      const labels = {
+        candidate_to_job: 'Candidate → Job',
+        job_to_candidate: 'Job → Candidate',
+        candidate_to_company: 'Candidate → Company',
+        company_to_candidate: 'Company → Candidate',
+        skills: 'Skills',
+        experience: 'Experience',
+        work_preference: 'Work preference',
+        location: 'Location',
+        salary: 'Salary',
+        culture: 'Culture',
+        growth_path: 'Growth path',
+      }
+      return labels[key] || key
+    }
+
+    function jevScoreText(t, item) {
+      if (!item || item.score == null) return t('jevUnknown')
+      return `${item.score}/100`
+    }
+
     function tBound(ctx) {
       return (key) => {
         try {
@@ -2060,6 +2107,8 @@ window.__ModuleLoader__.load({
       if (!selected) return null
 
       const scoreDetails = parseScoreDetails(selected.score_details)
+      const jevSignals = parseJevSignals(selected.jev_signals_json)
+      const jevMatch = jevSignals?.weighted_match || null
       const reasons = Array.isArray(scoreDetails?.reasons)
         ? scoreDetails.reasons.filter(Boolean)
         : []
@@ -2316,6 +2365,53 @@ window.__ModuleLoader__.load({
                                   }),
                                 }),
                               ],
+                            }),
+                            jsx(Accordion, {
+                              title: jevMatch
+                                ? `${t('jevScore')} · ${jevScoreText(t, { score: jevMatch.overall })}`
+                                : t('jevScore'),
+                              testId: 'jev-score-accordion',
+                              children: jevMatch
+                                ? jsxs('div', {
+                                    style: css.deflist,
+                                    children: [
+                                      jsxs('p', {
+                                        style: css.muted,
+                                        children: [
+                                          `${t('jevOverall')}: ${jevScoreText(t, { score: jevMatch.overall })}`,
+                                          ` · ${t('jevCoverage')}: ${jevMatch.overall_coverage ?? '—'}%`,
+                                          ` · ${t('jevModel')}: ${selected.jev_model || '—'}`,
+                                        ],
+                                      }),
+                                      jsx('strong', { children: t('jevAxes') }),
+                                      Object.entries(jevMatch.axes || {}).map(([key, item]) =>
+                                        jsxs('div', {
+                                          style: { display: 'flex', justifyContent: 'space-between', gap: '1rem' },
+                                          children: [
+                                            jsx('dt', { children: jevLabel(t, key) }),
+                                            jsx('dd', { children: jevScoreText(t, item) }),
+                                          ],
+                                        }, `axis-${key}`),
+                                      ),
+                                      jsx('strong', { children: t('jevDimensions') }),
+                                      Object.entries(jevMatch.dimensions || {}).map(([key, item]) =>
+                                        jsxs('div', {
+                                          style: { display: 'flex', justifyContent: 'space-between', gap: '1rem' },
+                                          children: [
+                                            jsx('dt', { children: jevLabel(t, key) }),
+                                            jsx('dd', { children: jevScoreText(t, item) }),
+                                          ],
+                                        }, `dimension-${key}`),
+                                      ),
+                                      selected.jev_scored_at
+                                        ? jsx('p', {
+                                            style: css.muted,
+                                            children: selected.jev_scored_at,
+                                          })
+                                        : null,
+                                    ],
+                                  })
+                                : jsx('p', { style: css.muted, children: t('jevNotEvaluated') }),
                             }),
                             jsx(Accordion, {
                               title: t('sourceInfo'),

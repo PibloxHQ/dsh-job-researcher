@@ -23,6 +23,8 @@ describe('client feedback / DSH token contract', () => {
     assert.match(src, /'data-testid':\s*'save-feedback'/)
     assert.match(src, /'data-testid':\s*'feedback-panel'/)
     assert.match(src, /'data-testid':\s*'system-score'/)
+    assert.match(src, /testId:\s*'jev-score-accordion'/)
+    assert.match(src, /jev_signals_json/)
     assert.match(src, /À préparer/)
     assert.match(src, /Prête/)
     assert.match(src, /Envoyée/)
