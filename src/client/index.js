@@ -56,6 +56,15 @@ window.__ModuleLoader__.load({
         decision: 'Interest',
         application: 'Application',
         minScore: 'Min score',
+        minDeterministicScore: 'Min deterministic score',
+        sort: 'Sort by',
+        sortJev: 'Jev match',
+        sortDeterministic: 'Deterministic score',
+        sortRecent: 'Most recent',
+        loadingResults: 'Loading offers…',
+        resultsLoaded: 'offers shown',
+        clearFilter: 'Remove filter',
+        noResultsHint: 'Try removing a filter or changing your search.',
         yes: "I'm interested",
         no: 'Not interested',
         maybe: 'Revisit later',
@@ -176,6 +185,15 @@ window.__ModuleLoader__.load({
         decision: 'Intérêt',
         application: 'Candidature',
         minScore: 'Score min',
+        minDeterministicScore: 'Score déterministe min.',
+        sort: 'Trier par',
+        sortJev: 'Correspondance Jev',
+        sortDeterministic: 'Score déterministe',
+        sortRecent: 'Plus récentes',
+        loadingResults: 'Chargement des offres…',
+        resultsLoaded: 'offres affichées',
+        clearFilter: 'Retirer le filtre',
+        noResultsHint: 'Essaie de retirer un filtre ou de modifier ta recherche.',
         yes: "M'intéresse",
         no: 'Pas intéressé',
         maybe: 'À revoir',
@@ -804,7 +822,7 @@ window.__ModuleLoader__.load({
         borderBottom: '0.5px solid var(--dsw-alias-border-l2)',
         background: 'var(--dsw-alias-bg-layer-2)',
         overflow: 'auto',
-        maxHeight: '55%',
+        maxHeight: 'min(32rem, 48vh)',
       },
       modalDialogWide: {
         position: 'relative',
@@ -1100,6 +1118,8 @@ window.__ModuleLoader__.load({
         background: 'var(--dsw-alias-bg-layer-3)',
         fontSize: '0.75rem',
         color: 'var(--dsw-alias-label-secondary, inherit)',
+        font: 'inherit',
+        cursor: 'pointer',
       },
       offerCard: {
         display: 'flex',
@@ -1398,6 +1418,7 @@ window.__ModuleLoader__.load({
       const [open, setOpen] = useState(false)
       const rootRef = useRef(null)
       const btnRef = useRef(null)
+      const menuRef = useRef(null)
 
       useEffect(() => {
         if (!open) return undefined
@@ -1421,6 +1442,13 @@ window.__ModuleLoader__.load({
         }
       }, [open])
 
+      useEffect(() => {
+        if (!open) return
+        const item = menuRef.current?.querySelector('[role="menuitemradio"][aria-checked="true"]')
+          || menuRef.current?.querySelector('[role="menuitemradio"]')
+        item?.focus?.()
+      }, [open])
+
       return jsxs('div', {
         ref: rootRef,
         style: css.dropdownRoot,
@@ -1442,6 +1470,7 @@ window.__ModuleLoader__.load({
           }),
           open
             ? jsx('ul', {
+                ref: menuRef,
                 role: 'menu',
                 style: {
                   ...css.dropdownMenu,
@@ -1462,6 +1491,20 @@ window.__ModuleLoader__.load({
                           ...(opt.danger ? { color: 'var(--dsw-alias-state-error-primary)' } : {}),
                         },
                         disabled: Boolean(opt.disabled),
+                        onKeyDown: (event) => {
+                          if (!['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) return
+                          event.preventDefault()
+                          const items = [...(menuRef.current?.querySelectorAll('[role="menuitemradio"]') || [])]
+                            .filter((item) => !item.disabled)
+                          const index = items.indexOf(event.currentTarget)
+                          if (!items.length || index < 0) return
+                          const next = event.key === 'Home'
+                            ? 0
+                            : event.key === 'End'
+                              ? items.length - 1
+                              : (index + (event.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length
+                          items[next]?.focus?.()
+                        },
                         onClick: () => {
                           setOpen(false)
                           onSelect?.(opt.value)
@@ -2084,9 +2127,27 @@ window.__ModuleLoader__.load({
           btn?.focus?.()
         }, 0)
         const onKey = (event) => {
-          if (event.key !== 'Escape') return
-          event.stopPropagation()
-          onCloseRef.current?.()
+          if (event.key === 'Escape') {
+            event.stopPropagation()
+            onCloseRef.current?.()
+            return
+          }
+          if (event.key !== 'Tab') return
+          const dialog = document.querySelector('[data-testid="offer-detail"]')
+          if (!dialog) return
+          const focusable = [...dialog.querySelectorAll(
+            'button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+          )].filter((node) => node.offsetParent !== null)
+          if (!focusable.length) return
+          const first = focusable[0]
+          const last = focusable[focusable.length - 1]
+          if (event.shiftKey && document.activeElement === first) {
+            event.preventDefault()
+            last.focus()
+          } else if (!event.shiftKey && document.activeElement === last) {
+            event.preventDefault()
+            first.focus()
+          }
         }
         window.addEventListener('keydown', onKey, false)
         return () => {
@@ -2215,7 +2276,8 @@ window.__ModuleLoader__.load({
             jsxs('div', {
               role: 'dialog',
               'aria-modal': true,
-              'aria-label': t('detail'),
+              'aria-labelledby': `offer-detail-title-${selected.id}`,
+              'aria-describedby': `offer-detail-meta-${selected.id}`,
               'data-testid': 'offer-detail',
               style: css.modalDialogWide,
               children: [
@@ -2265,11 +2327,13 @@ window.__ModuleLoader__.load({
                       children: [
                         jsx('h2', {
                           style: css.sheetTitle,
+                          id: `offer-detail-title-${selected.id}`,
                           'data-testid': 'offer-detail-title',
                           children: selected.title || t('untitledOffer'),
                         }),
                         jsx('p', {
                           style: css.sheetSub,
+                          id: `offer-detail-meta-${selected.id}`,
                           children: [
                             metaOrUnknown(selected.employer, unknown),
                             ' · ',
@@ -2697,6 +2761,7 @@ window.__ModuleLoader__.load({
       const [decision, setDecision] = useState('')
       const [application, setApplication] = useState('')
       const [minScore, setMinScore] = useState('')
+      const [sort, setSort] = useState('jev_desc')
       const [selected, setSelected] = useState(null)
       const [comment, setComment] = useState('')
       const [tags, setTags] = useState([])
@@ -2707,6 +2772,7 @@ window.__ModuleLoader__.load({
       const [rowErrors, setRowErrors] = useState({})
       const [err, setErr] = useState('')
       const [listErr, setListErr] = useState('')
+      const [listLoading, setListLoading] = useState(false)
       const [statusErr, setStatusErr] = useState('')
       const [runMsg, setRunMsg] = useState('')
       const [feedbackMsg, setFeedbackMsg] = useState('')
@@ -2792,6 +2858,70 @@ window.__ModuleLoader__.load({
   border-radius: 8px;
 }
 @media (max-width: 720px) {
+  [data-testid="job-researcher-navbar"] {
+    align-items: flex-start !important;
+    flex-wrap: wrap !important;
+    gap: 0.55rem !important;
+    padding: 0.65rem 0.75rem !important;
+  }
+  [data-testid="job-researcher-navbar"] > :first-child {
+    flex: 1 1 100% !important;
+    min-width: 0 !important;
+  }
+  [data-testid="job-researcher-navbar"] > :nth-child(2) {
+    order: 3 !important;
+    flex: 1 1 100% !important;
+    min-width: 0 !important;
+    gap: 0.35rem 0.65rem !important;
+    font-size: 0.72rem !important;
+  }
+  [data-testid="job-researcher-navbar"] > :nth-child(3) {
+    margin-left: auto !important;
+    max-width: 100% !important;
+    flex-wrap: wrap !important;
+  }
+  [data-testid="job-researcher-navbar"] > :nth-child(3) button {
+    min-height: 2.25rem !important;
+  }
+  [data-testid="job-researcher-toolbar"] {
+    align-items: stretch !important;
+  }
+  [data-testid="job-researcher-toolbar"] > input {
+    flex-basis: 100% !important;
+    min-width: 100% !important;
+  }
+  [data-testid="interest-views"] {
+    width: 100% !important;
+    overflow-x: auto !important;
+    flex-wrap: nowrap !important;
+  }
+  [data-testid="job-researcher-list"] {
+    padding: 0.25rem !important;
+  }
+  [data-testid="job-researcher-list"] table {
+    min-width: 0 !important;
+    table-layout: fixed !important;
+  }
+  [data-testid="job-researcher-list"] th:nth-child(3),
+  [data-testid="job-researcher-list"] td:nth-child(3),
+  [data-testid="job-researcher-list"] th:nth-child(5),
+  [data-testid="job-researcher-list"] td:nth-child(5),
+  [data-testid="job-researcher-list"] th:nth-child(7),
+  [data-testid="job-researcher-list"] td:nth-child(7) {
+    display: none !important;
+  }
+  [data-testid="job-researcher-list"] th:nth-child(1) { width: 4.8rem !important; }
+  [data-testid="job-researcher-list"] th:nth-child(2) { width: auto !important; }
+  [data-testid="job-researcher-list"] th:nth-child(4) { width: 8.5rem !important; }
+  [data-testid="job-researcher-list"] th:nth-child(6) { width: 5.5rem !important; }
+  [data-testid="job-researcher-list"] th:nth-child(8) { width: 7rem !important; }
+  [data-testid="job-researcher-list"] td {
+    overflow-wrap: anywhere !important;
+    padding: 0.4rem 0.25rem !important;
+  }
+  [data-testid="job-researcher-settings-inline"] {
+    max-height: 32vh !important;
+  }
   [data-testid="offer-detail"] .jr-sheet-grid {
     grid-template-columns: 1fr !important;
   }
@@ -2805,6 +2935,15 @@ window.__ModuleLoader__.load({
     transition: none !important;
     animation: none !important;
   }
+}
+[data-testid="dsh-job-researcher"] button:focus-visible,
+[data-testid="dsh-job-researcher"] input:focus-visible,
+[data-testid="dsh-job-researcher"] select:focus-visible,
+[data-testid="dsh-job-researcher"] textarea:focus-visible,
+[data-testid="offer-detail"] a:focus-visible {
+  outline: 2px solid var(--dsw-alias-button-primary-fill, #6ea8fe) !important;
+  outline-offset: 2px !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--dsw-alias-button-primary-fill, #6ea8fe) 35%, transparent) !important;
 }
 [data-density="compact"] [data-testid="job-researcher-list"] td {
   padding-top: 0.28rem !important;
@@ -2846,9 +2985,10 @@ window.__ModuleLoader__.load({
 
       const loadOffers = useCallback(async () => {
         const reqId = ++offersReqId.current
+        setListLoading(true)
         try {
           const list = await api(
-            `/offers?q=${encodeURIComponent(q)}&source=${encodeURIComponent(source)}&decision=${encodeURIComponent(decision)}&application=${encodeURIComponent(application)}&minScore=${encodeURIComponent(minScore)}&sort=jev_desc&limit=${limit}&offset=${page * limit}`,
+            `/offers?q=${encodeURIComponent(q)}&source=${encodeURIComponent(source)}&decision=${encodeURIComponent(decision)}&application=${encodeURIComponent(application)}&minScore=${encodeURIComponent(minScore)}&sort=${encodeURIComponent(sort)}&limit=${limit}&offset=${page * limit}`,
           )
           if (reqId !== offersReqId.current) return
           setOffers(list)
@@ -2856,8 +2996,10 @@ window.__ModuleLoader__.load({
         } catch (e) {
           if (reqId !== offersReqId.current) return
           setListErr(String(e.message || e))
+        } finally {
+          if (reqId === offersReqId.current) setListLoading(false)
         }
-      }, [q, source, decision, application, minScore, page])
+      }, [q, source, decision, application, minScore, sort, page])
 
       useEffect(() => {
         void loadStatus()
@@ -3211,7 +3353,20 @@ window.__ModuleLoader__.load({
         setDecision('')
         setApplication('')
         setMinScore('')
+        setSort('jev_desc')
         setListTab('offers')
+      }
+
+      function clearFilterByKey(key) {
+        setPage(0)
+        if (key === 'q') {
+          setQInput('')
+          setQ('')
+        }
+        if (key === 'decision') setDecision('')
+        if (key === 'source') setSource('')
+        if (key === 'application') setApplication('')
+        if (key === 'minScore') setMinScore('')
       }
 
       function setViewDecision(next) {
@@ -3492,6 +3647,21 @@ window.__ModuleLoader__.load({
                     value: qInput,
                     onChange: (e) => setQInput(e.target.value),
                   }),
+                  jsxs('select', {
+                    style: { ...css.input, flex: '0 1 11rem', minWidth: '9rem' },
+                    value: sort,
+                    'aria-label': t('sort'),
+                    'data-testid': 'sort-select',
+                    onChange: (e) => {
+                      setPage(0)
+                      setSort(e.target.value)
+                    },
+                    children: [
+                      jsx('option', { value: 'jev_desc', children: `${t('sort')}: ${t('sortJev')}` }),
+                      jsx('option', { value: 'score_desc', children: `${t('sort')}: ${t('sortDeterministic')}` }),
+                      jsx('option', { value: 'recent_desc', children: `${t('sort')}: ${t('sortRecent')}` }),
+                    ],
+                  }),
                   jsxs('div', {
                     style: css.viewTabs,
                     role: 'group',
@@ -3584,8 +3754,12 @@ window.__ModuleLoader__.load({
                       }),
                       jsx('input', {
                         style: { ...css.input, minWidth: '5rem' },
-                        placeholder: t('minScore'),
-                        'aria-label': t('minScore'),
+                        type: 'number',
+                        min: 0,
+                        max: 7,
+                        step: 1,
+                        placeholder: t('minDeterministicScore'),
+                        'aria-label': t('minDeterministicScore'),
                         value: minScore,
                         onChange: (e) => {
                           setPage(0)
@@ -3605,33 +3779,48 @@ window.__ModuleLoader__.load({
                         children: `${activeFilterCount} ${t('filtersActive')}`,
                       }),
                       q
-                        ? jsx('span', {
+                        ? jsxs('button', {
+                            type: 'button',
                             style: css.filterChip,
-                            children: `${t('search')}: ${q}`,
+                            'aria-label': `${t('clearFilter')}: ${t('search')}`,
+                            onClick: () => clearFilterByKey('q'),
+                            children: [`${t('search')}: ${q}`, jsx('span', { 'aria-hidden': true, children: ' ×' })],
                           })
                         : null,
                       decision
-                        ? jsx('span', {
+                        ? jsxs('button', {
+                            type: 'button',
                             style: css.filterChip,
-                            children: decisionLabel(t, decision),
+                            'aria-label': `${t('clearFilter')}: ${decisionLabel(t, decision)}`,
+                            onClick: () => clearFilterByKey('decision'),
+                            children: [decisionLabel(t, decision), jsx('span', { 'aria-hidden': true, children: ' ×' })],
                           })
                         : null,
                       source
-                        ? jsx('span', {
+                        ? jsxs('button', {
+                            type: 'button',
                             style: css.filterChip,
-                            children: sourceLabel(source),
+                            'aria-label': `${t('clearFilter')}: ${sourceLabel(source)}`,
+                            onClick: () => clearFilterByKey('source'),
+                            children: [sourceLabel(source), jsx('span', { 'aria-hidden': true, children: ' ×' })],
                           })
                         : null,
                       application
-                        ? jsx('span', {
+                        ? jsxs('button', {
+                            type: 'button',
                             style: css.filterChip,
-                            children: applicationLabel(t, application),
+                            'aria-label': `${t('clearFilter')}: ${applicationLabel(t, application)}`,
+                            onClick: () => clearFilterByKey('application'),
+                            children: [applicationLabel(t, application), jsx('span', { 'aria-hidden': true, children: ' ×' })],
                           })
                         : null,
                       minScore
-                        ? jsx('span', {
+                        ? jsxs('button', {
+                            type: 'button',
                             style: css.filterChip,
-                            children: `${t('minScore')}: ${minScore}`,
+                            'aria-label': `${t('clearFilter')}: ${t('minDeterministicScore')}`,
+                            onClick: () => clearFilterByKey('minScore'),
+                            children: [`${t('minDeterministicScore')}: ${minScore}`, jsx('span', { 'aria-hidden': true, children: ' ×' })],
                           })
                         : null,
                       jsx('button', {
@@ -3673,7 +3862,16 @@ window.__ModuleLoader__.load({
                 style: css.listPane,
                 'data-scroll-pane': true,
                 'data-testid': 'job-researcher-list',
+                'aria-busy': listLoading,
                 children: [
+                  jsx('div', {
+                    role: 'status',
+                    'aria-live': 'polite',
+                    style: { ...css.muted, minHeight: '1.2rem', marginBottom: '0.25rem' },
+                    children: listLoading
+                      ? t('loadingResults')
+                      : `${offers.total || 0} ${t('resultsLoaded')}`,
+                  }),
                   jsxs('table', {
                     style: css.table,
                     children: [
@@ -3698,7 +3896,21 @@ window.__ModuleLoader__.load({
                                 children: jsx('td', {
                                   style: css.td,
                                   colSpan: 8,
-                                  children: t('empty'),
+                                  children: jsxs('div', {
+                                    style: css.emptyState,
+                                    children: [
+                                      jsx('strong', { children: t('empty') }),
+                                      jsx('span', { style: css.muted, children: t('noResultsHint') }),
+                                      activeFilterCount
+                                        ? jsx('button', {
+                                            type: 'button',
+                                            style: css.btn,
+                                            onClick: clearAllFilters,
+                                            children: t('clearFilters'),
+                                          })
+                                        : null,
+                                    ],
+                                  }),
                                 }),
                               })
                             : offers.rows.map((row) => {
@@ -3741,14 +3953,17 @@ window.__ModuleLoader__.load({
                                           children: [
                                             jsx('span', {
                                               style: scoreBadgeStyle(rowJev?.overall != null ? rowJev.overall / 20 : row.score),
-                                              children: rowJev?.overall != null ? `J${rowJev.overall}` : row.score ?? '—',
+                                              title: rowJev?.overall != null
+                                                ? `Jev ${rowJev.overall}/100`
+                                                : `Déterministe ${row.score ?? '—'}/7`,
+                                              children: rowJev?.overall != null ? `Jev ${rowJev.overall}` : `D ${row.score ?? '—'}`,
                                             }),
                                             rowJev?.overall != null
                                               ? jsx('span', {
                                                   style: { ...css.muted, fontSize: '0.72rem' },
-                                                  title: `Déterministe ${row.score ?? '—'}`,
+                                                  title: `Score déterministe ${row.score ?? '—'}/7`,
                                                   'data-testid': `jev-score-${row.id}`,
-                                                  children: `D${row.score ?? '—'}`,
+                                                  children: `D ${row.score ?? '—'}/7`,
                                                 })
                                               : null,
                                           ],

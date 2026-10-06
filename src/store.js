@@ -547,6 +547,7 @@ export function openStore(dataDir, { now } = {}) {
       const where = clauses.length ? `WHERE ${clauses.join(' AND ')}` : ''
       let order = 'o.score DESC NULLS LAST, o.last_seen_at DESC'
       if (sort === 'seen_desc') order = 'o.last_seen_at DESC'
+      if (sort === 'recent_desc') order = 'o.published_at DESC, o.last_seen_at DESC'
       if (sort === 'title') order = 'o.title ASC'
       // SQLite lacks NULLS LAST — emulate
       if (sort === 'score_desc') order = 'CASE WHEN o.score IS NULL THEN 1 ELSE 0 END, o.score DESC, o.last_seen_at DESC'
