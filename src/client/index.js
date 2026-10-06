@@ -86,6 +86,9 @@ window.__ModuleLoader__.load({
         whyHeading: 'Why this choice?',
         whyHelper:
           'Explain with tags and a free comment — both update ranking after save (no application sent).',
+        mismatchFeedback: 'Why is this offer not a fit?',
+        mismatchHint: 'Select one or more reasons. You can combine several profile mismatches.',
+        selectedReasons: 'reasons selected',
         saveFeedback: 'Save feedback',
         feedbackSaved: 'Feedback saved — ranking updating…',
         rankingUpdating: 'Ranking updating in background…',
@@ -215,6 +218,9 @@ window.__ModuleLoader__.load({
         whyHeading: 'Pourquoi ce choix ?',
         whyHelper:
           'Les tags et ton commentaire libre influencent le classement après enregistrement (pas d’envoi de candidature).',
+        mismatchFeedback: 'Pourquoi cette offre ne correspond pas ?',
+        mismatchHint: 'Sélectionne une ou plusieurs raisons. Tu peux combiner plusieurs écarts avec ton profil.',
+        selectedReasons: 'raisons sélectionnées',
         saveFeedback: 'Enregistrer le retour',
         feedbackSaved: 'Retour enregistré — classement en cours de mise à jour…',
         rankingUpdating: 'Classement en cours de mise à jour…',
@@ -1069,6 +1075,14 @@ window.__ModuleLoader__.load({
         flexDirection: 'column',
         gap: '0.45rem',
       },
+      feedbackSelectionSummary: {
+        margin: 0,
+        padding: '0.35rem 0.5rem',
+        borderRadius: '0.35rem',
+        background: 'color-mix(in oklab, var(--dsw-alias-button-primary-fill) 10%, transparent)',
+        color: 'var(--dsw-alias-label-secondary, inherit)',
+        fontSize: '0.75rem',
+      },
       tagGroupLabel: {
         fontSize: '0.72rem',
         fontWeight: 600,
@@ -1359,25 +1373,25 @@ window.__ModuleLoader__.load({
     const FEEDBACK_TAG_GROUPS = [
       {
         id: 'location',
-        labelFr: 'Lieu',
+        labelFr: 'Lieu / mobilité',
         labelEn: 'Location',
         tags: ['location_good', 'too_far'],
       },
       {
         id: 'job',
-        labelFr: 'Métier',
+        labelFr: 'Métier / environnement',
         labelEn: 'Role',
         tags: ['dev_infra_good', 'support_good', 'support_bad', 'public_sector_good'],
       },
       {
         id: 'contract',
-        labelFr: 'Contrat',
+        labelFr: 'Contrat / conditions',
         labelEn: 'Contract',
         tags: ['student_contract_bad', 'contract_bad'],
       },
       {
         id: 'missing',
-        labelFr: 'Informations manquantes',
+        labelFr: 'Profil / informations',
         labelEn: 'Missing info',
         tags: ['missing_diploma', 'needs_details'],
       },
@@ -2131,7 +2145,7 @@ window.__ModuleLoader__.load({
       const bodyRef = useRef(null)
       const previousActiveRef = useRef(null)
       const onCloseRef = useRef(onClose)
-      const [showAllTags, setShowAllTags] = useState(false)
+      const [showAllTags, setShowAllTags] = useState(true)
       const [copiedMsg, setCopiedMsg] = useState('')
       const rowBusy = selected ? Boolean(offerBusy?.[selected.id]) : false
       const controlsBusy = busy || rowBusy
@@ -2200,7 +2214,7 @@ window.__ModuleLoader__.load({
       }, [selected?.id])
 
       useEffect(() => {
-        setShowAllTags(false)
+        setShowAllTags(true)
         setCopiedMsg('')
       }, [selected?.id])
 
@@ -2294,8 +2308,8 @@ window.__ModuleLoader__.load({
         onNavigate(row)
       }
 
-      const primaryGroups = FEEDBACK_TAG_GROUPS.slice(0, 2)
-      const groups = showAllTags ? FEEDBACK_TAG_GROUPS : primaryGroups
+      const groups = showAllTags ? FEEDBACK_TAG_GROUPS : FEEDBACK_TAG_GROUPS.slice(0, 2)
+      const mismatchDecision = selected.user_decision === 'NO'
 
       return createPortal(
         jsxs('div', {
@@ -2697,9 +2711,21 @@ window.__ModuleLoader__.load({
                               children: [
                                 jsx('h3', {
                                   style: css.sectionTitle,
-                                  children: t('myFeedback'),
+                                  children: mismatchDecision
+                                    ? t('mismatchFeedback')
+                                    : t('myFeedback'),
                                 }),
-                                jsx('p', { style: css.hint, children: t('whyHelper') }),
+                                jsx('p', {
+                                  style: css.hint,
+                                  children: mismatchDecision ? t('mismatchHint') : t('whyHelper'),
+                                }),
+                                tags.length
+                                  ? jsx('p', {
+                                      style: css.feedbackSelectionSummary,
+                                      role: 'status',
+                                      children: `${tags.length} ${t('selectedReasons')}`,
+                                    })
+                                  : null,
                                 groups.map((group) =>
                                   jsxs(
                                     'div',
