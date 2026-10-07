@@ -42,6 +42,14 @@ def _ensure_schema(db_path) -> None:
         ("score_version", "TEXT DEFAULT ''"),
         ("score_details", "TEXT DEFAULT ''"),
         ("notified_at", "TEXT"),
+        ("published_at", "TEXT"),
+        ("updated_at", "TEXT"),
+        ("expires_at", "TEXT"),
+        ("source_scope", "TEXT DEFAULT ''"),
+        ("lifecycle_status", "TEXT NOT NULL DEFAULT 'active'"),
+        ("missing_sync_count", "INTEGER NOT NULL DEFAULT 0"),
+        ("missing_since", "TEXT"),
+        ("retired_at", "TEXT"),
     ]:
         if col not in cols:
             conn.execute(f"ALTER TABLE offers ADD COLUMN {col} {decl}")
@@ -127,6 +135,16 @@ def _sync_source(
     try:
         db = Database(settings.db_path)
         if name == "csp-filtre":
+            path = getattr(settings, "csp_filtre_path", None) or csp_filtre.DEFAULT_FILTRE_PATH
+            source_scope = f"csp-filtre:{path.strip('/') }"
+        elif name == "et":
+            source_scope = f"et:dept={settings.et_departement}:keyword=informatique"
+        elif name == "ft":
+            profile_key = ",".join(sorted(ft_profiles or QUERY_PROFILES.keys()))
+            source_scope = f"ft:dept={settings.departement}:profiles={profile_key}"
+        else:
+            source_scope = "csp:all"
+        if name == "csp-filtre":
             path = getattr(settings, "csp_filtre_path", None) or None
             offers = list(
                 csp_filtre.iter_csp_filtre_offers(
@@ -149,7 +167,10 @@ def _sync_source(
             result["error"] = f"unknown_source:{name}"
             return result
 
-        n = db.upsert_many(offers)
+        seen_ids = {offer.external_id for offer in offers if offer.external_id}
+        n = db.upsert_many(offers, source_scope=source_scope)
+        lifecycle = db.reconcile_source(source_key, source_scope, seen_ids)
+        stale = db.mark_old_offers_stale()
         new_count = db._conn.execute(
             """
             SELECT COUNT(*) FROM offers
@@ -163,6 +184,8 @@ def _sync_source(
                 "seen": n,
                 "new": int(new_count),
                 "source_key": source_key,
+                "source_scope": source_scope,
+                "lifecycle": {**lifecycle, "stale": stale},
             }
         )
     except FtAuthError as exc:

@@ -19,6 +19,8 @@ import { openStore } from './store.js'
 import { startScheduler } from './scheduler.js'
 import { registerHttpRoutes } from './http.js'
 import { runBootstrap } from './bootstrap.js'
+import { buildCareerManifest } from './career-context.js'
+import { installCareerAgent, CAREER_AGENT_PRESET } from './career-agent.js'
 
 export const name = PLUGIN_ID
 /** Credential plane required — materialize when FT enabled (Secrets Boundary v1.1).
@@ -85,11 +87,18 @@ export function apply(ctx, config = {}) {
 
   ctx.inject(['webServer'], (webCtx) => {
     if (!webCtx.webServer?.register) return
+    let jev
+    try {
+      jev = ctx.get?.('jev')
+    } catch {
+      jev = undefined
+    }
     registerHttpRoutes(webCtx.webServer, {
       getStore,
       getScheduler,
       secrets,
       dataDir,
+      jev,
     })
     webCtx.logger?.info?.(`${PLUGIN_ID}: HTTP API registered under /api/job-researcher`)
   })
@@ -103,6 +112,31 @@ export function apply(ctx, config = {}) {
     getStatus: () => scheduler.getStatus(),
     bootstrap: (opts) => runBootstrap(dataDir, { logger: ctx.logger, ...opts }),
     getStore,
+    careerAgentPreset: CAREER_AGENT_PRESET,
+    buildCareerManifest: () => {
+      const bundle = getStore()?.getSearchConfig?.() || {}
+      return buildCareerManifest({
+        dataDir,
+        pluginRoot: new URL('.', import.meta.url).pathname.replace(/\/$/, ''),
+        profileRevision: bundle.version,
+        profileHash: bundle.config_hash,
+      })
+    },
+  })
+
+  // Agent-scoped integration: only the dedicated career-review preset sees
+  // the Job Researcher tools and prompt. Other sessions remain unchanged.
+  ctx.on?.('agent/created', (payload) => {
+    try {
+      installCareerAgent(payload?.agent ?? payload, {
+        getStore,
+        dataDir,
+        pluginRoot: new URL('.', import.meta.url).pathname.replace(/\/$/, ''),
+        logger: ctx.logger,
+      })
+    } catch (err) {
+      ctx.logger?.warn?.(`${PLUGIN_ID}: career agent mount failed: ${err?.message || err}`)
+    }
   })
 
   ctx.logger?.info?.(

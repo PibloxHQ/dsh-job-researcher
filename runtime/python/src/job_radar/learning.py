@@ -17,7 +17,7 @@ from typing import Any
 from job_radar.normalize import fold
 
 # Keep in sync with src/feedback.js
-SCORE_VERSION = "v5-feedback"
+SCORE_VERSION = "v6-feedback"
 LEARN_THRESHOLD = 2
 PER_TAG_DELTA_CAP = 1
 TOTAL_FEEDBACK_CAP = 2
@@ -29,6 +29,7 @@ COMMENT_TOTAL_CAP = 1
 FEEDBACK_TAGS: list[dict[str, Any]] = [
     {"id": "location_good", "delta": 1, "actionable": True, "label_fr": "Bon lieu"},
     {"id": "too_far", "delta": -1, "actionable": True, "label_fr": "Trop loin"},
+    {"id": "location_bad", "delta": 0, "actionable": False, "label_fr": "Mal situé"},
     {"id": "dev_infra_good", "delta": 1, "actionable": True, "label_fr": "Bon fit infra/dev"},
     {"id": "support_good", "delta": 1, "actionable": True, "label_fr": "Support OK"},
     {"id": "support_bad", "delta": -1, "actionable": True, "label_fr": "Support non"},
@@ -57,6 +58,13 @@ FEEDBACK_TAGS: list[dict[str, Any]] = [
         "actionable": False,
         "label_fr": "Manque de détails",
     },
+    {"id": "role_mismatch", "delta": 0, "actionable": False, "label_fr": "Métier pas recherché"},
+    {"id": "skills_gap", "delta": 0, "actionable": False, "label_fr": "Compétences insuffisantes"},
+    {"id": "experience_gap", "delta": 0, "actionable": False, "label_fr": "Expérience / niveau décalé"},
+    {"id": "work_preference_bad", "delta": 0, "actionable": False, "label_fr": "Organisation non adaptée"},
+    {"id": "salary_bad", "delta": 0, "actionable": False, "label_fr": "Rémunération non adaptée"},
+    {"id": "culture_bad", "delta": 0, "actionable": False, "label_fr": "Environnement non adapté"},
+    {"id": "growth_bad", "delta": 0, "actionable": False, "label_fr": "Évolution peu intéressante"},
 ]
 
 TAG_BY_ID = {t["id"]: t for t in FEEDBACK_TAGS}
@@ -206,7 +214,7 @@ _COMMENT_STOPWORDS = frozenset(
         "depublier", "terminee", "termine", "califications", "qualifications",
         "qualification", "hospitaliere", "hospitalier", "infra", "reseau",
         "reseaux", "systeme", "systemes", "informatique", "administratif",
-        "administration",
+        "administration", "justifiez", "justifie", "justifier",
     }
 )
 

@@ -27,7 +27,8 @@ Migration (Node + Python, idempotent): when `comment` **exactly equals** `offers
 
 ### Explainable learning
 
-- Closed tags grounded in scoring rules (`location_good`, `too_far`, `dev_infra_good`, `support_good`/`bad`, `public_sector_good`, `student_contract_bad`, `contract_bad`, `missing_diploma`, `needs_details`) with French UI labels.
+- Closed tags grounded in scoring rules (`location_good`, `too_far`, `dev_infra_good`, `support_good`/`bad`, `public_sector_good`, `student_contract_bad`, `contract_bad`, `missing_diploma`, `needs_details`) with French UI labels. `location_bad` (`Mal situé`) captures access/placement problems distinct from distance; it is currently neutral because the offer location data cannot reliably infer transit accessibility or the actual agency address.
+- Profile-mismatch tags (`role_mismatch`, `skills_gap`, `experience_gap`, `work_preference_bad`, `salary_bad`, `culture_bad`, `growth_bad`) are persisted as neutral structured feedback first; they do not alter the deterministic score until a later validated learning policy.
 - Learn **only** from `feedback_origin=user`; require ≥2 confirmations; per-tag and total caps (±1 / ±2).
 - `score_offer(row, preferences=None)` remains backward compatible; score version `v4-feedback`.
 - `score_details` stores `base_score`, `feedback_adjustment`, `learned_signals`, `reasons`.

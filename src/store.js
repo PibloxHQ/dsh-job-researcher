@@ -101,6 +101,8 @@ export const DAILY_APPLICATION_TARGET = 1
 export const APPLICATION_TIMEZONE = 'Europe/Paris'
 export { FEEDBACK_SCORE_VERSION }
 
+export const JEV_ENRICHMENT_SCHEMA_VERSION = 'career.v1'
+
 export function utcIso(date = new Date()) {
   return date.toISOString().replace(/\.\d{3}Z$/, 'Z')
 }
@@ -283,6 +285,27 @@ export function ensureAutonomySchema(db, { now = new Date() } = {}) {
   ensureFeedbackLearningSchema(db, { now })
   const stamp = utcIso(now)
 
+  const offerCols = new Set(db.prepare('PRAGMA table_info(offers)').all().map((r) => r.name))
+  const alterOfferIfMissing = (name, decl) => {
+    if (!offerCols.has(name)) {
+      db.exec(`ALTER TABLE offers ADD COLUMN ${name} ${decl}`)
+      offerCols.add(name)
+    }
+  }
+  alterOfferIfMissing('jev_model', "TEXT DEFAULT ''")
+  alterOfferIfMissing('jev_schema_version', "TEXT DEFAULT ''")
+  alterOfferIfMissing('jev_signals_json', "TEXT DEFAULT '{}'" )
+  alterOfferIfMissing('jev_scored_at', 'TEXT')
+  alterOfferIfMissing('jev_error', "TEXT DEFAULT ''")
+  alterOfferIfMissing('published_at', 'TEXT')
+  alterOfferIfMissing('updated_at', 'TEXT')
+  alterOfferIfMissing('expires_at', 'TEXT')
+  alterOfferIfMissing('source_scope', "TEXT DEFAULT ''")
+  alterOfferIfMissing('lifecycle_status', "TEXT NOT NULL DEFAULT 'active'")
+  alterOfferIfMissing('missing_sync_count', 'INTEGER NOT NULL DEFAULT 0')
+  alterOfferIfMissing('missing_since', 'TEXT')
+  alterOfferIfMissing('retired_at', 'TEXT')
+
   db.exec(`
     CREATE TABLE IF NOT EXISTS search_profiles (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -292,6 +315,47 @@ export function ensureAutonomySchema(db, { now = new Date() } = {}) {
       created_at TEXT NOT NULL,
       active INTEGER NOT NULL DEFAULT 0
     )
+  `)
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS jev_runs (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      profile_revision INTEGER,
+      profile_hash TEXT DEFAULT '',
+      question_set_version TEXT NOT NULL,
+      model TEXT DEFAULT '',
+      status TEXT NOT NULL DEFAULT 'running',
+      total_offers INTEGER NOT NULL DEFAULT 0,
+      completed_offers INTEGER NOT NULL DEFAULT 0,
+      failed_offers INTEGER NOT NULL DEFAULT 0,
+      skipped_offers INTEGER NOT NULL DEFAULT 0,
+      started_at TEXT NOT NULL,
+      finished_at TEXT,
+      error_summary TEXT DEFAULT ''
+    );
+    CREATE INDEX IF NOT EXISTS idx_jev_runs_started ON jev_runs(started_at DESC);
+    CREATE TABLE IF NOT EXISTS jev_evaluations (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      run_id INTEGER NOT NULL,
+      offer_id INTEGER NOT NULL,
+      request_hash TEXT NOT NULL,
+      profile_revision INTEGER,
+      profile_hash TEXT DEFAULT '',
+      question_set_version TEXT NOT NULL,
+      model TEXT DEFAULT '',
+      schema_version TEXT DEFAULT '',
+      status TEXT NOT NULL DEFAULT 'completed',
+      answers_json TEXT DEFAULT '{}',
+      weighted_match_json TEXT DEFAULT '{}',
+      usage_json TEXT DEFAULT '{}',
+      error TEXT DEFAULT '',
+      created_at TEXT NOT NULL,
+      completed_at TEXT,
+      UNIQUE(run_id, offer_id),
+      FOREIGN KEY(run_id) REFERENCES jev_runs(id) ON DELETE CASCADE,
+      FOREIGN KEY(offer_id) REFERENCES offers(id) ON DELETE CASCADE
+    );
+    CREATE INDEX IF NOT EXISTS idx_jev_evaluations_offer ON jev_evaluations(offer_id, created_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_jev_evaluations_request ON jev_evaluations(request_hash);
   `)
   db.exec(
     'CREATE INDEX IF NOT EXISTS idx_search_profiles_version ON search_profiles(version)',
@@ -449,10 +513,12 @@ export function openStore(dataDir, { now } = {}) {
         minScore = null,
         limit = 50,
         offset = 0,
-        sort = 'score_desc',
+        sort = 'jev_desc',
+        includeInactive = false,
       } = filters
       const clauses = []
       const params = []
+      if (!includeInactive) clauses.push("COALESCE(o.lifecycle_status, 'active') = 'active'")
       if (q) {
         clauses.push('(o.title LIKE ? OR o.employer LIKE ? OR o.location LIKE ? OR o.description LIKE ?)')
         const like = `%${q}%`
@@ -481,9 +547,21 @@ export function openStore(dataDir, { now } = {}) {
       const where = clauses.length ? `WHERE ${clauses.join(' AND ')}` : ''
       let order = 'o.score DESC NULLS LAST, o.last_seen_at DESC'
       if (sort === 'seen_desc') order = 'o.last_seen_at DESC'
+      if (sort === 'recent_desc') order = 'o.published_at DESC, o.last_seen_at DESC'
       if (sort === 'title') order = 'o.title ASC'
       // SQLite lacks NULLS LAST — emulate
       if (sort === 'score_desc') order = 'CASE WHEN o.score IS NULL THEN 1 ELSE 0 END, o.score DESC, o.last_seen_at DESC'
+      if (sort === 'jev_desc') {
+        // Jev is the primary ranking when available. Offers without a valid
+        // weighted match stay behind and retain deterministic score ordering.
+        order = `
+          CASE WHEN json_extract(o.jev_signals_json, '$.weighted_match.overall') IS NULL THEN 1 ELSE 0 END,
+          CAST(json_extract(o.jev_signals_json, '$.weighted_match.overall') AS REAL) DESC,
+          CASE WHEN o.score IS NULL THEN 1 ELSE 0 END,
+          o.score DESC,
+          o.last_seen_at DESC
+        `
+      }
 
       const countSql = `
         SELECT COUNT(*) AS n
@@ -512,6 +590,204 @@ export function openStore(dataDir, { now } = {}) {
       if (oid == null) return null
       const row = db.prepare(`${OFFER_SELECT} WHERE o.id = ?`).get(oid) || null
       return row ? decorateOffer(row) : null
+    },
+
+    startJevRun({
+      profileRevision = null,
+      profileHash = '',
+      questionSetVersion = 'career-questions.v1',
+      model = '',
+      totalOffers = 0,
+      now = new Date(),
+    } = {}) {
+      const result = db.prepare(`
+        INSERT INTO jev_runs
+          (profile_revision, profile_hash, question_set_version, model, status,
+           total_offers, started_at)
+        VALUES (?, ?, ?, ?, 'running', ?, ?)
+      `).run(
+        profileRevision == null ? null : Number(profileRevision),
+        String(profileHash || ''),
+        String(questionSetVersion || 'career-questions.v1'),
+        String(model || ''),
+        Math.max(0, Number(totalOffers) || 0),
+        utcIso(now),
+      )
+      return Number(result.lastInsertRowid)
+    },
+
+    finishJevRun(id, {
+      status = 'completed',
+      completedOffers = 0,
+      failedOffers = 0,
+      skippedOffers = 0,
+      errorSummary = '',
+      now = new Date(),
+    } = {}) {
+      const runId = Number(id)
+      if (!Number.isSafeInteger(runId) || runId <= 0) throw new Error('invalid_jev_run')
+      db.prepare(`
+        UPDATE jev_runs
+        SET status = ?, completed_offers = ?, failed_offers = ?, skipped_offers = ?,
+            finished_at = ?, error_summary = ?
+        WHERE id = ?
+      `).run(
+        String(status || 'completed'),
+        Math.max(0, Number(completedOffers) || 0),
+        Math.max(0, Number(failedOffers) || 0),
+        Math.max(0, Number(skippedOffers) || 0),
+        utcIso(now),
+        String(errorSummary || ''),
+        runId,
+      )
+      return db.prepare('SELECT * FROM jev_runs WHERE id = ?').get(runId) || null
+    },
+
+    listJevRuns(limit = 20) {
+      return db.prepare('SELECT * FROM jev_runs ORDER BY id DESC LIMIT ?').all(
+        Math.min(100, Math.max(1, Number(limit) || 20)),
+      )
+    },
+
+    listJevEvaluations(offerId, limit = 20) {
+      const oid = parseOfferId(offerId)
+      if (oid == null) throw new Error('not_found')
+      return db.prepare(`
+        SELECT * FROM jev_evaluations
+        WHERE offer_id = ?
+        ORDER BY id DESC LIMIT ?
+      `).all(oid, Math.min(100, Math.max(1, Number(limit) || 20)))
+    },
+
+    listPendingJevOffers(limit = 20) {
+      return db.prepare(`
+        SELECT id
+        FROM offers
+        WHERE score >= 5
+          AND (jev_model IS NULL OR jev_model = '' OR COALESCE(jev_error, '') <> '')
+        ORDER BY score DESC, last_seen_at DESC, id DESC
+        LIMIT ?
+      `).all(Math.min(20, Math.max(1, Number(limit) || 20)))
+    },
+
+    hasSuccessfulJevScore(offerId) {
+      const oid = parseOfferId(offerId)
+      if (oid == null) return false
+      const row = db.prepare(`
+        SELECT 1 AS found
+        FROM offers
+        WHERE id = ? AND COALESCE(jev_model, '') <> ''
+          AND jev_scored_at IS NOT NULL AND COALESCE(jev_error, '') = ''
+      `).get(oid)
+      return Boolean(row?.found)
+    },
+
+    recordJevEvaluation({
+      runId,
+      offerId,
+      requestHash = '',
+      profileRevision = null,
+      profileHash = '',
+      questionSetVersion = 'career-questions.v1',
+      model = '',
+      schemaVersion = '',
+      status = 'completed',
+      answers = {},
+      weightedMatch = {},
+      usage = {},
+      error = '',
+      now = new Date(),
+    } = {}) {
+      const oid = parseOfferId(offerId)
+      const rid = Number(runId)
+      if (oid == null || !Number.isSafeInteger(rid) || rid <= 0) {
+        throw new Error('invalid_jev_evaluation')
+      }
+      const stamp = utcIso(now)
+      db.prepare(`
+        INSERT INTO jev_evaluations
+          (run_id, offer_id, request_hash, profile_revision, profile_hash,
+           question_set_version, model, schema_version, status, answers_json,
+           weighted_match_json, usage_json, error, created_at, completed_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(run_id, offer_id) DO UPDATE SET
+          request_hash = excluded.request_hash,
+          profile_revision = excluded.profile_revision,
+          profile_hash = excluded.profile_hash,
+          question_set_version = excluded.question_set_version,
+          model = excluded.model,
+          schema_version = excluded.schema_version,
+          status = excluded.status,
+          answers_json = excluded.answers_json,
+          weighted_match_json = excluded.weighted_match_json,
+          usage_json = excluded.usage_json,
+          error = excluded.error,
+          completed_at = excluded.completed_at
+      `).run(
+        rid,
+        oid,
+        String(requestHash || ''),
+        profileRevision == null ? null : Number(profileRevision),
+        String(profileHash || ''),
+        String(questionSetVersion || 'career-questions.v1'),
+        String(model || ''),
+        String(schemaVersion || ''),
+        String(status || 'completed'),
+        JSON.stringify(answers || {}),
+        JSON.stringify(weightedMatch || {}),
+        JSON.stringify(usage || {}),
+        String(error || ''),
+        stamp,
+        status === 'running' ? null : stamp,
+      )
+      return db.prepare('SELECT * FROM jev_evaluations WHERE run_id = ? AND offer_id = ?').get(rid, oid)
+    },
+
+    /**
+     * Persist Jev shadow output without changing deterministic score or
+     * interest/application state. Errors are retained for observability.
+     */
+    setJevEnrichment(id, { result = null, error = '' } = {}, {
+      now = new Date(),
+      evaluation = null,
+    } = {}) {
+      const oid = parseOfferId(id)
+      if (oid == null) throw new Error('not_found')
+      const exists = db.prepare('SELECT id FROM offers WHERE id = ?').get(oid)
+      if (!exists) throw new Error('not_found')
+      const stamp = utcIso(now)
+      const normalized = result && typeof result === 'object' ? result : null
+      db.prepare(`
+        UPDATE offers
+        SET jev_model = ?, jev_schema_version = ?, jev_signals_json = ?,
+            jev_scored_at = ?, jev_error = ?
+        WHERE id = ?
+      `).run(
+        normalized?.model || '',
+        normalized?.contract || '',
+        JSON.stringify({
+          ...(normalized?.answers || {}),
+          ...(normalized?.weighted_match ? { weighted_match: normalized.weighted_match } : {}),
+        }),
+        stamp,
+        String(error || ''),
+        oid,
+      )
+      if (evaluation?.runId) {
+        this.recordJevEvaluation({
+          ...evaluation,
+          offerId: oid,
+          model: normalized?.model || evaluation.model || '',
+          schemaVersion: normalized?.contract || evaluation.schemaVersion || '',
+          status: error ? 'failed' : 'completed',
+          answers: normalized?.answers || {},
+          weightedMatch: normalized?.weighted_match || {},
+          usage: normalized?.usage || {},
+          error,
+          now,
+        })
+      }
+      return this.getOffer(oid)
     },
 
     /**

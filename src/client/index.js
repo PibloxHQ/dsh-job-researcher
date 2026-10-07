@@ -15,6 +15,8 @@ window.__ModuleLoader__.load({
 
     const PLUGIN_ID = 'dsh-job-researcher'
     const PANEL_ID = 'job-researcher'
+    const CAREER_TAB_ID = 'dsh-job-researcher/career-review'
+    const CAREER_TAB_KIND = 'dsh-job-researcher/career-review'
     const SECTION_ID = 'job-researcher'
     const LOCALE_NS = 'job-researcher'
     const SETTINGS_LOCALE_NS = 'settings.job-researcher'
@@ -22,6 +24,7 @@ window.__ModuleLoader__.load({
     const ORDER = 20
     const SETTINGS_ORDER = 17
     const SOURCE_OPTIONS = ['csp-filtre', 'et', 'ft']
+    const PROFILE_TEMPLATE = '# Profil candidat\n\n## Identité\n- Nom / prénom: à compléter\n- Localisation: à compléter\n- Mobilité: à compléter\n\n## Positionnement\n- Titres ciblés: à compléter\n- Niveau: à compléter\n- Années d’expérience: à compléter\n\n## Compétences\n### Cœur\n- à compléter\n### Adjacent\n- à compléter\n\n## Expérience\n- Réalisations importantes: à compléter\n- Environnements / secteurs: à compléter\n\n## Préférences\n- Contrats: à compléter\n- Travail: à compléter\n- Salaire minimum: à compléter\n\n## Contraintes non négociables\n- à compléter\n\n## Préférences souples\n- à compléter\n\n## Contexte pour Jev\n- Ce que je recherche réellement: à compléter\n- Ce que je veux éviter: à compléter\n'
     const SOURCE_LABELS = {
       'csp-filtre': 'CSP Filtre',
       csp: 'CSP Filtre',
@@ -33,6 +36,7 @@ window.__ModuleLoader__.load({
     const FEEDBACK_TAG_META = [
       { id: 'location_good', labelFr: 'Bon lieu' },
       { id: 'too_far', labelFr: 'Trop loin' },
+      { id: 'location_bad', labelFr: 'Mal situé' },
       { id: 'dev_infra_good', labelFr: 'Bon fit infra/dev' },
       { id: 'support_good', labelFr: 'Support OK' },
       { id: 'support_bad', labelFr: 'Support non' },
@@ -41,6 +45,13 @@ window.__ModuleLoader__.load({
       { id: 'contract_bad', labelFr: 'Contrat non' },
       { id: 'missing_diploma', labelFr: 'Diplôme manquant' },
       { id: 'needs_details', labelFr: 'Manque de détails' },
+      { id: 'role_mismatch', labelFr: 'Métier pas recherché' },
+      { id: 'skills_gap', labelFr: 'Compétences insuffisantes' },
+      { id: 'experience_gap', labelFr: 'Expérience / niveau décalé' },
+      { id: 'work_preference_bad', labelFr: 'Organisation non adaptée' },
+      { id: 'salary_bad', labelFr: 'Rémunération non adaptée' },
+      { id: 'culture_bad', labelFr: 'Environnement non adapté' },
+      { id: 'growth_bad', labelFr: 'Évolution peu intéressante' },
     ]
 
     const DICT = {
@@ -55,6 +66,15 @@ window.__ModuleLoader__.load({
         decision: 'Interest',
         application: 'Application',
         minScore: 'Min score',
+        minDeterministicScore: 'Min deterministic score',
+        sort: 'Sort by',
+        sortJev: 'Jev match',
+        sortDeterministic: 'Deterministic score',
+        sortRecent: 'Most recent',
+        loadingResults: 'Loading offers…',
+        resultsLoaded: 'offers shown',
+        clearFilter: 'Remove filter',
+        noResultsHint: 'Try removing a filter or changing your search.',
         yes: "I'm interested",
         no: 'Not interested',
         maybe: 'Revisit later',
@@ -76,6 +96,9 @@ window.__ModuleLoader__.load({
         whyHeading: 'Why this choice?',
         whyHelper:
           'Explain with tags and a free comment — both update ranking after save (no application sent).',
+        mismatchFeedback: 'Why is this offer not a fit?',
+        mismatchHint: 'Select one or more reasons. You can combine several profile mismatches.',
+        selectedReasons: 'reasons selected',
         saveFeedback: 'Save feedback',
         feedbackSaved: 'Feedback saved — ranking updating…',
         rankingUpdating: 'Ranking updating in background…',
@@ -116,6 +139,14 @@ window.__ModuleLoader__.load({
         scoreLow: 'Few matching criteria',
         scoreUnknown: 'Score not calculated',
         scoreNoReasons: 'No system reasons available yet.',
+        jevScore: 'Jev match (shadow)',
+        jevNotEvaluated: 'Not evaluated by Jev yet.',
+        jevOverall: 'Overall Jev match',
+        jevAxes: 'Directional match',
+        jevDimensions: 'Detailed dimensions',
+        jevCoverage: 'Coverage',
+        jevModel: 'Model',
+        jevUnknown: 'Unknown',
         sourceInfo: 'Source information',
         myInterest: 'My interest',
         myFeedback: 'My feedback',
@@ -137,6 +168,9 @@ window.__ModuleLoader__.load({
         match: 'Match',
         untitledOffer: 'Untitled offer',
         externalId: 'External id',
+        publishedAt: 'Published',
+        updatedAt: 'Updated',
+        lifecycleStatus: 'Lifecycle',
         collectedAt: 'Collected',
         appliedOn: 'Submitted on',
         clearApplied: 'Clear submitted status',
@@ -164,6 +198,15 @@ window.__ModuleLoader__.load({
         decision: 'Intérêt',
         application: 'Candidature',
         minScore: 'Score min',
+        minDeterministicScore: 'Score déterministe min.',
+        sort: 'Trier par',
+        sortJev: 'Correspondance Jev',
+        sortDeterministic: 'Score déterministe',
+        sortRecent: 'Plus récentes',
+        loadingResults: 'Chargement des offres…',
+        resultsLoaded: 'offres affichées',
+        clearFilter: 'Retirer le filtre',
+        noResultsHint: 'Essaie de retirer un filtre ou de modifier ta recherche.',
         yes: "M'intéresse",
         no: 'Pas intéressé',
         maybe: 'À revoir',
@@ -185,6 +228,9 @@ window.__ModuleLoader__.load({
         whyHeading: 'Pourquoi ce choix ?',
         whyHelper:
           'Les tags et ton commentaire libre influencent le classement après enregistrement (pas d’envoi de candidature).',
+        mismatchFeedback: 'Pourquoi cette offre ne correspond pas ?',
+        mismatchHint: 'Sélectionne une ou plusieurs raisons. Tu peux combiner plusieurs écarts avec ton profil.',
+        selectedReasons: 'raisons sélectionnées',
         saveFeedback: 'Enregistrer le retour',
         feedbackSaved: 'Retour enregistré — classement en cours de mise à jour…',
         rankingUpdating: 'Classement en cours de mise à jour…',
@@ -225,6 +271,14 @@ window.__ModuleLoader__.load({
         scoreLow: 'Peu de critères correspondants',
         scoreUnknown: 'Score non calculé',
         scoreNoReasons: 'Aucune raison système pour l’instant.',
+        jevScore: 'Correspondance Jev (shadow)',
+        jevNotEvaluated: 'Pas encore évaluée par Jev.',
+        jevOverall: 'Correspondance globale Jev',
+        jevAxes: 'Adéquation directionnelle',
+        jevDimensions: 'Dimensions détaillées',
+        jevCoverage: 'Couverture',
+        jevModel: 'Modèle',
+        jevUnknown: 'Inconnu',
         sourceInfo: 'Informations de la source',
         myInterest: 'Mon intérêt',
         myFeedback: 'Mon retour',
@@ -246,6 +300,9 @@ window.__ModuleLoader__.load({
         match: 'Correspondance',
         untitledOffer: 'Offre sans titre',
         externalId: 'Identifiant source',
+        publishedAt: 'Publiée le',
+        updatedAt: 'Actualisée le',
+        lifecycleStatus: 'État',
         collectedAt: 'Collectée',
         appliedOn: 'Envoyée le',
         clearApplied: 'Retirer le statut envoyée',
@@ -295,6 +352,14 @@ window.__ModuleLoader__.load({
         sectionSources: 'Sources',
         sectionRhythm: 'Rhythm',
         sectionPrefs: 'Preferences',
+        sectionProfile: 'Career profile for matching',
+        profileHint: 'Paste a complete Markdown profile. It is stored as the source text and a small derived view is sent to Jev.',
+        profilePlaceholder: 'Paste your Markdown profile here…',
+        profileFile: 'Import .md',
+        profileTemplate: 'Insert template',
+        profilePrompt: 'Prompt to format a profile',
+        copyPrompt: 'Copy prompt',
+        promptCopied: 'Prompt copied',
         sectionAdvanced: 'Advanced',
         summaryPrefix: 'Searching in',
         summaryFor: 'for',
@@ -334,6 +399,14 @@ window.__ModuleLoader__.load({
         sectionSources: 'Sources',
         sectionRhythm: 'Rythme',
         sectionPrefs: 'Préférences',
+        sectionProfile: 'Profil carrière pour le matching',
+        profileHint: 'Collez un profil Markdown complet. Le texte est conservé comme source et une vue dérivée compacte est envoyée à Jev.',
+        profilePlaceholder: 'Collez votre profil Markdown ici…',
+        profileFile: 'Importer un .md',
+        profileTemplate: 'Insérer le modèle',
+        profilePrompt: 'Prompt de mise en forme',
+        copyPrompt: 'Copier le prompt',
+        promptCopied: 'Prompt copié',
         sectionAdvanced: 'Avancé',
         summaryPrefix: 'Recherche dans',
         summaryFor: 'pour',
@@ -546,6 +619,10 @@ window.__ModuleLoader__.load({
         padding: '0.45rem 0.4rem',
         borderBottom: '0.5px solid var(--dsw-alias-border-l2)',
         verticalAlign: 'top',
+      },
+      scoreCell: {
+        whiteSpace: 'nowrap',
+        width: '6.25rem',
       },
       selectedRow: {
         background: 'var(--dsw-alias-bg-layer-3)',
@@ -765,7 +842,7 @@ window.__ModuleLoader__.load({
         borderBottom: '0.5px solid var(--dsw-alias-border-l2)',
         background: 'var(--dsw-alias-bg-layer-2)',
         overflow: 'auto',
-        maxHeight: '55%',
+        maxHeight: 'min(32rem, 48vh)',
       },
       modalDialogWide: {
         position: 'relative',
@@ -810,6 +887,10 @@ window.__ModuleLoader__.load({
         display: 'flex',
         flexDirection: 'column',
         gap: '0.35rem',
+        padding: '0.9rem 1rem 0.85rem',
+        borderRadius: '0.6rem',
+        border: '0.5px solid var(--dsw-alias-border-l2)',
+        background: 'var(--dsw-alias-bg-layer-2)',
       },
       sheetTitle: {
         margin: 0,
@@ -838,6 +919,12 @@ window.__ModuleLoader__.load({
         border: '0.5px solid var(--dsw-alias-border-l3)',
         background: 'var(--dsw-alias-bg-layer-3, transparent)',
         color: 'var(--dsw-alias-label-secondary, inherit)',
+      },
+      metaChipScore: {
+        color: 'var(--dsw-alias-label-primary, inherit)',
+        borderColor: 'color-mix(in oklab, var(--dsw-alias-button-primary-fill) 45%, transparent)',
+        background: 'color-mix(in oklab, var(--dsw-alias-button-primary-fill) 12%, transparent)',
+        fontWeight: 650,
       },
       sheetGrid: {
         display: 'grid',
@@ -868,6 +955,9 @@ window.__ModuleLoader__.load({
         lineHeight: 1.55,
         maxWidth: '42rem',
         color: 'var(--dsw-alias-label-primary, inherit)',
+      },
+      descriptionParagraph: {
+        margin: '0 0 0.8rem',
       },
       reasonList: {
         margin: '0.35rem 0 0.5rem',
@@ -987,10 +1077,21 @@ window.__ModuleLoader__.load({
       feedbackBlock: {
         marginTop: '0.35rem',
         paddingTop: '0.75rem',
-        borderTop: '0.5px solid var(--dsw-alias-border-l2)',
+        padding: '0.85rem',
+        border: '0.5px solid var(--dsw-alias-border-l2)',
+        borderRadius: '0.55rem',
+        background: 'var(--dsw-alias-bg-layer-1)',
         display: 'flex',
         flexDirection: 'column',
         gap: '0.45rem',
+      },
+      feedbackSelectionSummary: {
+        margin: 0,
+        padding: '0.35rem 0.5rem',
+        borderRadius: '0.35rem',
+        background: 'color-mix(in oklab, var(--dsw-alias-button-primary-fill) 10%, transparent)',
+        color: 'var(--dsw-alias-label-secondary, inherit)',
+        fontSize: '0.75rem',
       },
       tagGroupLabel: {
         fontSize: '0.72rem',
@@ -1061,6 +1162,8 @@ window.__ModuleLoader__.load({
         background: 'var(--dsw-alias-bg-layer-3)',
         fontSize: '0.75rem',
         color: 'var(--dsw-alias-label-secondary, inherit)',
+        font: 'inherit',
+        cursor: 'pointer',
       },
       offerCard: {
         display: 'flex',
@@ -1126,6 +1229,50 @@ window.__ModuleLoader__.load({
       } catch {
         return { reasons: [String(raw)] }
       }
+    }
+
+    function formatOfferDescription(raw) {
+      const text = String(raw || '')
+        .replace(/\r/g, '')
+        .replace(/[ \t]+/g, ' ')
+        .replace(/([.!?])(?=[A-ZÀ-ÖØ-Þ])/g, '$1\n\n')
+        .replace(/\s*:\s*(?=[A-ZÀ-ÖØ-Þ])/g, ':\n')
+        .trim()
+      return text
+        .split(/\n{2,}/)
+        .map((part) => part.trim())
+        .filter(Boolean)
+    }
+
+    function parseJevSignals(raw) {
+      const parsed = parseScoreDetails(raw)
+      if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return null
+      const match = parsed.weighted_match
+      return match && typeof match === 'object' && !Array.isArray(match)
+        ? { ...parsed, weighted_match: match }
+        : null
+    }
+
+    function jevLabel(t, key) {
+      const labels = {
+        candidate_to_job: 'Candidate → Job',
+        job_to_candidate: 'Job → Candidate',
+        candidate_to_company: 'Candidate → Company',
+        company_to_candidate: 'Company → Candidate',
+        skills: 'Skills',
+        experience: 'Experience',
+        work_preference: 'Work preference',
+        location: 'Location',
+        salary: 'Salary',
+        culture: 'Culture',
+        growth_path: 'Growth path',
+      }
+      return labels[key] || key
+    }
+
+    function jevScoreText(t, item) {
+      if (!item || item.score == null) return t('jevUnknown')
+      return `${item.score}/100`
     }
 
     function tBound(ctx) {
@@ -1236,32 +1383,43 @@ window.__ModuleLoader__.load({
     const FEEDBACK_TAG_GROUPS = [
       {
         id: 'location',
-        labelFr: 'Lieu',
+        labelFr: 'Lieu / mobilité',
         labelEn: 'Location',
-        tags: ['location_good', 'too_far'],
+        tags: ['location_good', 'too_far', 'location_bad'],
       },
       {
         id: 'job',
-        labelFr: 'Métier',
+        labelFr: 'Métier / environnement',
         labelEn: 'Role',
         tags: ['dev_infra_good', 'support_good', 'support_bad', 'public_sector_good'],
       },
       {
         id: 'contract',
-        labelFr: 'Contrat',
+        labelFr: 'Contrat / conditions',
         labelEn: 'Contract',
         tags: ['student_contract_bad', 'contract_bad'],
       },
       {
         id: 'missing',
-        labelFr: 'Informations manquantes',
+        labelFr: 'Adéquation au profil',
         labelEn: 'Missing info',
-        tags: ['missing_diploma', 'needs_details'],
+        tags: [
+          'role_mismatch',
+          'skills_gap',
+          'experience_gap',
+          'work_preference_bad',
+          'salary_bad',
+          'culture_bad',
+          'growth_bad',
+          'missing_diploma',
+          'needs_details',
+        ],
       },
     ]
 
     const EXCLUSIVE_TAG_PAIRS = [
       ['location_good', 'too_far'],
+      ['location_good', 'location_bad'],
       ['support_good', 'support_bad'],
     ]
 
@@ -1328,6 +1486,7 @@ window.__ModuleLoader__.load({
       const [open, setOpen] = useState(false)
       const rootRef = useRef(null)
       const btnRef = useRef(null)
+      const menuRef = useRef(null)
 
       useEffect(() => {
         if (!open) return undefined
@@ -1351,6 +1510,13 @@ window.__ModuleLoader__.load({
         }
       }, [open])
 
+      useEffect(() => {
+        if (!open) return
+        const item = menuRef.current?.querySelector('[role="menuitemradio"][aria-checked="true"]')
+          || menuRef.current?.querySelector('[role="menuitemradio"]')
+        item?.focus?.()
+      }, [open])
+
       return jsxs('div', {
         ref: rootRef,
         style: css.dropdownRoot,
@@ -1372,6 +1538,7 @@ window.__ModuleLoader__.load({
           }),
           open
             ? jsx('ul', {
+                ref: menuRef,
                 role: 'menu',
                 style: {
                   ...css.dropdownMenu,
@@ -1392,6 +1559,20 @@ window.__ModuleLoader__.load({
                           ...(opt.danger ? { color: 'var(--dsw-alias-state-error-primary)' } : {}),
                         },
                         disabled: Boolean(opt.disabled),
+                        onKeyDown: (event) => {
+                          if (!['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) return
+                          event.preventDefault()
+                          const items = [...(menuRef.current?.querySelectorAll('[role="menuitemradio"]') || [])]
+                            .filter((item) => !item.disabled)
+                          const index = items.indexOf(event.currentTarget)
+                          if (!items.length || index < 0) return
+                          const next = event.key === 'Home'
+                            ? 0
+                            : event.key === 'End'
+                              ? items.length - 1
+                              : (index + (event.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length
+                          items[next]?.focus?.()
+                        },
                         onClick: () => {
                           setOpen(false)
                           onSelect?.(opt.value)
@@ -1444,6 +1625,8 @@ window.__ModuleLoader__.load({
       const [allowNewProfile, setAllowNewProfile] = useState(false)
       const [dirty, setDirty] = useState(false)
       const [revision, setRevision] = useState(0)
+      const configDraftRef = useRef({})
+      const [profileMarkdown, setProfileMarkdown] = useState('')
       const [departments, setDepartments] = useState('')
       const [cron, setCron] = useState('0 12 * * *')
       const [dailyTarget, setDailyTarget] = useState(0)
@@ -1456,11 +1639,13 @@ window.__ModuleLoader__.load({
       const [readinessMsg, setReadinessMsg] = useState('')
 
       const applyConfig = useCallback((config, version) => {
+        configDraftRef.current = structuredClone(config || {})
         const deps = config?.location?.departments
         setDepartments(Array.isArray(deps) ? deps.join(', ') : '')
         setCron(config?.schedule?.cron || '0 12 * * *')
         const n = Number(config?.schedule?.daily_application_target)
         setDailyTarget(Number.isFinite(n) ? n : 0)
+        setProfileMarkdown(config?.profile?.markdown || '')
         const src = config?.sources?.enabled || SOURCE_OPTIONS
         const next = {}
         for (const id of SOURCE_OPTIONS) next[id] = src.includes(id)
@@ -1515,16 +1700,39 @@ window.__ModuleLoader__.load({
         }
         setFieldErr('')
         const n = Number(dailyTarget)
-        return {
-          location: { departments: deps },
-          sources: {
-            enabled: SOURCE_OPTIONS.filter((id) => enabled[id]),
-          },
-          schedule: {
-            cron: cron.trim(),
-            daily_application_target: Number.isFinite(n) ? n : 0,
-          },
+        const payload = structuredClone(configDraftRef.current || {})
+        payload.location = { ...(payload.location || {}), departments: deps }
+        payload.sources = {
+          ...(payload.sources || {}),
+          enabled: SOURCE_OPTIONS.filter((id) => enabled[id]),
         }
+        payload.schedule = {
+          ...(payload.schedule || {}),
+          cron: cron.trim(),
+          daily_application_target: Number.isFinite(n) ? n : 0,
+        }
+        payload.profile = {
+          ...(payload.profile || {}),
+          markdown: profileMarkdown,
+          source: 'operator',
+          updated_at: new Date().toISOString(),
+        }
+        return payload
+      }
+
+      async function importProfileFile(event) {
+        const file = event.target.files?.[0]
+        if (!file) return
+        const text = await file.text()
+        setProfileMarkdown(text)
+        markDirty()
+        event.target.value = ''
+      }
+
+      async function copyProfilePrompt() {
+        const prompt = 'Transforme mes notes/CV en un profil Markdown pour Job Researcher.\n\nRègles : conserve uniquement les faits fournis, n’invente aucune compétence, date, rémunération ou préférence. Utilise les sections Identité, Positionnement, Compétences (Cœur et Adjacent), Expérience, Préférences, Contraintes non négociables, Préférences souples et Contexte pour Jev. Quand une information manque, écris « à compléter ». Retourne uniquement le Markdown.'
+        await navigator.clipboard?.writeText(prompt)
+        setMsg(t('promptCopied'))
       }
 
       const canEdit = configLoaded || allowNewProfile
@@ -1616,6 +1824,42 @@ window.__ModuleLoader__.load({
             style: css.settingsSummary,
             'data-testid': 'jr-settings-summary',
             children: `${t('summaryPrefix')} [${departments.trim() || '—'}], ${t('summaryVia')} [${SOURCE_OPTIONS.filter((id) => enabled[id]).map(sourceLabel).join(', ') || '—'}], ${t('summaryAt')} [${cron.trim() || '—'}]`,
+          }),
+          jsxs('div', {
+            style: css.settingsSection,
+            'data-testid': 'jr-settings-section-profile',
+            children: [
+              jsx('h3', { style: css.settingsSectionTitle, children: t('sectionProfile') }),
+              jsx('p', { style: css.settingsHint, children: t('profileHint') }),
+              jsx('textarea', {
+                id: 'jr-profile-markdown',
+                value: profileMarkdown,
+                placeholder: t('profilePlaceholder'),
+                rows: 18,
+                disabled: busy || !canEdit,
+                onChange: (e) => { setProfileMarkdown(e.target.value); markDirty() },
+                style: { ...css.input, width: '100%', minWidth: 0, resize: 'vertical', fontFamily: 'monospace' },
+                'data-testid': 'jr-settings-profile-markdown',
+              }),
+              jsxs('div', {
+                style: { display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.5rem' },
+                children: [
+                  jsx('label', {
+                    style: btnStyle(css.btn, busy || !canEdit),
+                    children: [t('profileFile'), jsx('input', { type: 'file', accept: '.md,.markdown,text/markdown', hidden: true, disabled: busy || !canEdit, onChange: importProfileFile })],
+                  }),
+                  jsx('button', {
+                    type: 'button', style: btnStyle(css.btn, busy || !canEdit), disabled: busy || !canEdit,
+                    onClick: () => { setProfileMarkdown(PROFILE_TEMPLATE); markDirty() }, children: t('profileTemplate'),
+                  }),
+                  jsx('button', { type: 'button', style: btnStyle(css.btn, false), onClick: () => void copyProfilePrompt(), children: t('copyPrompt') }),
+                ],
+              }),
+              jsx('details', {
+                style: { marginTop: '0.5rem' },
+                children: [jsx('summary', { children: t('profilePrompt') }), jsx('pre', { style: { whiteSpace: 'pre-wrap', ...css.settingsHint }, children: 'Transforme mes notes/CV en un profil Markdown pour Job Researcher. Conserve les faits, n’invente rien, utilise les sections standard et écris « à compléter » si une information manque.' })],
+              }),
+            ],
           }),
           jsxs('div', {
             style: css.settingsSection,
@@ -1922,7 +2166,7 @@ window.__ModuleLoader__.load({
       const bodyRef = useRef(null)
       const previousActiveRef = useRef(null)
       const onCloseRef = useRef(onClose)
-      const [showAllTags, setShowAllTags] = useState(false)
+      const [showAllTags, setShowAllTags] = useState(true)
       const [copiedMsg, setCopiedMsg] = useState('')
       const rowBusy = selected ? Boolean(offerBusy?.[selected.id]) : false
       const controlsBusy = busy || rowBusy
@@ -1951,9 +2195,27 @@ window.__ModuleLoader__.load({
           btn?.focus?.()
         }, 0)
         const onKey = (event) => {
-          if (event.key !== 'Escape') return
-          event.stopPropagation()
-          onCloseRef.current?.()
+          if (event.key === 'Escape') {
+            event.stopPropagation()
+            onCloseRef.current?.()
+            return
+          }
+          if (event.key !== 'Tab') return
+          const dialog = document.querySelector('[data-testid="offer-detail"]')
+          if (!dialog) return
+          const focusable = [...dialog.querySelectorAll(
+            'button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+          )].filter((node) => node.offsetParent !== null)
+          if (!focusable.length) return
+          const first = focusable[0]
+          const last = focusable[focusable.length - 1]
+          if (event.shiftKey && document.activeElement === first) {
+            event.preventDefault()
+            last.focus()
+          } else if (!event.shiftKey && document.activeElement === last) {
+            event.preventDefault()
+            first.focus()
+          }
         }
         window.addEventListener('keydown', onKey, false)
         return () => {
@@ -1973,13 +2235,15 @@ window.__ModuleLoader__.load({
       }, [selected?.id])
 
       useEffect(() => {
-        setShowAllTags(false)
+        setShowAllTags(true)
         setCopiedMsg('')
       }, [selected?.id])
 
       if (!selected) return null
 
       const scoreDetails = parseScoreDetails(selected.score_details)
+      const jevSignals = parseJevSignals(selected.jev_signals_json)
+      const jevMatch = jevSignals?.weighted_match || null
       const reasons = Array.isArray(scoreDetails?.reasons)
         ? scoreDetails.reasons.filter(Boolean)
         : []
@@ -1992,9 +2256,13 @@ window.__ModuleLoader__.load({
       const contract = metaOrUnknown(selected.contract_type, unknown)
       const remote = remoteLabel(t, selected.remote)
       const matchLabel = scoreMatchLabel(t, selected.score)
+      const displayMatch = jevMatch?.overall != null
+        ? `Jev ${jevMatch.overall}/100 · D${selected.score ?? '—'}`
+        : `${matchLabel} · D${selected.score ?? '—'}`
       const interestLabel = decisionLabel(t, selected.user_decision)
       const appLabel = applicationLabel(t, selected.application_status)
       const desc = String(selected.description || '').trim()
+      const descriptionParagraphs = formatOfferDescription(desc)
       const isExcerpt = Boolean(desc) && desc.length < 280 && !desc.includes('\n\n')
 
       const interestOptions = [
@@ -2061,8 +2329,8 @@ window.__ModuleLoader__.load({
         onNavigate(row)
       }
 
-      const primaryGroups = FEEDBACK_TAG_GROUPS.slice(0, 2)
-      const groups = showAllTags ? FEEDBACK_TAG_GROUPS : primaryGroups
+      const groups = showAllTags ? FEEDBACK_TAG_GROUPS : FEEDBACK_TAG_GROUPS.slice(0, 2)
+      const mismatchDecision = selected.user_decision === 'NO'
 
       return createPortal(
         jsxs('div', {
@@ -2077,12 +2345,14 @@ window.__ModuleLoader__.load({
             jsxs('div', {
               role: 'dialog',
               'aria-modal': true,
-              'aria-label': t('detail'),
+              'aria-labelledby': `offer-detail-title-${selected.id}`,
+              'aria-describedby': `offer-detail-meta-${selected.id}`,
               'data-testid': 'offer-detail',
               style: css.modalDialogWide,
               children: [
                 jsxs('div', {
                   style: css.sheetTopBar,
+                  className: 'jr-sheet-topbar',
                   children: [
                     jsxs('div', {
                       style: css.sheetNavGroup,
@@ -2121,17 +2391,21 @@ window.__ModuleLoader__.load({
                 jsxs('div', {
                   ref: bodyRef,
                   style: css.sheetBody,
+                  className: 'jr-sheet-body',
                   children: [
                     jsxs('header', {
                       style: css.sheetHeader,
+                      className: 'jr-sheet-header',
                       children: [
                         jsx('h2', {
                           style: css.sheetTitle,
+                          id: `offer-detail-title-${selected.id}`,
                           'data-testid': 'offer-detail-title',
                           children: selected.title || t('untitledOffer'),
                         }),
                         jsx('p', {
                           style: css.sheetSub,
+                          id: `offer-detail-meta-${selected.id}`,
                           children: [
                             metaOrUnknown(selected.employer, unknown),
                             ' · ',
@@ -2154,9 +2428,9 @@ window.__ModuleLoader__.load({
                               children: [t('source'), ': ', sourceLabel(selected.source)],
                             }),
                             jsxs('span', {
-                              style: css.metaChip,
+                              style: { ...css.metaChip, ...css.metaChipScore },
                               title: `${selected.score ?? '—'} · ${selected.score_version || '—'}`,
-                              children: [t('match'), ': ', matchLabel],
+                              children: [t('match'), ': ', displayMatch],
                             }),
                           ],
                         }),
@@ -2184,7 +2458,14 @@ window.__ModuleLoader__.load({
                                   : null,
                                 jsx('div', {
                                   style: css.descriptionReadable,
-                                  children: desc || t('noDescription'),
+                                  children: descriptionParagraphs.length
+                                    ? descriptionParagraphs.map((paragraph, index) =>
+                                        jsx('p', {
+                                          style: css.descriptionParagraph,
+                                          children: paragraph,
+                                        }, `description-${index}`),
+                                      )
+                                    : t('noDescription'),
                                 }),
                               ],
                             }),
@@ -2216,9 +2497,7 @@ window.__ModuleLoader__.load({
                                     children: [
                                       jsx('p', {
                                         style: css.muted,
-                                        children: `${matchLabel} · score ${selected.score ?? '—'} (${
-                                          selected.score_version || '—'
-                                        })${
+                                        children: `${displayMatch} · score ${selected.score ?? '—'} (${selected.score_version || '—'})${
                                           selected.score_classification
                                             ? ` · ${selected.score_classification}`
                                             : ''
@@ -2236,6 +2515,53 @@ window.__ModuleLoader__.load({
                                   }),
                                 }),
                               ],
+                            }),
+                            jsx(Accordion, {
+                              title: jevMatch
+                                ? `${t('jevScore')} · ${jevScoreText(t, { score: jevMatch.overall })}`
+                                : t('jevScore'),
+                              testId: 'jev-score-accordion',
+                              children: jevMatch
+                                ? jsxs('div', {
+                                    style: css.deflist,
+                                    children: [
+                                      jsxs('p', {
+                                        style: css.muted,
+                                        children: [
+                                          `${t('jevOverall')}: ${jevScoreText(t, { score: jevMatch.overall })}`,
+                                          ` · ${t('jevCoverage')}: ${jevMatch.overall_coverage ?? '—'}%`,
+                                          ` · ${t('jevModel')}: ${selected.jev_model || '—'}`,
+                                        ],
+                                      }),
+                                      jsx('strong', { children: t('jevAxes') }),
+                                      Object.entries(jevMatch.axes || {}).map(([key, item]) =>
+                                        jsxs('div', {
+                                          style: { display: 'flex', justifyContent: 'space-between', gap: '1rem' },
+                                          children: [
+                                            jsx('dt', { children: jevLabel(t, key) }),
+                                            jsx('dd', { children: jevScoreText(t, item) }),
+                                          ],
+                                        }, `axis-${key}`),
+                                      ),
+                                      jsx('strong', { children: t('jevDimensions') }),
+                                      Object.entries(jevMatch.dimensions || {}).map(([key, item]) =>
+                                        jsxs('div', {
+                                          style: { display: 'flex', justifyContent: 'space-between', gap: '1rem' },
+                                          children: [
+                                            jsx('dt', { children: jevLabel(t, key) }),
+                                            jsx('dd', { children: jevScoreText(t, item) }),
+                                          ],
+                                        }, `dimension-${key}`),
+                                      ),
+                                      selected.jev_scored_at
+                                        ? jsx('p', {
+                                            style: css.muted,
+                                            children: selected.jev_scored_at,
+                                          })
+                                        : null,
+                                    ],
+                                  })
+                                : jsx('p', { style: css.muted, children: t('jevNotEvaluated') }),
                             }),
                             jsx(Accordion, {
                               title: t('sourceInfo'),
@@ -2274,6 +2600,30 @@ window.__ModuleLoader__.load({
                                       }),
                                     ],
                                   }),
+                                  selected.published_at
+                                    ? jsxs('div', {
+                                        children: [
+                                          jsx('dt', { children: t('publishedAt') }),
+                                          jsx('dd', { children: selected.published_at }),
+                                        ],
+                                      })
+                                    : null,
+                                  selected.updated_at
+                                    ? jsxs('div', {
+                                        children: [
+                                          jsx('dt', { children: t('updatedAt') }),
+                                          jsx('dd', { children: selected.updated_at }),
+                                        ],
+                                      })
+                                    : null,
+                                  selected.lifecycle_status && selected.lifecycle_status !== 'active'
+                                    ? jsxs('div', {
+                                        children: [
+                                          jsx('dt', { children: t('lifecycleStatus') }),
+                                          jsx('dd', { children: selected.lifecycle_status }),
+                                        ],
+                                      })
+                                    : null,
                                   selected.url
                                     ? jsxs('div', {
                                         children: [
@@ -2382,9 +2732,21 @@ window.__ModuleLoader__.load({
                               children: [
                                 jsx('h3', {
                                   style: css.sectionTitle,
-                                  children: t('myFeedback'),
+                                  children: mismatchDecision
+                                    ? t('mismatchFeedback')
+                                    : t('myFeedback'),
                                 }),
-                                jsx('p', { style: css.hint, children: t('whyHelper') }),
+                                jsx('p', {
+                                  style: css.hint,
+                                  children: mismatchDecision ? t('mismatchHint') : t('whyHelper'),
+                                }),
+                                tags.length
+                                  ? jsx('p', {
+                                      style: css.feedbackSelectionSummary,
+                                      role: 'status',
+                                      children: `${tags.length} ${t('selectedReasons')}`,
+                                    })
+                                  : null,
                                 groups.map((group) =>
                                   jsxs(
                                     'div',
@@ -2482,6 +2844,7 @@ window.__ModuleLoader__.load({
       const closePanel = props.closePanel
       const openSettings = props.openSettings
       const openSecrets = props.openSecrets
+      const openCareerChat = props.openCareerChat
       const [status, setStatus] = useState(null)
       const [offers, setOffers] = useState({ total: 0, rows: [] })
       const [qInput, setQInput] = useState('')
@@ -2490,6 +2853,7 @@ window.__ModuleLoader__.load({
       const [decision, setDecision] = useState('')
       const [application, setApplication] = useState('')
       const [minScore, setMinScore] = useState('')
+      const [sort, setSort] = useState('jev_desc')
       const [selected, setSelected] = useState(null)
       const [comment, setComment] = useState('')
       const [tags, setTags] = useState([])
@@ -2500,6 +2864,7 @@ window.__ModuleLoader__.load({
       const [rowErrors, setRowErrors] = useState({})
       const [err, setErr] = useState('')
       const [listErr, setListErr] = useState('')
+      const [listLoading, setListLoading] = useState(false)
       const [statusErr, setStatusErr] = useState('')
       const [runMsg, setRunMsg] = useState('')
       const [feedbackMsg, setFeedbackMsg] = useState('')
@@ -2585,6 +2950,93 @@ window.__ModuleLoader__.load({
   border-radius: 8px;
 }
 @media (max-width: 720px) {
+  [data-testid="offer-detail-modal"] {
+    padding: 0.35rem !important;
+  }
+  [data-testid="offer-detail"] {
+    max-height: calc(100vh - 0.7rem) !important;
+    border-radius: 0.5rem !important;
+  }
+  [data-testid="offer-detail"] .jr-sheet-topbar {
+    padding: 0.5rem 0.65rem !important;
+  }
+  [data-testid="offer-detail"] .jr-sheet-body {
+    padding: 0.7rem !important;
+    gap: 0.7rem !important;
+  }
+  [data-testid="offer-detail"] .jr-sheet-header {
+    padding: 0.75rem !important;
+  }
+  [data-testid="offer-detail"] .jr-sheet-header h2 {
+    font-size: 1.1rem !important;
+  }
+  [data-testid="offer-detail"] [data-testid="offer-actions-panel"] {
+    padding: 0.7rem !important;
+  }
+  [data-testid="job-researcher-navbar"] {
+    align-items: flex-start !important;
+    flex-wrap: wrap !important;
+    gap: 0.55rem !important;
+    padding: 0.65rem 0.75rem !important;
+  }
+  [data-testid="job-researcher-navbar"] > :first-child {
+    flex: 1 1 100% !important;
+    min-width: 0 !important;
+  }
+  [data-testid="job-researcher-navbar"] > :nth-child(2) {
+    order: 3 !important;
+    flex: 1 1 100% !important;
+    min-width: 0 !important;
+    gap: 0.35rem 0.65rem !important;
+    font-size: 0.72rem !important;
+  }
+  [data-testid="job-researcher-navbar"] > :nth-child(3) {
+    margin-left: auto !important;
+    max-width: 100% !important;
+    flex-wrap: wrap !important;
+  }
+  [data-testid="job-researcher-navbar"] > :nth-child(3) button {
+    min-height: 2.25rem !important;
+  }
+  [data-testid="job-researcher-toolbar"] {
+    align-items: stretch !important;
+  }
+  [data-testid="job-researcher-toolbar"] > input {
+    flex-basis: 100% !important;
+    min-width: 100% !important;
+  }
+  [data-testid="interest-views"] {
+    width: 100% !important;
+    overflow-x: auto !important;
+    flex-wrap: nowrap !important;
+  }
+  [data-testid="job-researcher-list"] {
+    padding: 0.25rem !important;
+  }
+  [data-testid="job-researcher-list"] table {
+    min-width: 0 !important;
+    table-layout: fixed !important;
+  }
+  [data-testid="job-researcher-list"] th:nth-child(3),
+  [data-testid="job-researcher-list"] td:nth-child(3),
+  [data-testid="job-researcher-list"] th:nth-child(5),
+  [data-testid="job-researcher-list"] td:nth-child(5),
+  [data-testid="job-researcher-list"] th:nth-child(7),
+  [data-testid="job-researcher-list"] td:nth-child(7) {
+    display: none !important;
+  }
+  [data-testid="job-researcher-list"] th:nth-child(1) { width: 4.8rem !important; }
+  [data-testid="job-researcher-list"] th:nth-child(2) { width: auto !important; }
+  [data-testid="job-researcher-list"] th:nth-child(4) { width: 8.5rem !important; }
+  [data-testid="job-researcher-list"] th:nth-child(6) { width: 5.5rem !important; }
+  [data-testid="job-researcher-list"] th:nth-child(8) { width: 7rem !important; }
+  [data-testid="job-researcher-list"] td {
+    overflow-wrap: anywhere !important;
+    padding: 0.4rem 0.25rem !important;
+  }
+  [data-testid="job-researcher-settings-inline"] {
+    max-height: 32vh !important;
+  }
   [data-testid="offer-detail"] .jr-sheet-grid {
     grid-template-columns: 1fr !important;
   }
@@ -2598,6 +3050,15 @@ window.__ModuleLoader__.load({
     transition: none !important;
     animation: none !important;
   }
+}
+[data-testid="dsh-job-researcher"] button:focus-visible,
+[data-testid="dsh-job-researcher"] input:focus-visible,
+[data-testid="dsh-job-researcher"] select:focus-visible,
+[data-testid="dsh-job-researcher"] textarea:focus-visible,
+[data-testid="offer-detail"] a:focus-visible {
+  outline: 2px solid var(--dsw-alias-button-primary-fill, #6ea8fe) !important;
+  outline-offset: 2px !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--dsw-alias-button-primary-fill, #6ea8fe) 35%, transparent) !important;
 }
 [data-density="compact"] [data-testid="job-researcher-list"] td {
   padding-top: 0.28rem !important;
@@ -2639,9 +3100,10 @@ window.__ModuleLoader__.load({
 
       const loadOffers = useCallback(async () => {
         const reqId = ++offersReqId.current
+        setListLoading(true)
         try {
           const list = await api(
-            `/offers?q=${encodeURIComponent(q)}&source=${encodeURIComponent(source)}&decision=${encodeURIComponent(decision)}&application=${encodeURIComponent(application)}&minScore=${encodeURIComponent(minScore)}&limit=${limit}&offset=${page * limit}`,
+            `/offers?q=${encodeURIComponent(q)}&source=${encodeURIComponent(source)}&decision=${encodeURIComponent(decision)}&application=${encodeURIComponent(application)}&minScore=${encodeURIComponent(minScore)}&sort=${encodeURIComponent(sort)}&limit=${limit}&offset=${page * limit}`,
           )
           if (reqId !== offersReqId.current) return
           setOffers(list)
@@ -2649,8 +3111,10 @@ window.__ModuleLoader__.load({
         } catch (e) {
           if (reqId !== offersReqId.current) return
           setListErr(String(e.message || e))
+        } finally {
+          if (reqId === offersReqId.current) setListLoading(false)
         }
-      }, [q, source, decision, application, minScore, page])
+      }, [q, source, decision, application, minScore, sort, page])
 
       useEffect(() => {
         void loadStatus()
@@ -3004,7 +3468,20 @@ window.__ModuleLoader__.load({
         setDecision('')
         setApplication('')
         setMinScore('')
+        setSort('jev_desc')
         setListTab('offers')
+      }
+
+      function clearFilterByKey(key) {
+        setPage(0)
+        if (key === 'q') {
+          setQInput('')
+          setQ('')
+        }
+        if (key === 'decision') setDecision('')
+        if (key === 'source') setSource('')
+        if (key === 'application') setApplication('')
+        if (key === 'minScore') setMinScore('')
       }
 
       function setViewDecision(next) {
@@ -3103,6 +3580,15 @@ window.__ModuleLoader__.load({
               jsxs('div', {
                 style: css.navActions,
                 children: [
+                  openCareerChat
+                    ? jsx('button', {
+                        type: 'button',
+                        style: css.btn,
+                        'aria-label': 'Ouvrir la revue carrière',
+                        onClick: openCareerChat,
+                        children: '💬 Revue',
+                      })
+                    : null,
                   jsx('button', {
                     type: 'button',
                     style: btnStyle(css.btn, busy),
@@ -3285,6 +3771,21 @@ window.__ModuleLoader__.load({
                     value: qInput,
                     onChange: (e) => setQInput(e.target.value),
                   }),
+                  jsxs('select', {
+                    style: { ...css.input, flex: '0 1 11rem', minWidth: '9rem' },
+                    value: sort,
+                    'aria-label': t('sort'),
+                    'data-testid': 'sort-select',
+                    onChange: (e) => {
+                      setPage(0)
+                      setSort(e.target.value)
+                    },
+                    children: [
+                      jsx('option', { value: 'jev_desc', children: `${t('sort')}: ${t('sortJev')}` }),
+                      jsx('option', { value: 'score_desc', children: `${t('sort')}: ${t('sortDeterministic')}` }),
+                      jsx('option', { value: 'recent_desc', children: `${t('sort')}: ${t('sortRecent')}` }),
+                    ],
+                  }),
                   jsxs('div', {
                     style: css.viewTabs,
                     role: 'group',
@@ -3377,8 +3878,12 @@ window.__ModuleLoader__.load({
                       }),
                       jsx('input', {
                         style: { ...css.input, minWidth: '5rem' },
-                        placeholder: t('minScore'),
-                        'aria-label': t('minScore'),
+                        type: 'number',
+                        min: 0,
+                        max: 7,
+                        step: 1,
+                        placeholder: t('minDeterministicScore'),
+                        'aria-label': t('minDeterministicScore'),
                         value: minScore,
                         onChange: (e) => {
                           setPage(0)
@@ -3398,33 +3903,48 @@ window.__ModuleLoader__.load({
                         children: `${activeFilterCount} ${t('filtersActive')}`,
                       }),
                       q
-                        ? jsx('span', {
+                        ? jsxs('button', {
+                            type: 'button',
                             style: css.filterChip,
-                            children: `${t('search')}: ${q}`,
+                            'aria-label': `${t('clearFilter')}: ${t('search')}`,
+                            onClick: () => clearFilterByKey('q'),
+                            children: [`${t('search')}: ${q}`, jsx('span', { 'aria-hidden': true, children: ' ×' })],
                           })
                         : null,
                       decision
-                        ? jsx('span', {
+                        ? jsxs('button', {
+                            type: 'button',
                             style: css.filterChip,
-                            children: decisionLabel(t, decision),
+                            'aria-label': `${t('clearFilter')}: ${decisionLabel(t, decision)}`,
+                            onClick: () => clearFilterByKey('decision'),
+                            children: [decisionLabel(t, decision), jsx('span', { 'aria-hidden': true, children: ' ×' })],
                           })
                         : null,
                       source
-                        ? jsx('span', {
+                        ? jsxs('button', {
+                            type: 'button',
                             style: css.filterChip,
-                            children: sourceLabel(source),
+                            'aria-label': `${t('clearFilter')}: ${sourceLabel(source)}`,
+                            onClick: () => clearFilterByKey('source'),
+                            children: [sourceLabel(source), jsx('span', { 'aria-hidden': true, children: ' ×' })],
                           })
                         : null,
                       application
-                        ? jsx('span', {
+                        ? jsxs('button', {
+                            type: 'button',
                             style: css.filterChip,
-                            children: applicationLabel(t, application),
+                            'aria-label': `${t('clearFilter')}: ${applicationLabel(t, application)}`,
+                            onClick: () => clearFilterByKey('application'),
+                            children: [applicationLabel(t, application), jsx('span', { 'aria-hidden': true, children: ' ×' })],
                           })
                         : null,
                       minScore
-                        ? jsx('span', {
+                        ? jsxs('button', {
+                            type: 'button',
                             style: css.filterChip,
-                            children: `${t('minScore')}: ${minScore}`,
+                            'aria-label': `${t('clearFilter')}: ${t('minDeterministicScore')}`,
+                            onClick: () => clearFilterByKey('minScore'),
+                            children: [`${t('minDeterministicScore')}: ${minScore}`, jsx('span', { 'aria-hidden': true, children: ' ×' })],
                           })
                         : null,
                       jsx('button', {
@@ -3466,7 +3986,16 @@ window.__ModuleLoader__.load({
                 style: css.listPane,
                 'data-scroll-pane': true,
                 'data-testid': 'job-researcher-list',
+                'aria-busy': listLoading,
                 children: [
+                  jsx('div', {
+                    role: 'status',
+                    'aria-live': 'polite',
+                    style: { ...css.muted, minHeight: '1.2rem', marginBottom: '0.25rem' },
+                    children: listLoading
+                      ? t('loadingResults')
+                      : `${offers.total || 0} ${t('resultsLoaded')}`,
+                  }),
                   jsxs('table', {
                     style: css.table,
                     children: [
@@ -3491,11 +4020,26 @@ window.__ModuleLoader__.load({
                                 children: jsx('td', {
                                   style: css.td,
                                   colSpan: 8,
-                                  children: t('empty'),
+                                  children: jsxs('div', {
+                                    style: css.emptyState,
+                                    children: [
+                                      jsx('strong', { children: t('empty') }),
+                                      jsx('span', { style: css.muted, children: t('noResultsHint') }),
+                                      activeFilterCount
+                                        ? jsx('button', {
+                                            type: 'button',
+                                            style: css.btn,
+                                            onClick: clearAllFilters,
+                                            children: t('clearFilters'),
+                                          })
+                                        : null,
+                                    ],
+                                  }),
                                 }),
                               })
                             : offers.rows.map((row) => {
                                 const rowBusy = Boolean(offerBusy[row.id])
+                                const rowJev = parseJevSignals(row.jev_signals_json)?.weighted_match
                                 return jsxs(
                                   'tr',
                                   {
@@ -3527,10 +4071,31 @@ window.__ModuleLoader__.load({
                                     },
                                     children: [
                                       jsx('td', {
-                                        style: css.td,
-                                        children: jsx('span', {
-                                          style: scoreBadgeStyle(row.score),
-                                          children: row.score ?? '—',
+                                        style: { ...css.td, ...css.scoreCell },
+                                        children: jsxs('div', {
+                                          style: {
+                                            display: 'inline-flex',
+                                            alignItems: 'center',
+                                            gap: '0.35rem',
+                                            whiteSpace: 'nowrap',
+                                          },
+                                          children: [
+                                            jsx('span', {
+                                              style: scoreBadgeStyle(rowJev?.overall != null ? rowJev.overall / 20 : row.score),
+                                              title: rowJev?.overall != null
+                                                ? `Jev ${rowJev.overall}/100`
+                                                : `Déterministe ${row.score ?? '—'}/7`,
+                                              children: rowJev?.overall != null ? `J${rowJev.overall}` : `D${row.score ?? '—'}`,
+                                            }),
+                                            rowJev?.overall != null
+                                              ? jsx('span', {
+                                                  style: { ...css.muted, fontSize: '0.72rem' },
+                                                  title: `Score déterministe ${row.score ?? '—'}/7`,
+                                                  'data-testid': `jev-score-${row.id}`,
+                                                  children: `· D${row.score ?? '—'}/7`,
+                                                })
+                                              : null,
+                                          ],
                                         }),
                                       }),
                                       jsx('td', {
@@ -3728,6 +4293,35 @@ window.__ModuleLoader__.load({
       })
     }
 
+    function CareerReviewSidebar() {
+      const [status, setStatus] = useState('loading')
+      const [profile, setProfile] = useState(null)
+      const [offers, setOffers] = useState([])
+      useEffect(() => {
+        let cancelled = false
+        Promise.all([
+          fetch(`${API}/status`).then((r) => r.ok ? r.json() : null),
+          fetch(`${API}/offers?limit=5&sort=jev_desc`).then((r) => r.ok ? r.json() : null),
+        ]).then(([nextStatus, nextOffers]) => {
+          if (cancelled) return
+          setStatus(nextStatus ? 'ready' : 'unavailable')
+          setProfile(nextStatus?.config?.profile || nextStatus?.profile || null)
+          setOffers(nextOffers?.rows || [])
+        }).catch(() => { if (!cancelled) setStatus('unavailable') })
+        return () => { cancelled = true }
+      }, [])
+      return jsxs('div', {
+        'data-testid': 'job-researcher-career-review',
+        style: { padding: '1rem', display: 'grid', gap: '0.8rem', color: 'var(--dsw-alias-text-primary)' },
+        children: [
+          jsxs('div', { children: [jsx('h2', { style: { margin: 0 }, children: 'Revue carrière' }), jsx('p', { style: css.muted, children: status === 'ready' ? 'Contexte Job Researcher chargé.' : 'Contexte indisponible.' })] }),
+          jsxs('section', { children: [jsx('h3', { children: 'Profil actif' }), jsx('p', { style: css.muted, children: profile?.markdown ? 'Profil Markdown configuré.' : 'Profil Markdown vide ou non configuré.' })] }),
+          jsxs('section', { children: [jsx('h3', { children: 'Offres prioritaires' }), offers.length ? offers.map((offer) => jsxs('div', { style: { padding: '0.55rem 0', borderBottom: '1px solid var(--dsw-alias-border-subtle)' }, children: [jsx('strong', { children: offer.title || 'Offre sans titre' }), jsx('div', { style: css.muted, children: `${offer.employer || 'Employeur inconnu'} · Jev ${offer.jev?.weighted_match?.overall ?? '—'}` })] }, offer.id)) : jsx('p', { style: css.muted, children: 'Aucune offre prioritaire chargée.' })] }),
+          jsx('p', { style: css.muted, children: 'Cette vue est le cockpit de revue. La conversation dédiée utilise le preset career-review et les outils Job Researcher bornés.' }),
+        ],
+      })
+    }
+
     function apply(ctx) {
       if (!ctx.slots || !ctx.slots.inject) return
       ctx.effect(
@@ -3755,6 +4349,7 @@ window.__ModuleLoader__.load({
         },
         openSettings: () => tryOpenHostSettings(ctx),
         openSecrets: () => tryOpenHostSettings(ctx, 'secrets'),
+        openCareerChat: () => ctx.sidebarRight?.openTab?.(CAREER_TAB_KIND, { preferNewPane: false }),
       })
       const settingsInject = () => ({
         t: settingsT,
@@ -3796,10 +4391,51 @@ window.__ModuleLoader__.load({
           JobResearcherSettings,
         ),
       )
+      if (ctx.sidebarRightTabs?.register && ctx.sidebarRight && ctx.slots) {
+        ctx.effect(() => ctx.sidebarRightTabs.register({
+          id: CAREER_TAB_ID,
+          kind: CAREER_TAB_KIND,
+          priority: 'extension',
+          title: () => 'Revue carrière',
+          keepMounted: true,
+        }), `${PLUGIN_ID}: career review sidebar type`)
+        ctx.slots.inject('sidebar.right.pane.tab', () => ctx.slots.register({
+          name: 'sidebar.right.pane.tab',
+          key: CAREER_TAB_ID,
+          locale: LOCALE_NS,
+        }, CareerReviewSidebar))
+      }
+      if (ctx.commandUi?.register) {
+        ctx.effect(() => {
+          const spec = (run) => ({ kind: 'action', run })
+          const register = (name, label, run) => ctx.commandUi.register({
+            name, label: () => label,
+            description: () => 'Job Researcher · session carrière dédiée',
+            available: () => true, ui: spec(run),
+          })
+          const decorate = (name, run) => ctx.commandUi.decorate({
+            name, available: () => true, ui: spec(run),
+          })
+          const disposers = [
+            decorate('new', () => ctx.uiWorkspace?.startSession?.()),
+            decorate('reset', (session) => {
+              const id = session?.sessionId || session?.id
+              if (id && ctx.uiWorkspace?.forkSession) void ctx.uiWorkspace.forkSession(id).then((next) => ctx.uiWorkspace.openSession(next))
+              else ctx.uiWorkspace?.startSession?.()
+            }),
+            register('context', '/context — ouvrir le contexte carrière', () => ctx.sidebarRight?.openTab?.(CAREER_TAB_KIND)),
+            register('profile', '/profile — afficher le profil actif', () => ctx.sidebarRight?.openTab?.(CAREER_TAB_KIND)),
+            register('offer', '/offer — ouvrir la revue des offres', () => ctx.sidebarRight?.openTab?.(CAREER_TAB_KIND)),
+            register('compare', '/compare — comparer les offres sélectionnées', () => ctx.sidebarRight?.openTab?.(CAREER_TAB_KIND)),
+          ]
+          return () => disposers.forEach((dispose) => dispose?.())
+        }, `${PLUGIN_ID}: career commands`)
+      }
     }
 
     exports.apply = apply
-    exports.inject = ['slots', 'locale', 'layout', 'settingsScope']
+    // DSH 0.2 removed settingsScope; settings.section is provided by slots.
+    exports.inject = ['slots', 'locale', 'layout', 'sidebarRight', 'sidebarRightTabs', 'commandUi', 'uiWorkspace']
     exports.JobResearcherPanel = JobResearcherPanel
     exports.JobResearcherSettings = JobResearcherSettings
     exports.JobResearcherIcon = JobResearcherIcon

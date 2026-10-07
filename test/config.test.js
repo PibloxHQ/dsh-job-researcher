@@ -15,6 +15,32 @@ describe('validateSearchConfig', () => {
     assert.equal(errors.length, 0)
     assert.ok(config.sources.enabled.includes('ft'))
     assert.equal(config.schema_version, 1)
+    assert.equal(config.profile.schema_version, 'career-profile.v1')
+  })
+
+  it('normalizes a Markdown career profile into a bounded derived view', () => {
+    const { ok, config } = validateSearchConfig({
+      profile: { markdown: '# Profil\n\n## Compétences\n- TypeScript' },
+    })
+    assert.equal(ok, true)
+    assert.equal(config.profile.markdown.includes('TypeScript'), true)
+    assert.deepEqual(config.profile.derived.skills.core, ['TypeScript'])
+  })
+
+  it('allows a complete long-form profile within the Jev-safe bound', () => {
+    const { ok, config } = validateSearchConfig({
+      profile: { markdown: `## Expérience\n- ${'x'.repeat(70_000)}` },
+    })
+    assert.equal(ok, true)
+    assert.equal(config.profile.markdown.length, 70_016)
+  })
+
+  it('keeps bullets under Markdown subsections in the derived profile', () => {
+    const { config } = validateSearchConfig({
+      profile: { markdown: '## Expériences\n### Projet\n- Node.js\n\n## Compétences techniques\n### Fortement étayées\n- Linux' },
+    })
+    assert.deepEqual(config.profile.derived.experience, ['Node.js'])
+    assert.deepEqual(config.profile.derived.skills.core, ['Linux'])
   })
 
   it('accepts partial overlay on base', () => {

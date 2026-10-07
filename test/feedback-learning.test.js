@@ -254,6 +254,35 @@ describe('feedback learning (Node)', () => {
     assert.equal(FEEDBACK_UI_COPY_FR.whyHeading, 'Pourquoi ce choix ?')
   })
 
+  it('keeps poorly located as a valid neutral location signal', () => {
+    assert.deepEqual(normalizeFeedbackTags(['location_bad', 'location_bad']), ['location_bad'])
+    const prefs = aggregateLearnedSignals([
+      { feedback_origin: 'user', tags: ['location_bad'] },
+    ])
+    assert.equal(prefs.pending_signals[0].tag, 'location_bad')
+    assert.equal(prefs.pending_signals[0].actionable, false)
+    assert.equal(prefs.pending_signals[0].delta, 0)
+  })
+
+  it('generic HR terms are filtered from comment learning', () => {
+    assert.equal(FEEDBACK_SCORE_VERSION, 'v6-feedback')
+    const agg = aggregateLearnedSignals([
+      {
+        feedback_origin: 'user',
+        decision: 'NO',
+        comment: "Vous justifiez de cinq ans d'expérience",
+        feedback_tags_json: '[]',
+      },
+      {
+        feedback_origin: 'user',
+        decision: 'NO',
+        comment: "Vous justifiez d'une solide expérience",
+        feedback_tags_json: '[]',
+      },
+    ])
+    assert.equal(agg.avoid_terms.some((t) => t.term === 'justifiez'), false)
+  })
+
   it('production-shaped disposable clone disentangles legacy notes (if present)', () => {
     const prod = join(
       process.env.DSH_HOME || join(homedir(), 'dsh-lab', 'runtime', 'dsh-home'),

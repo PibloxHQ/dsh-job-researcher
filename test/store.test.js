@@ -119,6 +119,26 @@ afterEach(() => {
 })
 
 describe('store application tracker (fixture db)', () => {
+  it('ranks evaluated offers by Jev overall score before deterministic fallback', () => {
+    const dir = createLegacyFixtureDb()
+    const store = openStore(dir)
+    const runId = store.startJevRun({ totalOffers: 1, model: 'jev-1.13.0' })
+
+    store.setJevEnrichment(2, {
+      result: {
+        model: 'jev-1.13.0',
+        contract: 'career.v1',
+        weighted_match: { overall: 95 },
+      },
+    }, { evaluation: { runId } })
+
+    const ranked = store.listOffers({ limit: 2 })
+    assert.deepEqual(ranked.rows.map((offer) => offer.id), [2, 1])
+    assert.equal(ranked.rows[0].score, 1)
+    assert.equal(ranked.rows[1].score, 3)
+    store.close()
+  })
+
   it('additive migration preserves interest feedback and defaults application to NONE', () => {
     const dir = createLegacyFixtureDb()
     const store = openStore(dir)

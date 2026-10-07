@@ -62,7 +62,7 @@ function createFixtureDir() {
   const now = '2026-09-15T10:00:00Z'
   db.prepare(
     `INSERT INTO offers (source, external_id, title, employer, location, first_seen_at, last_seen_at, interest, score)
-     VALUES ('csp', 'x1', 'Role', 'Acme', 'Paris', ?, ?, 'interested', 2)`,
+     VALUES ('csp', 'x1', 'Role', 'Acme', 'Paris', ?, ?, 'interested', 5)`,
   ).run(now, now)
   db.prepare(
     `INSERT INTO offer_feedback (offer_id, decision, comment, viewed, decision_updated_at)
@@ -224,6 +224,65 @@ describe('HTTP application API', () => {
     assert.equal(resList.statusCode, 200)
     assert.equal(resList.body.total, 1)
 
+    store.close()
+  })
+
+  it('Jev enrichment is bounded shadow mode and preserves business state', async () => {
+    const dir = createFixtureDir()
+    const store = openStore(dir)
+    const server = mockWebServer()
+    const calls = []
+    registerHttpRoutes(server, {
+      getStore: () => store,
+      getScheduler: () => null,
+      secrets: { hasKey: () => false },
+      jev: {
+        async ask(input) {
+          calls.push(input)
+          return {
+            model: 'jev-1.13.0',
+            answers: { semantic_fit: { type: 'score', score: 0.8 } },
+            usage: { input_tokens: 10, output_tokens: 1 },
+          }
+        },
+      },
+    })
+    const route = findRoute(server, '/api/job-researcher/jev-enrich')
+    const response = mockRes()
+    await route.handler(
+      Object.assign(bodyStream({ offer_ids: [1] }), {
+        method: 'POST',
+        url: '/api/job-researcher/jev-enrich',
+      }),
+      response,
+    )
+    assert.equal(response.statusCode, 200)
+    assert.equal(response.body.ok, true)
+    assert.equal(response.body.shadow_mode, true)
+    assert.equal(response.body.affects_score, false)
+    assert.equal(calls.length, 1)
+    const offer = store.getOffer(1)
+    assert.equal(offer.score, 5)
+    assert.equal(offer.user_decision, 'YES')
+    assert.equal(offer.application_status, 'NONE')
+    assert.equal(offer.jev_model, 'jev-1.13.0')
+    assert.equal(offer.jev_schema_version, 'career.v1')
+    assert.ok(offer.jev_signals_json.includes('weighted_match'))
+    assert.equal(Number(response.body.run_id) > 0, true)
+    const evalRoute = findRoute(server, '/api/job-researcher/offers', 'prefix')
+    const evalResponse = mockRes()
+    await evalRoute.handler({
+      method: 'GET',
+      url: '/api/job-researcher/offers/1/jev-evaluations?limit=5',
+    }, evalResponse)
+    assert.equal(evalResponse.statusCode, 200)
+    assert.equal(evalResponse.body.evaluations.length, 1)
+    assert.equal(evalResponse.body.evaluations[0].status, 'completed')
+    const runsRoute = findRoute(server, '/api/job-researcher/jev-runs')
+    const runsResponse = mockRes()
+    await runsRoute.handler({ method: 'GET', url: '/api/job-researcher/jev-runs' }, runsResponse)
+    assert.equal(runsResponse.statusCode, 200)
+    assert.equal(runsResponse.body.runs[0].completed_offers, 1)
     store.close()
   })
 })

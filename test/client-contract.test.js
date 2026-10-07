@@ -23,6 +23,8 @@ describe('client feedback / DSH token contract', () => {
     assert.match(src, /'data-testid':\s*'save-feedback'/)
     assert.match(src, /'data-testid':\s*'feedback-panel'/)
     assert.match(src, /'data-testid':\s*'system-score'/)
+    assert.match(src, /testId:\s*'jev-score-accordion'/)
+    assert.match(src, /jev_signals_json/)
     assert.match(src, /À préparer/)
     assert.match(src, /Prête/)
     assert.match(src, /Envoyée/)
@@ -46,6 +48,14 @@ describe('client feedback / DSH token contract', () => {
     assert.match(src, /settings\.section/)
   })
 
+  it('uses the native resizable right-sidebar tab contract for career review', () => {
+    const source = readFileSync(CLIENT, 'utf8')
+    assert.match(source, /sidebarRightTabs\.register/)
+    assert.match(source, /sidebar\.right\.pane\.tab/)
+    assert.match(source, /openTab\?\./)
+    assert.match(source, /CAREER_TAB_KIND/)
+  })
+
   it('exposes readiness badge and settings gear', () => {
     const src = readFileSync(CLIENT, 'utf8')
     assert.match(src, /'data-testid':\s*'job-researcher-readiness'/)
@@ -61,6 +71,14 @@ describe('client feedback / DSH token contract', () => {
     assert.match(src, /createPortal/)
     assert.match(src, /'data-testid':\s*'offer-detail-modal'/)
     assert.match(src, /'data-testid':\s*'offer-detail'/)
+    assert.match(src, /'aria-labelledby':\s*`offer-detail-title-/)
+    assert.match(src, /'aria-describedby':\s*`offer-detail-meta-/)
+    assert.match(src, /function formatOfferDescription\(raw\)/)
+    assert.match(src, /className:\s*'jr-sheet-header'/)
+    assert.match(src, /metaChipScore/)
+    assert.match(src, /data-testid':\s*'sort-select'/)
+    assert.match(src, /recent_desc/)
+    assert.match(src, /focusable = \[\.\.\.dialog\.querySelectorAll/)
     assert.match(src, /modalDialog/)
     assert.match(src, /JobMark/)
   })
